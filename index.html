@@ -208,7 +208,7 @@
       position: relative;
       z-index: 10;
       border-radius: var(--radius-lg);
-      padding: 10px 12px;
+      padding: 12px 12px 12px 84px;
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.07));
       border: 1px solid rgba(255, 255, 255, 0.16);
       min-height: 0;
@@ -216,8 +216,12 @@
         inset 0 1px 0 rgba(255, 255, 255, 0.34),
         inset 0 -1px 0 rgba(255, 255, 255, 0.06);
       backdrop-filter: blur(28px) saturate(160%);
-      width: min(calc(100vw - 24px), 1540px);
-      margin: 0 auto;
+      width: min(calc(100vw - 28px), 980px);
+      margin: 0;
+      position: fixed;
+      left: max(12px, calc(env(safe-area-inset-left, 0px) + 12px));
+      bottom: max(12px, calc(env(safe-area-inset-bottom, 0px) + 12px));
+      transition: width 0.22s ease, min-height 0.22s ease, height 0.22s ease, padding 0.22s ease, border-radius 0.22s ease, box-shadow 0.22s ease, background 0.22s ease;
     }
 
     .board-top,
@@ -236,6 +240,80 @@
     .bank-card {
       display: grid;
       gap: 10px;
+    }
+
+    .bank-card.collapsed,
+    .board-top.collapsed {
+      width: 72px;
+      min-width: 72px;
+      min-height: 72px;
+      height: 72px;
+      padding: 0;
+      border-radius: 50%;
+      overflow: hidden;
+      background: linear-gradient(180deg, #fff4b5 0%, #ffd54d 54%, #f4b400 100%);
+      border: 1px solid rgba(255, 247, 201, 0.95);
+      box-shadow:
+        0 14px 24px rgba(120, 79, 0, 0.24),
+        inset 0 1px 0 rgba(255, 255, 255, 0.82),
+        inset 0 -1px 0 rgba(164, 103, 0, 0.22);
+      backdrop-filter: none;
+    }
+
+    .tray-panel-body {
+      display: grid;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .bank-card.collapsed .tray-panel-body,
+    .board-top.collapsed .tray-panel-body {
+      display: none;
+    }
+
+    .tray-launcher {
+      position: absolute;
+      left: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 56px;
+      height: 56px;
+      min-width: 56px;
+      min-height: 56px;
+      padding: 0;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #5a3900;
+      background: linear-gradient(180deg, #fff8cf 0%, #ffe27a 56%, #f6bc1d 100%);
+      border: 1px solid rgba(255, 247, 201, 0.95);
+      box-shadow:
+        0 10px 18px rgba(120, 79, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.82),
+        inset 0 -1px 0 rgba(164, 103, 0, 0.18);
+      z-index: 2;
+    }
+
+    .bank-card.collapsed .tray-launcher,
+    .board-top.collapsed .tray-launcher {
+      position: static;
+      transform: none;
+      width: 72px;
+      height: 72px;
+      min-width: 72px;
+      min-height: 72px;
+      border: 0;
+      box-shadow: none;
+      background: transparent;
+    }
+
+    .tray-launcher-icon {
+      font-size: 1.5rem;
+      line-height: 1;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      pointer-events: none;
     }
 
     .label {
@@ -965,12 +1043,13 @@
 
     .board-top {
       position: absolute;
-      left: 50%;
+      left: max(12px, calc(env(safe-area-inset-left, 0px) + 12px));
       bottom: max(18px, calc(env(safe-area-inset-bottom, 0px) + 12px));
-      transform: translateX(-50%);
+      transform: none;
       z-index: 4;
-      width: min(calc(100vw - 44px), 1020px);
+      width: min(calc(100vw - 28px), 980px);
       border-radius: 22px;
+      padding: 10px 10px 10px 84px;
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.1));
       border: 1px solid rgba(255, 255, 255, 0.2);
       box-shadow:
@@ -979,6 +1058,7 @@
         inset 0 -1px 0 rgba(255, 255, 255, 0.08);
       backdrop-filter: blur(26px) saturate(155%);
       pointer-events: auto;
+      transition: width 0.22s ease, min-height 0.22s ease, height 0.22s ease, padding 0.22s ease, border-radius 0.22s ease, box-shadow 0.22s ease, background 0.22s ease;
     }
 
     .close-btn {
@@ -1111,9 +1191,9 @@
         grid-template-rows: auto auto;
         align-content: start;
         justify-self: center;
-        width: min(calc(100vw - 16px), 1540px);
+        width: min(calc(100vw - 24px), 960px);
         gap: 6px;
-        padding: 8px 10px;
+        padding: 8px 10px 8px 78px;
       }
 
       .spell-stage {
@@ -1175,7 +1255,8 @@
 
       .board-top {
         bottom: max(16px, calc(env(safe-area-inset-bottom, 0px) + 10px));
-        width: min(calc(100vw - 28px), 1040px);
+        width: min(calc(100vw - 24px), 960px);
+        padding: 8px 10px 8px 78px;
       }
 
       .letter-card {
@@ -1227,7 +1308,7 @@
       .board-top {
         bottom: max(12px, calc(env(safe-area-inset-bottom, 0px) + 8px));
         width: calc(100vw - 16px);
-        padding: 8px;
+        padding: 8px 8px 8px 76px;
       }
 
       #closeBoardBtn {
@@ -1299,11 +1380,16 @@
             <div class="spell-stage" id="spellStage" aria-live="polite"></div>
           </section>
 
-          <section class="bank-card">
-            <div class="letter-bank" id="letterBank"></div>
-            <section class="sticker-section">
-              <div class="icon-bank" id="iconBank" aria-label="Sticker icons"></div>
-            </section>
+          <section class="bank-card collapsed" id="spellTray">
+            <button class="tray-launcher" id="spellTrayLauncher" type="button" aria-label="Spelling tray launcher. Double tap to open the tray.">
+              <span class="tray-launcher-icon">Aa</span>
+            </button>
+            <div class="tray-panel-body">
+              <div class="letter-bank" id="letterBank"></div>
+              <section class="sticker-section">
+                <div class="icon-bank" id="iconBank" aria-label="Sticker icons"></div>
+              </section>
+            </div>
           </section>
         </div>
       </section>
@@ -1353,51 +1439,56 @@
           <div class="board-sticker-layer" id="boardStickerLayer" aria-hidden="true"></div>
         </div>
 
-        <section class="board-top">
-          <div class="board-toolbar-row">
-            <div class="palette-row" id="paletteRow" aria-label="Pencil colors">
-              <button class="swatch active" type="button" data-color="#ff69b4" style="background:#ff69b4" aria-label="Pink pencil"></button>
-              <button class="swatch" type="button" data-color="#ffd84d" style="background:#ffd84d" aria-label="Yellow pencil"></button>
-              <button class="swatch" type="button" data-color="#38b86c" style="background:#38b86c" aria-label="Green pencil"></button>
-              <button class="swatch" type="button" data-color="#2d7ff9" style="background:#2d7ff9" aria-label="Blue pencil"></button>
-              <button class="swatch" type="button" data-color="#e53935" style="background:#e53935" aria-label="Red pencil"></button>
-              <button class="swatch" type="button" data-color="#101010" style="background:#101010" aria-label="Black pencil"></button>
-              <button class="swatch" type="button" data-color="#7c4dff" style="background:#7c4dff" aria-label="Purple pencil"></button>
-              <button class="swatch" type="button" data-color="#8b93a1" style="background:#8b93a1" aria-label="Gray pencil"></button>
+        <section class="board-top collapsed" id="boardTop">
+          <button class="tray-launcher" id="boardTrayLauncher" type="button" aria-label="Screen Board tray launcher. Double tap to open the tray.">
+            <span class="tray-launcher-icon">✦</span>
+          </button>
+          <div class="tray-panel-body">
+            <div class="board-toolbar-row">
+              <div class="palette-row" id="paletteRow" aria-label="Pencil colors">
+                <button class="swatch active" type="button" data-color="#ff69b4" style="background:#ff69b4" aria-label="Pink pencil"></button>
+                <button class="swatch" type="button" data-color="#ffd84d" style="background:#ffd84d" aria-label="Yellow pencil"></button>
+                <button class="swatch" type="button" data-color="#38b86c" style="background:#38b86c" aria-label="Green pencil"></button>
+                <button class="swatch" type="button" data-color="#2d7ff9" style="background:#2d7ff9" aria-label="Blue pencil"></button>
+                <button class="swatch" type="button" data-color="#e53935" style="background:#e53935" aria-label="Red pencil"></button>
+                <button class="swatch" type="button" data-color="#101010" style="background:#101010" aria-label="Black pencil"></button>
+                <button class="swatch" type="button" data-color="#7c4dff" style="background:#7c4dff" aria-label="Purple pencil"></button>
+                <button class="swatch" type="button" data-color="#8b93a1" style="background:#8b93a1" aria-label="Gray pencil"></button>
+              </div>
+              <div class="tool-actions">
+                <button class="tool-btn board-control-btn active" id="penModeBtn" type="button">Pen: On</button>
+                <button class="tool-btn board-control-btn" id="eraserBtn" type="button" aria-label="Eraser tool off. Click once to choose eraser or click twice for eraser size.">
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M8.2 18.4h9.2c.5 0 1-.2 1.3-.6l2.2-2.2c.6-.6.6-1.6 0-2.2L13 5.7a1.55 1.55 0 0 0-2.2 0L3.1 13.4a1.55 1.55 0 0 0 0 2.2l2.2 2.2c.4.4.8.6 1.4.6h1.5Z" fill="#fff8df" stroke="#915800" stroke-width="1.4" stroke-linejoin="round"/>
+                    <path d="M10.1 8.6 16 14.5" stroke="#915800" stroke-width="1.4" stroke-linecap="round"/>
+                    <path d="M5.7 18.4h13.8" stroke="#915800" stroke-width="1.4" stroke-linecap="round"/>
+                  </svg>
+                </button>
+                <button class="ghost-btn board-control-btn" id="clearBoardBtn" type="button">Clear All</button>
+                <button class="ghost-btn board-control-btn active" id="emojiModeBtn" type="button" data-board-mode="emoji">Emojis</button>
+                <button class="ghost-btn board-control-btn" id="shapeModeBtn" type="button" data-board-mode="shape">Shapes</button>
+                <button class="ghost-btn board-control-btn" id="numberModeBtn" type="button" data-board-mode="number">Numbers</button>
+              </div>
             </div>
-            <div class="tool-actions">
-              <button class="tool-btn board-control-btn active" id="penModeBtn" type="button">Pen: On</button>
-              <button class="tool-btn board-control-btn" id="eraserBtn" type="button" aria-label="Eraser tool off. Click once to choose eraser or click twice for eraser size.">
-                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M8.2 18.4h9.2c.5 0 1-.2 1.3-.6l2.2-2.2c.6-.6.6-1.6 0-2.2L13 5.7a1.55 1.55 0 0 0-2.2 0L3.1 13.4a1.55 1.55 0 0 0 0 2.2l2.2 2.2c.4.4.8.6 1.4.6h1.5Z" fill="#fff8df" stroke="#915800" stroke-width="1.4" stroke-linejoin="round"/>
-                  <path d="M10.1 8.6 16 14.5" stroke="#915800" stroke-width="1.4" stroke-linecap="round"/>
-                  <path d="M5.7 18.4h13.8" stroke="#915800" stroke-width="1.4" stroke-linecap="round"/>
-                </svg>
+
+            <div class="size-popup hidden" id="toolSizePopup" role="group" aria-label="Tool size options" aria-hidden="true">
+              <button class="size-popup-btn" type="button" data-popup-size="small" aria-label="Small tool size">
+                <span class="size-popup-dot small"></span>
               </button>
-              <button class="ghost-btn board-control-btn" id="clearBoardBtn" type="button">Clear All</button>
-              <button class="ghost-btn board-control-btn active" id="emojiModeBtn" type="button" data-board-mode="emoji">Emojis</button>
-              <button class="ghost-btn board-control-btn" id="shapeModeBtn" type="button" data-board-mode="shape">Shapes</button>
-              <button class="ghost-btn board-control-btn" id="numberModeBtn" type="button" data-board-mode="number">Numbers</button>
+              <button class="size-popup-btn" type="button" data-popup-size="medium" aria-label="Medium tool size">
+                <span class="size-popup-dot medium"></span>
+              </button>
+              <button class="size-popup-btn" type="button" data-popup-size="large" aria-label="Large tool size">
+                <span class="size-popup-dot large"></span>
+              </button>
+              <button class="size-popup-btn" type="button" data-popup-size="xlarge" aria-label="Extra large tool size">
+                <span class="size-popup-dot xlarge"></span>
+              </button>
             </div>
-          </div>
 
-          <div class="size-popup hidden" id="toolSizePopup" role="group" aria-label="Tool size options" aria-hidden="true">
-            <button class="size-popup-btn" type="button" data-popup-size="small" aria-label="Small tool size">
-              <span class="size-popup-dot small"></span>
-            </button>
-            <button class="size-popup-btn" type="button" data-popup-size="medium" aria-label="Medium tool size">
-              <span class="size-popup-dot medium"></span>
-            </button>
-            <button class="size-popup-btn" type="button" data-popup-size="large" aria-label="Large tool size">
-              <span class="size-popup-dot large"></span>
-            </button>
-            <button class="size-popup-btn" type="button" data-popup-size="xlarge" aria-label="Extra large tool size">
-              <span class="size-popup-dot xlarge"></span>
-            </button>
-          </div>
-
-          <div class="board-sticker-row">
-            <div class="icon-bank compact" id="boardIconBank" aria-label="Screen Board sticker icons"></div>
+            <div class="board-sticker-row">
+              <div class="icon-bank compact" id="boardIconBank" aria-label="Screen Board sticker icons"></div>
+            </div>
           </div>
         </section>
       </div>
@@ -1425,11 +1516,15 @@
       drawing: false,
       lastPoint: null,
       boardVisible: false,
-      pointerSession: null
+      pointerSession: null,
+      spellTrayExpanded: false,
+      boardTrayExpanded: false
     };
 
     const coverScreen = document.getElementById("coverScreen");
     const enterGameBtn = document.getElementById("enterGameBtn");
+    const spellTray = document.getElementById("spellTray");
+    const spellTrayLauncher = document.getElementById("spellTrayLauncher");
     const letterBank = document.getElementById("letterBank");
     const iconBank = document.getElementById("iconBank");
     const boardIconBank = document.getElementById("boardIconBank");
@@ -1456,6 +1551,7 @@
     const toolSizePopup = document.getElementById("toolSizePopup");
     const popupSizeButtons = Array.from(toolSizePopup.querySelectorAll("[data-popup-size]"));
     const boardTop = document.querySelector(".board-top");
+    const boardTrayLauncher = document.getElementById("boardTrayLauncher");
     const boardWrap = document.getElementById("boardWrap");
     const boardStickerLayer = document.getElementById("boardStickerLayer");
     const canvas = document.getElementById("drawCanvas");
@@ -2306,6 +2402,68 @@
       toolSizePopup.setAttribute("aria-hidden", "true");
       toolSizePopup.style.removeProperty("left");
       toolSizePopup.style.removeProperty("top");
+    }
+
+    function setSpellTrayExpanded(expanded) {
+      state.spellTrayExpanded = Boolean(expanded);
+      spellTray.classList.toggle("collapsed", !state.spellTrayExpanded);
+      spellTrayLauncher.setAttribute("aria-expanded", String(state.spellTrayExpanded));
+      spellTrayLauncher.setAttribute(
+        "aria-label",
+        state.spellTrayExpanded
+          ? "Spelling tray open. Tap once to collapse."
+          : "Spelling tray closed. Double tap to open."
+      );
+    }
+
+    function setBoardTrayExpanded(expanded) {
+      state.boardTrayExpanded = Boolean(expanded);
+      boardTop.classList.toggle("collapsed", !state.boardTrayExpanded);
+      boardTrayLauncher.setAttribute("aria-expanded", String(state.boardTrayExpanded));
+      boardTrayLauncher.setAttribute(
+        "aria-label",
+        state.boardTrayExpanded
+          ? "Screen Board tray open. Tap once to collapse."
+          : "Screen Board tray closed. Double tap to open."
+      );
+
+      if (!state.boardTrayExpanded) {
+        closeSizePopup();
+      } else if (state.sizePopupVisible) {
+        requestAnimationFrame(positionSizePopup);
+      }
+    }
+
+    function handleTrayLauncherTap(kind, launcher) {
+      const isExpanded = kind === "spell" ? state.spellTrayExpanded : state.boardTrayExpanded;
+      if (isExpanded) {
+        if (kind === "spell") {
+          setSpellTrayExpanded(false);
+        } else {
+          setBoardTrayExpanded(false);
+        }
+        launcher.dataset.lastTapAt = "0";
+        return;
+      }
+
+      const now = performance.now();
+      const lastTapAt = Number(launcher.dataset.lastTapAt || 0);
+      if (now - lastTapAt <= DOUBLE_TAP_MS) {
+        launcher.dataset.lastTapAt = "0";
+        if (kind === "spell") {
+          setSpellTrayExpanded(true);
+        } else {
+          setBoardTrayExpanded(true);
+        }
+        return;
+      }
+
+      launcher.dataset.lastTapAt = String(now);
+      window.setTimeout(() => {
+        if (launcher.dataset.lastTapAt === String(now)) {
+          launcher.dataset.lastTapAt = "0";
+        }
+      }, DOUBLE_TAP_MS + 20);
     }
 
     function toggleCardFlip(card) {
@@ -3458,6 +3616,7 @@
       boardModal.classList.remove("hidden");
       boardModal.setAttribute("aria-hidden", "false");
       state.boardVisible = true;
+      setBoardTrayExpanded(false);
       requestAnimationFrame(() => {
         resizeCanvas();
         normalizeBoardItems();
@@ -3472,6 +3631,7 @@
       state.boardVisible = false;
       state.drawing = false;
       state.lastPoint = null;
+      setBoardTrayExpanded(false);
       boardModal.classList.add("hidden");
       boardModal.setAttribute("aria-hidden", "true");
     }
@@ -3731,6 +3891,8 @@
     });
 
     closeBoardBtn.addEventListener("click", closeBoardModal);
+    spellTrayLauncher.addEventListener("click", () => handleTrayLauncherTap("spell", spellTrayLauncher));
+    boardTrayLauncher.addEventListener("click", () => handleTrayLauncherTap("board", boardTrayLauncher));
     penModeBtn.addEventListener("click", () => {
       setBoardPenMode(!state.boardPenMode);
     });
@@ -3786,6 +3948,8 @@
     renderBoardAssetBank();
     renderPlacedSpelling();
     renderBoardStickers();
+    setSpellTrayExpanded(false);
+    setBoardTrayExpanded(false);
     setActiveColor(state.selectedColor);
     setBoardPenMode(state.boardPenMode);
     setEraserMode(state.eraserOn);
