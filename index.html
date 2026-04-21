@@ -418,14 +418,14 @@
     }
 
     .board-control-btn {
-      flex: 0 0 116px;
-      width: 116px;
-      min-height: 56px;
+      flex: 0 0 108px;
+      width: 108px;
+      min-height: 52px;
       justify-content: center;
       align-items: center;
       display: inline-flex;
-      padding: 14px 12px;
-      font-size: 0.98rem;
+      padding: 12px 10px;
+      font-size: 0.94rem;
       letter-spacing: 0.04em;
       text-transform: uppercase;
     }
@@ -440,8 +440,8 @@
 
     .board-sticker-row {
       display: grid;
-      gap: 6px;
-      margin-top: 8px;
+      gap: 4px;
+      margin-top: 6px;
       justify-items: center;
       width: 100%;
     }
@@ -513,15 +513,15 @@
     }
 
     .board-sticker-row .icon-bank.compact {
-      gap: 6px;
-      padding-bottom: 4px;
+      gap: 5px;
+      padding-bottom: 2px;
       width: 100%;
     }
 
     .board-sticker-row .icon-bank.compact .icon-chip {
-      flex: 0 0 58px;
-      padding: 5px;
-      border-radius: 16px;
+      flex: 0 0 52px;
+      padding: 4px;
+      border-radius: 15px;
     }
 
     .icon-bank {
@@ -959,18 +959,18 @@
 
     .board-top,
     .board-tools {
-      padding: 10px 12px;
+      padding: 8px 10px;
       overflow: visible;
     }
 
     .board-top {
       position: absolute;
       left: 50%;
-      bottom: 14px;
+      bottom: max(18px, calc(env(safe-area-inset-bottom, 0px) + 12px));
       transform: translateX(-50%);
       z-index: 4;
-      width: min(calc(100vw - 24px), 1160px);
-      border-radius: 24px;
+      width: min(calc(100vw - 44px), 1020px);
+      border-radius: 22px;
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.1));
       border: 1px solid rgba(255, 255, 255, 0.2);
       box-shadow:
@@ -1174,8 +1174,8 @@
       }
 
       .board-top {
-        bottom: 12px;
-        width: min(calc(100vw - 24px), 1180px);
+        bottom: max(16px, calc(env(safe-area-inset-bottom, 0px) + 10px));
+        width: min(calc(100vw - 28px), 1040px);
       }
 
       .letter-card {
@@ -1225,9 +1225,9 @@
       }
 
       .board-top {
-        bottom: 10px;
-        width: calc(100vw - 20px);
-        padding: 10px;
+        bottom: max(12px, calc(env(safe-area-inset-bottom, 0px) + 8px));
+        width: calc(100vw - 16px);
+        padding: 8px;
       }
 
       #closeBoardBtn {
@@ -3058,6 +3058,10 @@
       return boardStickerLayer.getBoundingClientRect();
     }
 
+    function boardTopRect() {
+      return boardTop ? boardTop.getBoundingClientRect() : null;
+    }
+
     function boardPoint(clientX, clientY) {
       const rect = boardRect();
       return {
@@ -3065,6 +3069,87 @@
         y: clientY - rect.top,
         inside: clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom
       };
+    }
+
+    function boardItemOverlapsPanel(x, y, size) {
+      const panelRect = boardTopRect();
+      const rect = boardRect();
+      if (!panelRect || !panelRect.width || !panelRect.height || !rect.width || !rect.height) {
+        return false;
+      }
+
+      const localPanel = {
+        left: panelRect.left - rect.left,
+        top: panelRect.top - rect.top,
+        right: panelRect.right - rect.left,
+        bottom: panelRect.bottom - rect.top
+      };
+      const margin = 10;
+      const itemLeft = x;
+      const itemTop = y;
+      const itemRight = x + size;
+      const itemBottom = y + size;
+
+      return !(
+        itemRight <= localPanel.left + margin ||
+        itemLeft >= localPanel.right - margin ||
+        itemBottom <= localPanel.top + margin ||
+        itemTop >= localPanel.bottom - margin
+      );
+    }
+
+    function shiftBoardPositionAbovePanel(item, position, nextSize = item.size) {
+      if (!boardItemOverlapsPanel(position.x, position.y, nextSize)) {
+        return position;
+      }
+
+      const rect = boardRect();
+      const panelRect = boardTopRect();
+      if (!rect.width || !rect.height || !panelRect) {
+        return position;
+      }
+
+      const panelTop = panelRect.top - rect.top;
+      const liftedY = Math.max(0, panelTop - nextSize - 14);
+      return clampBoardItemPosition(item, position.x, liftedY, nextSize);
+    }
+
+    function findVisibleBoardPlacement(item, initialPosition, nextSize = item.size) {
+      const offsets = [
+        { x: 0, y: 0 },
+        { x: 0, y: -(nextSize * 0.42) },
+        { x: nextSize * 0.32, y: -(nextSize * 0.18) },
+        { x: -(nextSize * 0.32), y: -(nextSize * 0.18) },
+        { x: nextSize * 0.42, y: 0 },
+        { x: -(nextSize * 0.42), y: 0 },
+        { x: nextSize * 0.28, y: nextSize * 0.18 },
+        { x: -(nextSize * 0.28), y: nextSize * 0.18 }
+      ];
+      const overlapPadding = Math.max(14, nextSize * 0.14);
+
+      for (const offset of offsets) {
+        let candidate = clampBoardItemPosition(item, initialPosition.x + offset.x, initialPosition.y + offset.y, nextSize);
+        candidate = shiftBoardPositionAbovePanel(item, candidate, nextSize);
+        const overlapsExisting = state.boardItems.some((existing) => {
+          const candidateRight = candidate.x + nextSize;
+          const candidateBottom = candidate.y + nextSize;
+          const existingRight = existing.x + existing.size;
+          const existingBottom = existing.y + existing.size;
+
+          return !(
+            candidateRight <= existing.x + overlapPadding ||
+            candidate.x >= existingRight - overlapPadding ||
+            candidateBottom <= existing.y + overlapPadding ||
+            candidate.y >= existingBottom - overlapPadding
+          );
+        });
+
+        if (!overlapsExisting) {
+          return candidate;
+        }
+      }
+
+      return shiftBoardPositionAbovePanel(item, initialPosition, nextSize);
     }
 
     function defaultBoardStickerSize() {
@@ -3096,7 +3181,8 @@
 
     function centeredBoardItemPosition(item, clientX, clientY, nextSize = item.size) {
       const point = boardPoint(clientX, clientY);
-      return clampBoardItemPosition(item, point.x - (nextSize / 2), point.y - (nextSize / 2), nextSize);
+      const initialPosition = clampBoardItemPosition(item, point.x - (nextSize / 2), point.y - (nextSize / 2), nextSize);
+      return findVisibleBoardPlacement(item, initialPosition, nextSize);
     }
 
     function nextBoardPlacement(size = defaultBoardStickerSize()) {
@@ -3111,7 +3197,8 @@
       const index = state.boardItems.length;
       const rawX = 12 + (index % itemsPerRow) * (size + gap);
       const rawY = 12 + Math.floor(index / itemsPerRow) * (size + gap);
-      return clampBoardItemPosition({ size }, rawX, rawY, size);
+      const initialPosition = clampBoardItemPosition({ size }, rawX, rawY, size);
+      return findVisibleBoardPlacement({ size }, initialPosition, size);
     }
 
     function getBoardItem(itemId) {
