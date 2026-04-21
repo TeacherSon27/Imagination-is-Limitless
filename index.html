@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Spell &amp; Scribble Studio</title>
   <style>
     :root {
@@ -68,6 +68,7 @@
     button,
     input {
       font: inherit;
+      -webkit-focus-ring-color: transparent;
     }
 
     button {
@@ -368,6 +369,10 @@
       pointer-events: none;
     }
 
+    .board-sticker img {
+      filter: none;
+    }
+
     .space-chip {
       background: linear-gradient(180deg, rgba(233, 246, 255, 0.92), rgba(217, 239, 255, 0.88));
       color: rgba(32, 48, 74, 0.68);
@@ -573,6 +578,7 @@
     .icon-chip.dragging {
       opacity: 0.34;
       transform: scale(0.95) rotate(-1.5deg);
+      touch-action: none;
     }
 
     .icon-chip img {
@@ -697,6 +703,7 @@
     .letter-card.dragging {
       opacity: 0.3;
       transform: scale(0.95) rotate(-1.5deg);
+      touch-action: none;
     }
 
     .letter-card-inner {
@@ -855,6 +862,7 @@
     #boardModal {
       padding: 0;
       background: rgba(8, 12, 28, 0.18);
+      overscroll-behavior: none;
     }
 
     .hidden {
@@ -1017,6 +1025,7 @@
       box-shadow: none;
       touch-action: none;
       cursor: default;
+      overscroll-behavior: none;
     }
 
     .board-wrap.pen-mode {
@@ -1521,6 +1530,10 @@
     }
 
     function makeBoardNumberAsset(number) {
+      const fontSize = number >= 10 ? 240 : 276;
+      const baseline = number >= 10 ? 334 : 340;
+      const outerStrokeWidth = number >= 10 ? 38 : 34;
+      const innerStrokeWidth = number >= 10 ? 16 : 14;
       return {
         id: `number-${number}`,
         label: `Number ${number}`,
@@ -1531,24 +1544,43 @@
                 <stop offset="0" stop-color="#8edcff"/>
                 <stop offset="1" stop-color="#8b5eff"/>
               </linearGradient>
-              <linearGradient id="numStroke" x1="88" y1="74" x2="436" y2="430" gradientUnits="userSpaceOnUse">
-                <stop offset="0" stop-color="#fff7b0"/>
-                <stop offset="0.48" stop-color="#ffd400"/>
-                <stop offset="1" stop-color="#ffb300"/>
+              <linearGradient id="numOuterStroke" x1="76" y1="62" x2="442" y2="438" gradientUnits="userSpaceOnUse">
+                <stop offset="0" stop-color="#fff9c9"/>
+                <stop offset="0.32" stop-color="#ffe46f"/>
+                <stop offset="0.68" stop-color="#ffc821"/>
+                <stop offset="1" stop-color="#f4a300"/>
+              </linearGradient>
+              <linearGradient id="numInnerStroke" x1="92" y1="84" x2="420" y2="414" gradientUnits="userSpaceOnUse">
+                <stop offset="0" stop-color="#fff6b3"/>
+                <stop offset="0.46" stop-color="#ffd53d"/>
+                <stop offset="1" stop-color="#ffbc00"/>
               </linearGradient>
             </defs>
-            <text
-              x="256"
-              y="340"
+            <g
               text-anchor="middle"
-              font-size="286"
               font-family="Avenir Next, Arial Rounded MT Bold, Arial, sans-serif"
               font-weight="900"
-              fill="url(#numFill)"
-              stroke="url(#numStroke)"
-              stroke-width="18"
+              stroke-linejoin="round"
+              stroke-linecap="round"
               paint-order="stroke fill"
-            >${number}</text>
+            >
+              <text
+                x="256"
+                y="${baseline}"
+                font-size="${fontSize}"
+                fill="none"
+                stroke="url(#numOuterStroke)"
+                stroke-width="${outerStrokeWidth}"
+              >${number}</text>
+              <text
+                x="256"
+                y="${baseline}"
+                font-size="${fontSize}"
+                fill="url(#numFill)"
+                stroke="url(#numInnerStroke)"
+                stroke-width="${innerStrokeWidth}"
+              >${number}</text>
+            </g>
           </svg>
         `)
       };
@@ -2324,6 +2356,56 @@
       return preview;
     }
 
+    function tryCaptureSessionPointer(session) {
+      if (!session || session.captured) {
+        return;
+      }
+
+      const captureTarget = session.type === "bank-card"
+        ? session.card
+        : session.type === "bank-icon"
+          ? session.sourceElement
+          : null;
+
+      if (!captureTarget || typeof captureTarget.setPointerCapture !== "function") {
+        return;
+      }
+
+      try {
+        captureTarget.setPointerCapture(session.pointerId);
+        session.captured = true;
+      } catch (error) {
+        session.captured = false;
+      }
+    }
+
+    function releaseSessionPointer(session) {
+      if (!session || !session.captured) {
+        return;
+      }
+
+      const captureTarget = session.type === "bank-card"
+        ? session.card
+        : session.type === "bank-icon"
+          ? session.sourceElement
+          : null;
+
+      if (!captureTarget || typeof captureTarget.releasePointerCapture !== "function") {
+        session.captured = false;
+        return;
+      }
+
+      try {
+        if (typeof captureTarget.hasPointerCapture !== "function" || captureTarget.hasPointerCapture(session.pointerId)) {
+          captureTarget.releasePointerCapture(session.pointerId);
+        }
+      } catch (error) {
+        // Ignore auto-release behavior on browsers that do not preserve capture state.
+      }
+
+      session.captured = false;
+    }
+
     function updateDragPreview(session, clientX, clientY) {
       if (!session.preview) {
         return;
@@ -2365,7 +2447,8 @@
         char,
         startX: event.clientX,
         startY: event.clientY,
-        preview: null
+        preview: null,
+        captured: false
       };
     }
 
@@ -2387,7 +2470,8 @@
         targetSurface: chip.dataset.surface,
         startX: event.clientX,
         startY: event.clientY,
-        preview: null
+        preview: null,
+        captured: false
       };
     }
 
@@ -2786,6 +2870,7 @@
         session.card.classList.remove("dragging");
         spellStage.classList.remove("drop-ready");
         boardWrap.classList.remove("drop-ready");
+        releaseSessionPointer(session);
 
         if (session.preview) {
           const point = stagePoint(event.clientX, event.clientY);
@@ -2803,6 +2888,7 @@
         session.sourceElement.classList.remove("dragging");
         spellStage.classList.remove("drop-ready");
         boardWrap.classList.remove("drop-ready");
+        releaseSessionPointer(session);
 
         if (session.preview) {
           if (session.targetSurface === "board") {
@@ -2879,6 +2965,7 @@
           event.preventDefault();
           session.preview = createDragPreview(session.char, session.card.getBoundingClientRect());
           session.card.classList.add("dragging");
+          tryCaptureSessionPointer(session);
         }
 
         if (session.preview) {
@@ -2906,6 +2993,7 @@
           event.preventDefault();
           session.preview = createIconDragPreview(session.assetId, session.targetSurface, session.sourceElement.getBoundingClientRect());
           session.sourceElement.classList.add("dragging");
+          tryCaptureSessionPointer(session);
         }
 
         if (session.preview) {
@@ -3320,6 +3408,21 @@
       });
     }
 
+    function preventBoardZoomGesture(event) {
+      if (!state.boardVisible) {
+        return;
+      }
+
+      if (event.type === "touchstart" || event.type === "touchmove") {
+        if (event.touches && event.touches.length > 1) {
+          event.preventDefault();
+        }
+        return;
+      }
+
+      event.preventDefault();
+    }
+
     function resizeCanvas() {
       const rect = canvas.getBoundingClientRect();
       if (!rect.width || !rect.height) {
@@ -3572,6 +3675,11 @@
     boardWrap.addEventListener("pointerup", stopDrawing);
     boardWrap.addEventListener("pointerleave", stopDrawing);
     boardWrap.addEventListener("pointercancel", stopDrawing);
+    ["gesturestart", "gesturechange", "gestureend"].forEach((eventName) => {
+      boardModal.addEventListener(eventName, preventBoardZoomGesture, { passive: false });
+    });
+    boardModal.addEventListener("touchstart", preventBoardZoomGesture, { passive: false });
+    boardModal.addEventListener("touchmove", preventBoardZoomGesture, { passive: false });
 
     window.addEventListener("resize", () => {
       normalizePlacedItems();
