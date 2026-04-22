@@ -2350,8 +2350,8 @@
     const MIN_ICON_SIZE = 8;
     const MAX_TILE_SIZE = 4000;
     const MAX_BOARD_ICON_SIZE = 4000;
-    const DRAG_THRESHOLD = 8;
     const DOUBLE_TAP_MS = 360;
+    const PANEL_TAP_WINDOW_MS = 220;
     const LONG_PRESS_MS = 280;
     const GESTURE_MOVE_THRESHOLD = 10;
     const LINE_LETTER_HEIGHT_RATIO = 1;
@@ -2397,6 +2397,7 @@
     let activityCameraStream = null;
     const imageAssetCache = new Map();
     const animatedVisibilityTimers = new WeakMap();
+    const pendingLetterPlacementTimers = new WeakMap();
 
     function getLetterVariant(variantId = "classic") {
       return LETTER_VARIANTS[variantId] || LETTER_VARIANTS.classic;
@@ -2430,6 +2431,55 @@
         animatedVisibilityTimers.delete(element);
       }, LAUNCHER_TRANSITION_MS);
       animatedVisibilityTimers.set(element, timer);
+    }
+
+    function clearPendingLetterPlacement(card) {
+      const timer = pendingLetterPlacementTimers.get(card);
+      if (!timer) {
+        return;
+      }
+      clearTimeout(timer);
+      pendingLetterPlacementTimers.delete(card);
+    }
+
+    function playPlacementDropMotion(element) {
+      if (!element || typeof element.animate !== "function") {
+        return;
+      }
+
+      const baseTransform = element.style.transform || "translate3d(0px, 0px, 0px)";
+      element.animate([
+        {
+          transform: `${baseTransform} translateY(-18px) scale(0.84)`,
+          opacity: 0.38,
+          filter: "saturate(0.9)"
+        },
+        {
+          transform: `${baseTransform} translateY(3px) scale(1.035)`,
+          opacity: 1,
+          filter: "none",
+          offset: 0.72
+        },
+        {
+          transform: baseTransform,
+          opacity: 1,
+          filter: "none"
+        }
+      ], {
+        duration: 260,
+        easing: "cubic-bezier(0.22, 1, 0.36, 1)"
+      });
+    }
+
+    function animatePlacedItemEntry(surface, itemId) {
+      requestAnimationFrame(() => {
+        const host = surface === "board" ? boardStickerLayer : spellStage;
+        const selector = surface === "board"
+          ? `.board-sticker[data-item-id="${itemId}"]`
+          : `[data-item-id="${itemId}"]`;
+        const element = host.querySelector(selector);
+        playPlacementDropMotion(element);
+      });
     }
     function svgToDataUri(svg) {
       return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
@@ -3873,12 +3923,13 @@
       if (variant === "line") {
         card.classList.add("line-card");
       }
+      card.setAttribute("role", "button");
       card.tabIndex = 0;
       card.dataset.uppercase = letter;
       card.dataset.lowercase = lowercase;
       card.dataset.caseMode = "upper";
       card.dataset.letterVariant = variantDef.id;
-      card.setAttribute("aria-label", `Capital ${letter} card. Double-tap to flip to lowercase.`);
+      card.setAttribute("aria-label", `Capital ${letter} card. Tap once to add, or double-tap or press F to flip to lowercase.`);
 
       const inner = document.createElement("div");
       inner.className = "letter-card-inner";
@@ -3903,10 +3954,16 @@
       inner.appendChild(back);
       card.appendChild(inner);
 
-      card.addEventListener("pointerdown", handleBankCardPointerDown);
+      card.addEventListener("click", () => handleCardTap(card));
       card.addEventListener("keydown", (event) => {
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
+          handleCardTap(card);
+          return;
+        }
+        if (event.key.toLowerCase() === "f") {
+          event.preventDefault();
+          clearPendingLetterPlacement(card);
           toggleCardFlip(card);
         }
       });
@@ -3932,14 +3989,14 @@
       chip.className = "icon-chip";
       chip.dataset.assetId = icon.id;
       chip.dataset.surface = surface;
-      chip.setAttribute("aria-label", `${icon.label} asset`);
+      chip.setAttribute("aria-label", `${icon.label} asset. Tap once to add to the ${surface === "board" ? "screen" : "spelling"} board.`);
 
       const image = document.createElement("img");
       image.src = icon.src;
       image.alt = icon.label;
       image.draggable = false;
       chip.appendChild(image);
-      chip.addEventListener("pointerdown", handleIconChipPointerDown);
+      chip.addEventListener("click", () => handleIconChipTap(chip));
       return chip;
     }
 
@@ -4150,46 +4207,9 @@
       const modeLabel = isFlipped ? "lowercase" : "capital";
       card.setAttribute(
         "aria-label",
-        `${modeLabel} ${visibleChar} card. Double-tap to ${isFlipped ? "flip back to capital" : "flip to lowercase"}.`
+        `${modeLabel} ${visibleChar} card. Tap once to add, or double-tap or press F to ${isFlipped ? "flip back to capital" : "flip to lowercase"}.`
       );
       setStatus(`Card ${card.dataset.uppercase} flipped to ${modeLabel}.`, "good");
-    }
-
-    function createDragPreview(char, cardRect, variant = "classic") {
-      const variantDef = getLetterVariant(variant);
-      const preview = document.createElement("div");
-      preview.className = "drag-preview";
-      preview.style.width = `${Math.max(variantDef.previewMinWidth, cardRect.width * 0.94)}px`;
-      preview.style.height = `${Math.max(variantDef.previewMinHeight, cardRect.height * 0.94)}px`;
-
-      const image = document.createElement("img");
-      image.src = imagePathForCharacter(char, variantDef.id);
-      image.alt = "";
-      image.draggable = false;
-      preview.appendChild(image);
-      document.body.appendChild(preview);
-      return preview;
-    }
-
-    function createIconDragPreview(assetId, surface, chipRect) {
-      const icon = surface === "board" ? getBoardAssetDef(assetId) : getIconDef(assetId);
-      if (!icon) {
-        return null;
-      }
-
-      const preview = document.createElement("div");
-      preview.className = "drag-preview";
-      const size = Math.max(88, chipRect.width * 0.98);
-      preview.style.width = `${size}px`;
-      preview.style.height = `${size}px`;
-
-      const image = document.createElement("img");
-      image.src = icon.src;
-      image.alt = "";
-      image.draggable = false;
-      preview.appendChild(image);
-      document.body.appendChild(preview);
-      return preview;
     }
 
     function createColorDragPreview(color, swatchRect) {
@@ -4254,13 +4274,7 @@
         return;
       }
 
-      const captureTarget = session.captureElement || (
-        session.type === "bank-card"
-          ? session.card
-          : session.type === "bank-icon"
-            ? session.sourceElement
-            : null
-      );
+      const captureTarget = session.captureElement;
 
       if (!captureTarget || typeof captureTarget.setPointerCapture !== "function") {
         return;
@@ -4279,13 +4293,7 @@
         return;
       }
 
-      const captureTarget = session.captureElement || (
-        session.type === "bank-card"
-          ? session.card
-          : session.type === "bank-icon"
-            ? session.sourceElement
-            : null
-      );
+      const captureTarget = session.captureElement;
 
       if (!captureTarget || typeof captureTarget.releasePointerCapture !== "function") {
         session.captured = false;
@@ -4314,63 +4322,32 @@
     }
 
     function handleCardTap(card) {
-      const now = performance.now();
-      const lastTapAt = Number(card.dataset.lastTapAt || 0);
-
-      if (now - lastTapAt <= DOUBLE_TAP_MS) {
-        card.dataset.lastTapAt = "0";
+      const existingTimer = pendingLetterPlacementTimers.get(card);
+      if (existingTimer) {
+        clearPendingLetterPlacement(card);
         toggleCardFlip(card);
         return;
       }
 
-      card.dataset.lastTapAt = String(now);
-    }
-
-    function handleBankCardPointerDown(event) {
-      if (!isPrimaryPointerInput(event) || state.pointerSession) {
-        return;
-      }
-
-      if (event.pointerType !== "touch") {
-        event.preventDefault();
-      }
-      const card = event.currentTarget;
       const char = card.dataset.caseMode === "lower" ? card.dataset.lowercase : card.dataset.uppercase;
-      state.pointerSession = {
-        type: "bank-card",
-        pointerType: event.pointerType || "mouse",
-        pointerId: event.pointerId,
-        card,
-        char,
-        letterVariant: card.dataset.letterVariant || "classic",
-        startX: event.clientX,
-        startY: event.clientY,
-        preview: null,
-        captured: false
-      };
+      const letterVariant = card.dataset.letterVariant || "classic";
+      const timer = window.setTimeout(() => {
+        pendingLetterPlacementTimers.delete(card);
+        createPlacedLetter(char, null, letterVariant);
+      }, PANEL_TAP_WINDOW_MS);
+      pendingLetterPlacementTimers.set(card, timer);
     }
 
-    function handleIconChipPointerDown(event) {
-      if (!isPrimaryPointerInput(event) || state.pointerSession) {
+    function handleIconChipTap(chip) {
+      if (!chip) {
         return;
       }
 
-      if (event.pointerType !== "touch") {
-        event.preventDefault();
+      if (chip.dataset.surface === "board") {
+        createBoardSticker(chip.dataset.assetId);
+      } else {
+        createPlacedIcon(chip.dataset.assetId);
       }
-      const chip = event.currentTarget;
-      state.pointerSession = {
-        type: "bank-icon",
-        pointerType: event.pointerType || "mouse",
-        pointerId: event.pointerId,
-        sourceElement: chip,
-        assetId: chip.dataset.assetId,
-        targetSurface: chip.dataset.surface,
-        startX: event.clientX,
-        startY: event.clientY,
-        preview: null,
-        captured: false
-      };
     }
 
     function handleSwatchPointerDown(event) {
@@ -4447,6 +4424,7 @@
       state.placedItems.push(item);
       state.nextItemId += 1;
       renderPlacedSpelling();
+      animatePlacedItemEntry("stage", item.id);
       setStatus(`Added ${char}.`, "good");
     }
 
@@ -4482,6 +4460,7 @@
       state.placedItems.push(item);
       state.nextItemId += 1;
       renderPlacedSpelling();
+      animatePlacedItemEntry("stage", item.id);
       setStatus(`${icon.label} added.`, "good");
     }
 
@@ -4507,6 +4486,7 @@
       state.placedItems.push(item);
       state.nextItemId += 1;
       renderPlacedSpelling();
+      animatePlacedItemEntry("stage", item.id);
       setStatus("Space tile added.", "good");
     }
 
@@ -4583,10 +4563,6 @@
       scheduleGestureRotate(session);
     }
 
-    function extendSurfaceItemGesture(surface, event, element) {
-      return false;
-    }
-
     function updateSurfaceMoveGesture(session) {
       const item = getSurfaceItem(session.surface, session.itemId);
       const pointer = singleGesturePointer(session);
@@ -4657,87 +4633,6 @@
       }
     }
 
-    function startPlacedItemMove(event, tile) {
-      if (event.button !== 0 || state.pointerSession) {
-        return;
-      }
-
-      const item = bringItemToFront(tile.dataset.itemId);
-      if (!item) {
-        return;
-      }
-
-      event.preventDefault();
-      tile.classList.add("moving");
-      applyPlacedStyles(tile, item);
-      state.pointerSession = {
-        type: "move-item",
-        pointerId: event.pointerId,
-        itemId: item.id,
-        element: tile,
-        startX: event.clientX,
-        startY: event.clientY,
-        startItemX: item.x,
-        startItemY: item.y
-      };
-    }
-
-    function startPlacedItemResize(event, resizeHandle) {
-      if (event.button !== 0 || state.pointerSession) {
-        return;
-      }
-
-      const tile = resizeHandle.closest(".placed-tile, .space-chip, .placed-icon");
-      const item = bringItemToFront(tile.dataset.itemId);
-      if (!item) {
-        return;
-      }
-
-      event.preventDefault();
-      event.stopPropagation();
-      tile.classList.add("moving");
-      applyPlacedStyles(tile, item);
-      state.pointerSession = {
-        type: "resize-item",
-        pointerId: event.pointerId,
-        itemId: item.id,
-        element: tile,
-        startX: event.clientX,
-        startY: event.clientY,
-        startSize: item.size
-      };
-    }
-
-    function startPlacedItemRotate(event, rotateHandle) {
-      if (event.button !== 0 || state.pointerSession) {
-        return;
-      }
-
-      const tile = rotateHandle.closest(".placed-tile, .placed-icon");
-      const item = bringItemToFront(tile.dataset.itemId);
-      if (!item) {
-        return;
-      }
-
-      event.preventDefault();
-      event.stopPropagation();
-      tile.classList.add("moving");
-      applyPlacedStyles(tile, item);
-      const rect = stageRect();
-      const centerX = rect.left + item.x + (item.size / 2);
-      const centerY = rect.top + item.y + (itemHeight(item) / 2);
-      state.pointerSession = {
-        type: "rotate-item",
-        pointerId: event.pointerId,
-        itemId: item.id,
-        element: tile,
-        centerX,
-        centerY,
-        startRotation: item.rotation || 0,
-        startAngle: angleBetween(event.clientX, event.clientY, centerX, centerY)
-      };
-    }
-
     function handleSpellStagePointerDown(event) {
       const tile = event.target.closest(".placed-tile, .space-chip, .placed-icon");
       if (tile) {
@@ -4745,59 +4640,6 @@
           startSurfaceItemGesture("stage", event, tile);
         }
       }
-    }
-
-    function updateMoveSession(session, event) {
-      const item = getPlacedItem(session.itemId);
-      if (!item) {
-        return;
-      }
-
-      const nextPosition = clampItemPosition(
-        item,
-        session.startItemX + (event.clientX - session.startX),
-        session.startItemY + (event.clientY - session.startY)
-      );
-      item.x = nextPosition.x;
-      item.y = nextPosition.y;
-      applyPlacedStyles(session.element, item);
-      refreshBuiltWord();
-    }
-
-    function updateRotateSession(session, event) {
-      const item = getPlacedItem(session.itemId);
-      if (!item) {
-        return;
-      }
-
-      const currentAngle = angleBetween(event.clientX, event.clientY, session.centerX, session.centerY);
-      const delta = shortestAngleDelta(currentAngle, session.startAngle);
-      item.rotation = normalizeRotation(session.startRotation + delta);
-      applyPlacedStyles(session.element, item);
-      refreshBuiltWord();
-    }
-
-    function updateResizeSession(session, event) {
-      const item = getPlacedItem(session.itemId);
-      if (!item) {
-        return;
-      }
-
-      const ratio = item.kind === "space" ? SPACE_HEIGHT_RATIO : heightRatioForItem(item);
-      const deltaX = event.clientX - session.startX;
-      const deltaY = (event.clientY - session.startY) / ratio;
-      const nextSize = clamp(
-        Math.round(session.startSize + Math.max(deltaX, deltaY)),
-        minTileSize(item.kind),
-        maxTileSize(item)
-      );
-
-      item.size = nextSize;
-      const nextPosition = clampItemPosition(item, item.x, item.y, nextSize);
-      item.x = nextPosition.x;
-      item.y = nextPosition.y;
-      applyPlacedStyles(session.element, item);
-      refreshBuiltWord();
     }
 
     function finishPointerSession(event) {
@@ -4835,47 +4677,6 @@
 
         state.pointerSession = null;
         return;
-      }
-
-      if (session.type === "bank-card") {
-        const travel = Math.hypot(event.clientX - session.startX, event.clientY - session.startY);
-        session.card.classList.remove("dragging");
-        spellStage.classList.remove("drop-ready");
-        boardWrap.classList.remove("drop-ready");
-        releaseSessionPointer(session);
-
-        if (session.preview) {
-          const point = stagePoint(event.clientX, event.clientY);
-          if (!cancelled && point.inside) {
-            createPlacedLetter(session.char, { clientX: event.clientX, clientY: event.clientY }, session.letterVariant);
-          }
-          session.preview.remove();
-        } else if (!cancelled && travel < DRAG_THRESHOLD) {
-          handleCardTap(session.card);
-        }
-      }
-
-      if (session.type === "bank-icon") {
-        const travel = Math.hypot(event.clientX - session.startX, event.clientY - session.startY);
-        session.sourceElement.classList.remove("dragging");
-        spellStage.classList.remove("drop-ready");
-        boardWrap.classList.remove("drop-ready");
-        releaseSessionPointer(session);
-
-        if (session.preview) {
-          if (session.targetSurface === "board") {
-            const point = boardPoint(event.clientX, event.clientY);
-            if (!cancelled && point.inside) {
-              createBoardSticker(session.assetId, { clientX: event.clientX, clientY: event.clientY });
-            }
-          } else {
-            const point = stagePoint(event.clientX, event.clientY);
-            if (!cancelled && point.inside) {
-              createPlacedIcon(session.assetId, { clientX: event.clientX, clientY: event.clientY });
-            }
-          }
-          session.preview.remove();
-        }
       }
 
       if (session.element) {
@@ -4930,106 +4731,6 @@
           const target = findBoardColorableItemAt(event.clientX, event.clientY);
           highlightBoardColorTarget(target ? target.id : null);
         }
-        return;
-      }
-
-      if (event.pointerId !== session.pointerId) {
-        return;
-      }
-
-      if (session.type === "bank-card") {
-        const deltaX = event.clientX - session.startX;
-        const deltaY = event.clientY - session.startY;
-        const distance = Math.hypot(deltaX, deltaY);
-        const horizontalSwipeIntent = session.pointerType === "touch" && Math.abs(deltaX) > DRAG_THRESHOLD && Math.abs(deltaX) > Math.abs(deltaY) * 1.15;
-
-        if (!session.preview && horizontalSwipeIntent) {
-          state.pointerSession = null;
-          spellStage.classList.remove("drop-ready");
-          boardWrap.classList.remove("drop-ready");
-          return;
-        }
-
-        if (!session.preview && distance > DRAG_THRESHOLD) {
-          event.preventDefault();
-          session.preview = createDragPreview(session.char, session.card.getBoundingClientRect(), session.letterVariant);
-          session.card.classList.add("dragging");
-          tryCaptureSessionPointer(session);
-        }
-
-        if (session.preview) {
-          event.preventDefault();
-          updateDragPreview(session, event.clientX, event.clientY);
-          spellStage.classList.toggle("drop-ready", stagePoint(event.clientX, event.clientY).inside);
-        }
-        return;
-      }
-
-      if (session.type === "bank-icon") {
-        const deltaX = event.clientX - session.startX;
-        const deltaY = event.clientY - session.startY;
-        const distance = Math.hypot(deltaX, deltaY);
-        const horizontalSwipeIntent = session.pointerType === "touch" && Math.abs(deltaX) > DRAG_THRESHOLD && Math.abs(deltaX) > Math.abs(deltaY) * 1.15;
-
-        if (!session.preview && horizontalSwipeIntent) {
-          state.pointerSession = null;
-          spellStage.classList.remove("drop-ready");
-          boardWrap.classList.remove("drop-ready");
-          return;
-        }
-
-        if (!session.preview && distance > DRAG_THRESHOLD) {
-          event.preventDefault();
-          session.preview = createIconDragPreview(session.assetId, session.targetSurface, session.sourceElement.getBoundingClientRect());
-          session.sourceElement.classList.add("dragging");
-          tryCaptureSessionPointer(session);
-        }
-
-        if (session.preview) {
-          event.preventDefault();
-          updateDragPreview(session, event.clientX, event.clientY);
-          if (session.targetSurface === "board") {
-            boardWrap.classList.toggle("drop-ready", boardPoint(event.clientX, event.clientY).inside);
-          } else {
-            spellStage.classList.toggle("drop-ready", stagePoint(event.clientX, event.clientY).inside);
-          }
-        }
-        return;
-      }
-
-      if (session.type === "move-item") {
-        event.preventDefault();
-        updateMoveSession(session, event);
-        return;
-      }
-
-      if (session.type === "resize-item") {
-        event.preventDefault();
-        updateResizeSession(session, event);
-        return;
-      }
-
-      if (session.type === "rotate-item") {
-        event.preventDefault();
-        updateRotateSession(session, event);
-        return;
-      }
-
-      if (session.type === "move-board-item") {
-        event.preventDefault();
-        updateBoardMoveSession(session, event);
-        return;
-      }
-
-      if (session.type === "resize-board-item") {
-        event.preventDefault();
-        updateBoardResizeSession(session, event);
-        return;
-      }
-
-      if (session.type === "rotate-board-item") {
-        event.preventDefault();
-        updateBoardRotateSession(session, event);
       }
     }
 
@@ -5294,87 +4995,7 @@
       state.boardItems.push(item);
       state.nextBoardItemId += 1;
       renderBoardStickers();
-    }
-
-    function startBoardStickerMove(event, sticker) {
-      if (event.button !== 0 || state.pointerSession) {
-        return;
-      }
-
-      const item = bringBoardItemToFront(sticker.dataset.itemId);
-      if (!item) {
-        return;
-      }
-
-      event.preventDefault();
-      sticker.classList.add("moving");
-      applyBoardItemStyles(sticker, item);
-      state.pointerSession = {
-        type: "move-board-item",
-        pointerId: event.pointerId,
-        itemId: item.id,
-        element: sticker,
-        startX: event.clientX,
-        startY: event.clientY,
-        startItemX: item.x,
-        startItemY: item.y
-      };
-    }
-
-    function startBoardStickerResize(event, resizeHandle) {
-      if (event.button !== 0 || state.pointerSession) {
-        return;
-      }
-
-      const sticker = resizeHandle.closest(".board-sticker");
-      const item = bringBoardItemToFront(sticker.dataset.itemId);
-      if (!item) {
-        return;
-      }
-
-      event.preventDefault();
-      event.stopPropagation();
-      sticker.classList.add("moving");
-      applyBoardItemStyles(sticker, item);
-      state.pointerSession = {
-        type: "resize-board-item",
-        pointerId: event.pointerId,
-        itemId: item.id,
-        element: sticker,
-        startX: event.clientX,
-        startY: event.clientY,
-        startSize: item.size
-      };
-    }
-
-    function startBoardStickerRotate(event, rotateHandle) {
-      if (event.button !== 0 || state.pointerSession) {
-        return;
-      }
-
-      const sticker = rotateHandle.closest(".board-sticker");
-      const item = bringBoardItemToFront(sticker.dataset.itemId);
-      if (!item) {
-        return;
-      }
-
-      event.preventDefault();
-      event.stopPropagation();
-      sticker.classList.add("moving");
-      applyBoardItemStyles(sticker, item);
-      const rect = boardRect();
-      const centerX = rect.left + item.x + (item.size / 2);
-      const centerY = rect.top + item.y + (item.size / 2);
-      state.pointerSession = {
-        type: "rotate-board-item",
-        pointerId: event.pointerId,
-        itemId: item.id,
-        element: sticker,
-        centerX,
-        centerY,
-        startRotation: item.rotation || 0,
-        startAngle: angleBetween(event.clientX, event.clientY, centerX, centerY)
-      };
+      animatePlacedItemEntry("board", item.id);
     }
 
     function handleBoardStickerLayerPointerDown(event) {
@@ -5388,55 +5009,6 @@
           startSurfaceItemGesture("board", event, sticker);
         }
       }
-    }
-
-    function updateBoardMoveSession(session, event) {
-      const item = getBoardItem(session.itemId);
-      if (!item) {
-        return;
-      }
-
-      const nextPosition = clampBoardItemPosition(
-        item,
-        session.startItemX + (event.clientX - session.startX),
-        session.startItemY + (event.clientY - session.startY)
-      );
-      item.x = nextPosition.x;
-      item.y = nextPosition.y;
-      applyBoardItemStyles(session.element, item);
-    }
-
-    function updateBoardResizeSession(session, event) {
-      const item = getBoardItem(session.itemId);
-      if (!item) {
-        return;
-      }
-
-      const deltaX = event.clientX - session.startX;
-      const deltaY = event.clientY - session.startY;
-      const nextSize = clamp(
-        Math.round(session.startSize + Math.max(deltaX, deltaY)),
-        MIN_ICON_SIZE,
-        maxBoardStickerSize()
-      );
-
-      item.size = nextSize;
-      const nextPosition = clampBoardItemPosition(item, item.x, item.y, nextSize);
-      item.x = nextPosition.x;
-      item.y = nextPosition.y;
-      applyBoardItemStyles(session.element, item);
-    }
-
-    function updateBoardRotateSession(session, event) {
-      const item = getBoardItem(session.itemId);
-      if (!item) {
-        return;
-      }
-
-      const currentAngle = angleBetween(event.clientX, event.clientY, session.centerX, session.centerY);
-      const delta = shortestAngleDelta(currentAngle, session.startAngle);
-      item.rotation = normalizeRotation(session.startRotation + delta);
-      applyBoardItemStyles(session.element, item);
     }
 
     function normalizeBoardItems() {
