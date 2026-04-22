@@ -15,6 +15,7 @@
       --warning: #d97900;
       --danger: #d63f52;
       --glow: 0 0 0 2px rgba(255, 223, 122, 0.65), 0 16px 26px rgba(255, 183, 64, 0.24);
+      --spell-background-fade: 0;
     }
 
     * {
@@ -38,6 +39,18 @@
       background-color: #070b1a;
       overflow: hidden;
       -webkit-tap-highlight-color: transparent;
+    }
+
+    .spell-background-wash {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      opacity: var(--spell-background-fade);
+      transition: opacity 0.24s ease;
+      background:
+        radial-gradient(circle at 50% 28%, rgba(255, 255, 255, 0.54), transparent 34%),
+        linear-gradient(180deg, rgba(248, 246, 239, 0.98), rgba(236, 231, 220, 0.98));
     }
 
     body::before,
@@ -250,7 +263,6 @@
       height: 72px;
       padding: 0;
       border-radius: 50%;
-      overflow: hidden;
       background: linear-gradient(180deg, #fff4b5 0%, #ffd54d 54%, #f4b400 100%);
       border: 1px solid rgba(255, 247, 201, 0.95);
       box-shadow:
@@ -258,6 +270,14 @@
         inset 0 1px 0 rgba(255, 255, 255, 0.82),
         inset 0 -1px 0 rgba(164, 103, 0, 0.22);
       backdrop-filter: none;
+    }
+
+    .bank-card.collapsed {
+      overflow: visible;
+    }
+
+    .board-top.collapsed {
+      overflow: hidden;
     }
 
     .tray-panel-body {
@@ -271,7 +291,8 @@
       display: none;
     }
 
-    .tray-launcher {
+    .tray-launcher,
+    .gold-launcher {
       position: absolute;
       left: 8px;
       top: 50%;
@@ -296,7 +317,8 @@
     }
 
     .bank-card.collapsed .tray-launcher,
-    .board-top.collapsed .tray-launcher {
+    .board-top.collapsed .tray-launcher,
+    .bank-card.collapsed .gold-launcher {
       position: static;
       transform: none;
       width: 72px;
@@ -314,6 +336,82 @@
       font-weight: 900;
       letter-spacing: -0.04em;
       pointer-events: none;
+    }
+
+    .background-control {
+      position: absolute;
+      left: 8px;
+      top: -72px;
+      z-index: 12;
+      display: grid;
+      justify-items: start;
+      gap: 12px;
+    }
+
+    .bank-card.collapsed .background-control {
+      left: 0;
+      top: -84px;
+    }
+
+    .background-launcher {
+      position: relative;
+      inset: auto;
+      transform: none;
+    }
+
+    .background-launcher .tray-launcher-icon {
+      font-size: 1rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .background-popup {
+      position: absolute;
+      left: 0;
+      bottom: calc(100% + 10px);
+      width: min(248px, calc(100vw - 36px));
+      padding: 14px 16px;
+      border-radius: 24px;
+      background: linear-gradient(180deg, rgba(255, 252, 238, 0.96), rgba(248, 239, 214, 0.94));
+      border: 1px solid rgba(255, 236, 176, 0.96);
+      box-shadow:
+        0 20px 34px rgba(74, 48, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.84),
+        inset 0 -1px 0 rgba(201, 156, 40, 0.14);
+      backdrop-filter: blur(16px) saturate(145%);
+    }
+
+    .background-popup-title,
+    .letter-line-header {
+      margin: 0;
+      font-size: 0.73rem;
+      font-weight: 900;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(90, 57, 0, 0.88);
+    }
+
+    .background-slider-copy {
+      margin: 8px 0 10px;
+      font-size: 0.9rem;
+      line-height: 1.45;
+      color: rgba(32, 48, 74, 0.8);
+    }
+
+    .background-slider {
+      width: 100%;
+      accent-color: #c98b00;
+      margin: 0;
+    }
+
+    .background-slider-ends {
+      margin-top: 8px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 0.74rem;
+      font-weight: 800;
+      color: rgba(90, 57, 0, 0.76);
     }
 
     .label {
@@ -751,6 +849,22 @@
       touch-action: pan-x;
     }
 
+    .letter-bank-stack {
+      display: grid;
+      gap: 10px;
+    }
+
+    .letter-line-panel {
+      display: grid;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .letter-bank.line-bank {
+      gap: 8px;
+      padding-bottom: 2px;
+    }
+
     .letter-card {
       position: relative;
       flex: 0 0 56px;
@@ -774,6 +888,19 @@
       transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
     }
 
+    .letter-card.line-card {
+      flex-basis: 74px;
+      min-height: 74px;
+      aspect-ratio: 1 / 1;
+      padding: 4px;
+      border-radius: 24px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.46), rgba(255, 255, 255, 0.2));
+      border: 1px solid rgba(255, 255, 255, 0.34);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.62),
+        0 10px 18px rgba(32, 48, 74, 0.12);
+    }
+
     .letter-card:focus-visible {
       box-shadow: var(--glow);
     }
@@ -792,6 +919,10 @@
       transform-style: preserve-3d;
       will-change: transform;
       transition: transform 0.34s cubic-bezier(0.22, 0.84, 0.24, 1);
+    }
+
+    .letter-card.line-card .letter-card-inner {
+      min-height: 100%;
     }
 
     .letter-card.flipped .letter-card-inner {
@@ -825,8 +956,34 @@
       -webkit-tap-highlight-color: transparent;
     }
 
+    .letter-card.line-card .letter-face {
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.34));
+    }
+
+    .letter-card.line-card .letter-face img {
+      object-fit: cover;
+      object-position: center center;
+      filter: drop-shadow(0 10px 16px rgba(48, 53, 84, 0.16));
+    }
+
     .letter-face.back {
       transform: rotateY(180deg);
+    }
+
+    .placed-tile.line-letter-tile {
+      border-radius: 28px;
+      overflow: hidden;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.52), rgba(255, 255, 255, 0.22));
+      box-shadow:
+        0 16px 30px rgba(48, 53, 84, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.64);
+    }
+
+    .placed-tile.line-letter-tile img {
+      object-fit: cover;
+      object-position: center center;
+      filter: drop-shadow(0 8px 14px rgba(48, 53, 84, 0.14));
     }
 
     .drag-preview {
@@ -1251,6 +1408,14 @@
         justify-items: stretch;
       }
 
+      .background-control {
+        top: -70px;
+      }
+
+      .background-popup {
+        width: min(240px, calc(100vw - 34px));
+      }
+
       .letter-bank {
         justify-content: flex-start;
         max-width: 100%;
@@ -1295,6 +1460,11 @@
         flex-basis: 52px;
         max-width: none;
         min-height: 80px;
+      }
+
+      .letter-card.line-card {
+        flex-basis: 72px;
+        min-height: 72px;
       }
 
       .letter-card-inner {
@@ -1357,6 +1527,19 @@
         flex-basis: 66px;
       }
 
+      .background-control {
+        top: -66px;
+      }
+
+      .bank-card.collapsed .background-control {
+        top: -78px;
+      }
+
+      .background-popup {
+        width: min(220px, calc(100vw - 28px));
+        padding: 12px 14px;
+      }
+
       .letter-bank {
         gap: 3px;
         max-height: none;
@@ -1366,6 +1549,12 @@
         flex-basis: 44px;
         max-width: none;
         min-height: 63px;
+      }
+
+      .letter-card.line-card {
+        flex-basis: 56px;
+        min-height: 56px;
+        border-radius: 20px;
       }
 
       .letter-card-inner {
@@ -1395,6 +1584,7 @@
   </style>
 </head>
 <body>
+  <div class="spell-background-wash" id="spellBackgroundWash" aria-hidden="true"></div>
   <div class="app">
     <header class="topbar">
       <div class="top-actions">
@@ -1413,11 +1603,34 @@
           </section>
 
           <section class="bank-card collapsed" id="spellTray">
+            <div class="background-control" id="backgroundControl">
+              <button class="gold-launcher background-launcher" id="backgroundLauncher" type="button" aria-label="Background controls closed. Tap once to open." aria-expanded="false">
+                <span class="tray-launcher-icon">Bg</span>
+              </button>
+              <div class="background-popup hidden" id="backgroundPopup" aria-hidden="true">
+                <p class="background-popup-title">Background Fade</p>
+                <p class="background-slider-copy">Slide from full picture color to a soft dirty-white background.</p>
+                <input class="background-slider" id="backgroundTransparencyRange" type="range" min="0" max="100" value="0" aria-label="Background fade level">
+                <div class="background-slider-ends">
+                  <span>Full picture</span>
+                  <span>Dirty white</span>
+                </div>
+              </div>
+            </div>
             <button class="tray-launcher" id="spellTrayLauncher" type="button" aria-label="Spelling tray launcher. Double tap to open the tray.">
               <span class="tray-launcher-icon">Aa</span>
             </button>
             <div class="tray-panel-body">
-              <div class="letter-bank" id="letterBank"></div>
+              <div class="letter-bank-stack">
+                <section class="letter-line-panel">
+                  <p class="letter-line-header">Original Letters</p>
+                  <div class="letter-bank" id="letterBank"></div>
+                </section>
+                <section class="letter-line-panel">
+                  <p class="letter-line-header">Line Panel</p>
+                  <div class="letter-bank line-bank" id="lineLetterBank"></div>
+                </section>
+              </div>
               <section class="sticker-section">
                 <div class="icon-bank" id="iconBank" aria-label="Sticker icons"></div>
               </section>
@@ -1555,14 +1768,21 @@
       boardVisible: false,
       pointerSession: null,
       spellTrayExpanded: false,
-      boardTrayExpanded: false
+      boardTrayExpanded: false,
+      backgroundPanelVisible: false,
+      backgroundWash: 0
     };
 
     const coverScreen = document.getElementById("coverScreen");
     const enterGameBtn = document.getElementById("enterGameBtn");
     const spellTray = document.getElementById("spellTray");
+    const backgroundControl = document.getElementById("backgroundControl");
+    const backgroundLauncher = document.getElementById("backgroundLauncher");
+    const backgroundPopup = document.getElementById("backgroundPopup");
+    const backgroundTransparencyRange = document.getElementById("backgroundTransparencyRange");
     const spellTrayLauncher = document.getElementById("spellTrayLauncher");
     const letterBank = document.getElementById("letterBank");
+    const lineLetterBank = document.getElementById("lineLetterBank");
     const iconBank = document.getElementById("iconBank");
     const boardIconBank = document.getElementById("boardIconBank");
     const spellStage = document.getElementById("spellStage");
@@ -1604,6 +1824,7 @@
     const DOUBLE_TAP_MS = 360;
     const LONG_PRESS_MS = 280;
     const GESTURE_MOVE_THRESHOLD = 10;
+    const LINE_LETTER_HEIGHT_RATIO = 1;
     const PEN_STROKE_WIDTHS = {
       small: 4,
       medium: 8,
@@ -1616,10 +1837,32 @@
       large: 44,
       xlarge: 64
     };
+    const LETTER_VARIANTS = {
+      classic: {
+        id: "classic",
+        tileHeightRatio: LETTER_HEIGHT_RATIO,
+        previewMinWidth: 96,
+        previewMinHeight: 144,
+        uppercasePath: (letter) => `uppercase-transparent/alphabet-letter-${String(letter).toUpperCase()}-4k.png`,
+        lowercasePath: (letter) => `lowercase-transparent/alphabet-letter-${String(letter).toLowerCase()}-4k.png`
+      },
+      line: {
+        id: "line",
+        tileHeightRatio: LINE_LETTER_HEIGHT_RATIO,
+        previewMinWidth: 112,
+        previewMinHeight: 112,
+        uppercasePath: (letter) => `uppercase/alphabet-letter-${String(letter).toUpperCase()}-4k.png`,
+        lowercasePath: (letter) => `lowercase/alphabet-letter-${String(letter).toLowerCase()}-4k.png`
+      }
+    };
     let sizePopupAnchor = null;
     let lastControlChooserTool = null;
     let lastControlChooserTarget = null;
     let lastControlChooserTime = 0;
+
+    function getLetterVariant(variantId = "classic") {
+      return LETTER_VARIANTS[variantId] || LETTER_VARIANTS.classic;
+    }
     function svgToDataUri(svg) {
       return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
     }
@@ -1985,16 +2228,16 @@
       [...ICON_DEFS, ...BOARD_SHAPE_DEFS, ...BOARD_NUMBER_DEFS].map((asset) => [asset.id, asset])
     );
 
-    function uppercaseImagePath(letter) {
-      return `uppercase-transparent/alphabet-letter-${letter}-4k.png`;
+    function uppercaseImagePath(letter, variant = "classic") {
+      return getLetterVariant(variant).uppercasePath(letter);
     }
 
-    function lowercaseImagePath(letter) {
-      return `lowercase-transparent/alphabet-letter-${letter}-4k.png`;
+    function lowercaseImagePath(letter, variant = "classic") {
+      return getLetterVariant(variant).lowercasePath(letter);
     }
 
-    function imagePathForCharacter(char) {
-      return char === char.toUpperCase() ? uppercaseImagePath(char) : lowercaseImagePath(char);
+    function imagePathForCharacter(char, variant = "classic") {
+      return char === char.toUpperCase() ? uppercaseImagePath(char, variant) : lowercaseImagePath(char, variant);
     }
 
     function getIconDef(iconId) {
@@ -2033,6 +2276,19 @@
 
     function clamp(value, min, max) {
       return Math.min(Math.max(value, min), max);
+    }
+
+    function heightRatioForItem(item) {
+      if (!item || item.kind === "letter") {
+        const letterVariant = item ? getLetterVariant(item.letterVariant) : LETTER_VARIANTS.classic;
+        return Number.isFinite(item && item.heightRatio) ? item.heightRatio : letterVariant.tileHeightRatio;
+      }
+
+      if (item.kind === "space") {
+        return SPACE_HEIGHT_RATIO;
+      }
+
+      return 1;
     }
 
     function normalizeRotation(value) {
@@ -2144,7 +2400,7 @@
     }
 
     function maxSurfaceTileSize(surface, item) {
-      return surface === "board" ? maxBoardStickerSize() : maxTileSize(item.kind);
+      return surface === "board" ? maxBoardStickerSize() : maxTileSize(item);
     }
 
     function clampSurfaceItemPosition(surface, item, nextX, nextY, nextSize = item.size) {
@@ -2290,8 +2546,7 @@
       if (item.kind === "icon") {
         return Math.round(size);
       }
-      const ratio = item.kind === "space" ? SPACE_HEIGHT_RATIO : LETTER_HEIGHT_RATIO;
-      return Math.round(size * ratio);
+      return Math.round(size * heightRatioForItem(item));
     }
 
     function stageRect() {
@@ -2305,7 +2560,8 @@
       };
     }
 
-    function defaultTileSize(kind = "letter") {
+    function defaultTileSize(kindOrItem = "letter") {
+      const kind = typeof kindOrItem === "object" ? kindOrItem.kind : kindOrItem;
       const rect = stageRect();
       if (!rect.width || !rect.height) {
         if (kind === "space") {
@@ -2326,7 +2582,9 @@
       return clamp(Math.round(candidate), minTileSize(kind), kind === "space" ? 180 : 220);
     }
 
-    function maxTileSize(kind = "letter") {
+    function maxTileSize(kindOrItem = "letter") {
+      const probeItem = typeof kindOrItem === "object" ? kindOrItem : { kind: kindOrItem };
+      const kind = probeItem.kind;
       const rect = stageRect();
       if (!rect.width || !rect.height) {
         return MAX_TILE_SIZE;
@@ -2336,7 +2594,7 @@
         return clamp(Math.floor(Math.min(rect.height - 16, rect.width - 16, MAX_TILE_SIZE)), minTileSize(kind), MAX_TILE_SIZE);
       }
 
-      const ratio = kind === "space" ? SPACE_HEIGHT_RATIO : LETTER_HEIGHT_RATIO;
+      const ratio = heightRatioForItem(probeItem);
       const heightLimited = (rect.height - 16) / ratio;
       const widthLimited = rect.width - 16;
       return clamp(Math.floor(Math.min(heightLimited, widthLimited, MAX_TILE_SIZE)), minTileSize(kind), MAX_TILE_SIZE);
@@ -2371,7 +2629,8 @@
       );
     }
 
-    function nextAutoPlacement(kind = "letter", size = defaultTileSize(kind)) {
+    function nextAutoPlacement(kindOrItem = "letter", size = defaultTileSize(kindOrItem)) {
+      const probeItem = typeof kindOrItem === "object" ? kindOrItem : { kind: kindOrItem, size };
       const rect = stageRect();
       if (!rect.width || !rect.height) {
         return { x: 12, y: 12 };
@@ -2379,13 +2638,13 @@
 
       const gap = 12;
       const topPadding = 96;
-      const cellHeight = itemHeight({ kind, size }, size);
+      const cellHeight = itemHeight(probeItem, size);
       const usableWidth = Math.max(1, rect.width - 24);
       const itemsPerRow = Math.max(1, Math.floor(usableWidth / (size + gap)));
       const index = state.placedItems.length;
       const rawX = 12 + (index % itemsPerRow) * (size + gap);
       const rawY = topPadding + Math.floor(index / itemsPerRow) * (cellHeight + gap);
-      return clampItemPosition({ kind, size }, rawX, rawY, size);
+      return clampItemPosition(probeItem, rawX, rawY, size);
     }
 
     function getPlacedItem(itemId) {
@@ -2434,11 +2693,7 @@
 
     function applyPlacedStyles(element, item) {
       element.style.width = `${item.size}px`;
-      if (item.kind === "space" || item.kind === "icon") {
-        element.style.height = `${itemHeight(item)}px`;
-      } else {
-        element.style.removeProperty("height");
-      }
+      element.style.height = `${itemHeight(item)}px`;
       element.style.left = "0px";
       element.style.top = "0px";
       element.style.transform = `translate3d(${Math.round(item.x)}px, ${Math.round(item.y)}px, 0) rotate(${normalizeRotation(item.rotation || 0)}deg)`;
@@ -2479,6 +2734,9 @@
         .forEach((item) => {
           const tile = document.createElement("div");
           tile.className = item.kind === "space" ? "space-chip" : item.kind === "icon" ? "placed-icon" : "placed-tile";
+          if (item.kind === "letter" && item.letterVariant === "line") {
+            tile.classList.add("line-letter-tile");
+          }
           tile.dataset.itemId = item.id;
           applyPlacedStyles(tile, item);
 
@@ -2492,7 +2750,7 @@
             tile.appendChild(image);
           } else {
             const image = document.createElement("img");
-            image.src = imagePathForCharacter(item.char);
+            image.src = imagePathForCharacter(item.char, item.letterVariant);
             image.alt = `${item.char} letter tile`;
             image.draggable = false;
             tile.appendChild(image);
@@ -2503,14 +2761,19 @@
       refreshBuiltWord();
     }
 
-    function createLetterCard(letter) {
+    function createLetterCard(letter, variant = "classic") {
+      const variantDef = getLetterVariant(variant);
       const lowercase = letter.toLowerCase();
       const card = document.createElement("div");
       card.className = "letter-card";
+      if (variant === "line") {
+        card.classList.add("line-card");
+      }
       card.tabIndex = 0;
       card.dataset.uppercase = letter;
       card.dataset.lowercase = lowercase;
       card.dataset.caseMode = "upper";
+      card.dataset.letterVariant = variantDef.id;
       card.setAttribute("aria-label", `Capital ${letter} card. Double-tap to flip to lowercase.`);
 
       const inner = document.createElement("div");
@@ -2519,7 +2782,7 @@
       const front = document.createElement("div");
       front.className = "letter-face front";
       const frontImage = document.createElement("img");
-      frontImage.src = uppercaseImagePath(letter);
+      frontImage.src = uppercaseImagePath(letter, variantDef.id);
       frontImage.alt = `${letter} uppercase card`;
       frontImage.draggable = false;
       front.appendChild(frontImage);
@@ -2527,7 +2790,7 @@
       const back = document.createElement("div");
       back.className = "letter-face back";
       const backImage = document.createElement("img");
-      backImage.src = lowercaseImagePath(lowercase);
+      backImage.src = lowercaseImagePath(lowercase, variantDef.id);
       backImage.alt = `${lowercase} lowercase card`;
       backImage.draggable = false;
       back.appendChild(backImage);
@@ -2547,11 +2810,16 @@
       return card;
     }
 
-    function renderLetterBank() {
-      letterBank.innerHTML = "";
+    function renderLetterBank(container, variant = "classic") {
+      if (!container) {
+        return;
+      }
+
+      container.innerHTML = "";
       alphabet.forEach((letter) => {
-        letterBank.appendChild(createLetterCard(letter));
+        container.appendChild(createLetterCard(letter, variant));
       });
+      container.scrollLeft = 0;
     }
 
     function createIconChip(icon, surface) {
@@ -2576,6 +2844,7 @@
       assets.forEach((icon) => {
         container.appendChild(createIconChip(icon, surface));
       });
+      container.scrollLeft = 0;
     }
 
     function renderBoardAssetBank() {
@@ -2792,14 +3061,15 @@
       setStatus(`Card ${card.dataset.uppercase} flipped to ${modeLabel}.`, "good");
     }
 
-    function createDragPreview(char, cardRect) {
+    function createDragPreview(char, cardRect, variant = "classic") {
+      const variantDef = getLetterVariant(variant);
       const preview = document.createElement("div");
       preview.className = "drag-preview";
-      preview.style.width = `${Math.max(96, cardRect.width * 0.94)}px`;
-      preview.style.height = `${Math.max(144, cardRect.height * 0.94)}px`;
+      preview.style.width = `${Math.max(variantDef.previewMinWidth, cardRect.width * 0.94)}px`;
+      preview.style.height = `${Math.max(variantDef.previewMinHeight, cardRect.height * 0.94)}px`;
 
       const image = document.createElement("img");
-      image.src = imagePathForCharacter(char);
+      image.src = imagePathForCharacter(char, variantDef.id);
       image.alt = "";
       image.draggable = false;
       preview.appendChild(image);
@@ -2978,6 +3248,7 @@
         pointerId: event.pointerId,
         card,
         char,
+        letterVariant: card.dataset.letterVariant || "classic",
         startX: event.clientX,
         startY: event.clientY,
         preview: null,
@@ -3055,17 +3326,20 @@
       state.pointerSession = session;
     }
 
-    function createPlacedLetter(char, clientPoint = null) {
+    function createPlacedLetter(char, clientPoint = null, variant = "classic") {
       if (state.placedItems.length >= 30) {
         setStatus("This spelling board holds up to 30 characters at a time.", "warn");
         return;
       }
 
+      const variantDef = getLetterVariant(variant);
       const item = {
         id: state.nextItemId,
         kind: "letter",
         char,
-        size: defaultTileSize("letter"),
+        letterVariant: variantDef.id,
+        heightRatio: variantDef.tileHeightRatio,
+        size: defaultTileSize({ kind: "letter", letterVariant: variantDef.id, heightRatio: variantDef.tileHeightRatio }),
         x: 0,
         y: 0,
         rotation: 0,
@@ -3073,7 +3347,7 @@
       };
       const position = clientPoint
         ? centeredItemPosition(item, clientPoint.clientX, clientPoint.clientY, item.size)
-        : nextAutoPlacement("letter", item.size);
+        : nextAutoPlacement(item, item.size);
       item.x = position.x;
       item.y = position.y;
       state.placedItems.push(item);
@@ -3415,13 +3689,13 @@
         return;
       }
 
-      const ratio = item.kind === "space" ? SPACE_HEIGHT_RATIO : item.kind === "icon" ? 1 : LETTER_HEIGHT_RATIO;
+      const ratio = item.kind === "space" ? SPACE_HEIGHT_RATIO : heightRatioForItem(item);
       const deltaX = event.clientX - session.startX;
       const deltaY = (event.clientY - session.startY) / ratio;
       const nextSize = clamp(
         Math.round(session.startSize + Math.max(deltaX, deltaY)),
         minTileSize(item.kind),
-        maxTileSize(item.kind)
+        maxTileSize(item)
       );
 
       item.size = nextSize;
@@ -3479,7 +3753,7 @@
         if (session.preview) {
           const point = stagePoint(event.clientX, event.clientY);
           if (!cancelled && point.inside) {
-            createPlacedLetter(session.char, { clientX: event.clientX, clientY: event.clientY });
+            createPlacedLetter(session.char, { clientX: event.clientX, clientY: event.clientY }, session.letterVariant);
           }
           session.preview.remove();
         } else if (!cancelled && travel < DRAG_THRESHOLD) {
@@ -3584,7 +3858,7 @@
 
         if (!session.preview && distance > DRAG_THRESHOLD) {
           event.preventDefault();
-          session.preview = createDragPreview(session.char, session.card.getBoundingClientRect());
+          session.preview = createDragPreview(session.char, session.card.getBoundingClientRect(), session.letterVariant);
           session.card.classList.add("dragging");
           tryCaptureSessionPointer(session);
         }
@@ -3667,12 +3941,43 @@
 
     function normalizePlacedItems() {
       state.placedItems.forEach((item) => {
-        item.size = clamp(item.size || defaultTileSize(item.kind), minTileSize(item.kind), maxTileSize(item.kind));
+        if (item.kind === "letter") {
+          item.letterVariant = item.letterVariant || "classic";
+          item.heightRatio = Number.isFinite(item.heightRatio) ? item.heightRatio : getLetterVariant(item.letterVariant).tileHeightRatio;
+        }
+        item.size = clamp(item.size || defaultTileSize(item), minTileSize(item.kind), maxTileSize(item));
         item.rotation = normalizeRotation(item.rotation || 0);
         const nextPosition = clampItemPosition(item, item.x || 0, item.y || 0, item.size);
         item.x = nextPosition.x;
         item.y = nextPosition.y;
       });
+    }
+
+    function setBackgroundPanelVisible(visible) {
+      state.backgroundPanelVisible = Boolean(visible);
+      backgroundPopup.classList.toggle("hidden", !state.backgroundPanelVisible);
+      backgroundPopup.setAttribute("aria-hidden", String(!state.backgroundPanelVisible));
+      backgroundLauncher.setAttribute("aria-expanded", String(state.backgroundPanelVisible));
+      backgroundLauncher.setAttribute(
+        "aria-label",
+        state.backgroundPanelVisible
+          ? "Background controls open. Tap again to close."
+          : "Background controls closed. Tap once to open."
+      );
+    }
+
+    function setBackgroundWash(value) {
+      state.backgroundWash = clamp(value, 0, 1);
+      document.documentElement.style.setProperty("--spell-background-fade", state.backgroundWash.toFixed(2));
+      backgroundTransparencyRange.value = String(Math.round(state.backgroundWash * 100));
+      backgroundTransparencyRange.setAttribute(
+        "aria-valuetext",
+        state.backgroundWash >= 0.96
+          ? "Dirty white background"
+          : state.backgroundWash <= 0.04
+            ? "Full picture background"
+            : `${Math.round(state.backgroundWash * 100)} percent faded`
+      );
     }
 
     function boardRect() {
@@ -4318,6 +4623,11 @@
       }
 
       if (event.key === "Escape") {
+        if (state.backgroundPanelVisible) {
+          event.preventDefault();
+          setBackgroundPanelVisible(false);
+          return;
+        }
         if (state.sizePopupVisible) {
           event.preventDefault();
           closeSizePopup();
@@ -4362,6 +4672,9 @@
     document.addEventListener("pointerup", finishPointerSession);
     document.addEventListener("pointercancel", finishPointerSession);
     document.addEventListener("pointerdown", (event) => {
+      if (state.backgroundPanelVisible && backgroundControl && !backgroundControl.contains(event.target)) {
+        setBackgroundPanelVisible(false);
+      }
       if (!paletteRow.contains(event.target) && event.target !== eraserBtn && !toolSizePopup.contains(event.target)) {
         resetControlChooserSession();
       }
@@ -4414,6 +4727,12 @@
     });
 
     closeBoardBtn.addEventListener("click", closeBoardModal);
+    backgroundLauncher.addEventListener("click", () => {
+      setBackgroundPanelVisible(!state.backgroundPanelVisible);
+    });
+    backgroundTransparencyRange.addEventListener("input", (event) => {
+      setBackgroundWash(Number(event.currentTarget.value) / 100);
+    });
     spellTrayLauncher.addEventListener("click", () => handleTrayLauncherTap("spell", spellTrayLauncher));
     boardTrayLauncher.addEventListener("click", () => handleTrayLauncherTap("board", boardTrayLauncher));
     penModeBtn.addEventListener("click", () => {
@@ -4466,13 +4785,16 @@
       }
     });
 
-    renderLetterBank();
+    renderLetterBank(letterBank, "classic");
+    renderLetterBank(lineLetterBank, "line");
     renderIconBank(iconBank, "spell");
     renderBoardAssetBank();
     renderPlacedSpelling();
     renderBoardStickers();
     setSpellTrayExpanded(false);
     setBoardTrayExpanded(false);
+    setBackgroundPanelVisible(false);
+    setBackgroundWash(state.backgroundWash);
     setActiveColor(state.selectedColor);
     setBoardPenMode(state.boardPenMode);
     setEraserMode(state.eraserOn);
