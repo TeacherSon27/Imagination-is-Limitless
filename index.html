@@ -1486,6 +1486,10 @@
                 <button class="swatch" type="button" data-color="#101010" style="background:#101010" aria-label="Black pencil"></button>
                 <button class="swatch" type="button" data-color="#7c4dff" style="background:#7c4dff" aria-label="Purple pencil"></button>
                 <button class="swatch" type="button" data-color="#8b93a1" style="background:#8b93a1" aria-label="Gray pencil"></button>
+                <button class="swatch" type="button" data-color="#7a4b2a" style="background:#7a4b2a" aria-label="Brown pencil"></button>
+                <button class="swatch" type="button" data-color="#ff8a1e" style="background:#ff8a1e" aria-label="Orange pencil"></button>
+                <button class="swatch" type="button" data-color="#d4af37" style="background:#d4af37" aria-label="Gold pencil"></button>
+                <button class="swatch" type="button" data-color="#ffffff" style="background:#ffffff" aria-label="White pencil"></button>
               </div>
               <div class="tool-actions">
                 <button class="tool-btn board-control-btn active" id="penModeBtn" type="button">Pen: On</button>
@@ -1542,6 +1546,7 @@
       sizePopupVisible: false,
       sizePopupTool: null,
       selectedColor: "#ff69b4",
+      activeInkColors: ["#ff69b4"],
       penSize: "medium",
       eraserSize: "medium",
       eraserOn: false,
@@ -1746,6 +1751,137 @@
       `;
     }
 
+    function cubicInterpolate(amount, start, end) {
+      const weight = amount * amount * (3 - 2 * amount);
+      return start + (end - start) * weight;
+    }
+
+    function rybToRgb(red, yellow, blue) {
+      const x0 = cubicInterpolate(blue, 1.0, 0.163);
+      const x1 = cubicInterpolate(blue, 1.0, 0.0);
+      const x2 = cubicInterpolate(blue, 1.0, 0.5);
+      const x3 = cubicInterpolate(blue, 1.0, 0.2);
+      const y0 = cubicInterpolate(yellow, x0, x1);
+      const y1 = cubicInterpolate(yellow, x2, x3);
+      const r = cubicInterpolate(red, y0, y1);
+
+      const x4 = cubicInterpolate(blue, 1.0, 0.373);
+      const x5 = cubicInterpolate(blue, 1.0, 0.66);
+      const x6 = cubicInterpolate(blue, 0.0, 0.0);
+      const x7 = cubicInterpolate(blue, 0.5, 0.094);
+      const y2 = cubicInterpolate(yellow, x4, x5);
+      const y3 = cubicInterpolate(yellow, x6, x7);
+      const g = cubicInterpolate(red, y2, y3);
+
+      const x8 = cubicInterpolate(blue, 1.0, 0.6);
+      const x9 = cubicInterpolate(blue, 0.0, 0.2);
+      const x10 = cubicInterpolate(blue, 0.0, 0.5);
+      const x11 = cubicInterpolate(blue, 0.0, 0.0);
+      const y4 = cubicInterpolate(yellow, x8, x9);
+      const y5 = cubicInterpolate(yellow, x10, x11);
+      const b = cubicInterpolate(red, y4, y5);
+
+      return {
+        r: Math.round(r * 255),
+        g: Math.round(g * 255),
+        b: Math.round(b * 255)
+      };
+    }
+
+    function mixRgbObjects(first, second, ratio) {
+      const amount = clamp(ratio, 0, 1);
+      return {
+        r: first.r + (second.r - first.r) * amount,
+        g: first.g + (second.g - first.g) * amount,
+        b: first.b + (second.b - first.b) * amount
+      };
+    }
+
+    const INK_PIGMENTS = {
+      "#ff69b4": { r: 1.0, y: 0.18, b: 0.08, white: 0.34, black: 0.02 },
+      "#ffd84d": { r: 0.02, y: 1.0, b: 0.02, white: 0.04, black: 0.0 },
+      "#38b86c": { r: 0.02, y: 0.72, b: 0.7, white: 0.03, black: 0.04 },
+      "#2d7ff9": { r: 0.02, y: 0.08, b: 1.0, white: 0.02, black: 0.02 },
+      "#e53935": { r: 1.0, y: 0.16, b: 0.04, white: 0.02, black: 0.02 },
+      "#101010": { r: 0.0, y: 0.0, b: 0.0, white: 0.0, black: 1.0 },
+      "#7c4dff": { r: 0.64, y: 0.08, b: 0.92, white: 0.08, black: 0.06 },
+      "#8b93a1": { r: 0.05, y: 0.05, b: 0.08, white: 0.42, black: 0.28 },
+      "#7a4b2a": { r: 0.56, y: 0.72, b: 0.08, white: 0.04, black: 0.34 },
+      "#ff8a1e": { r: 0.72, y: 1.0, b: 0.02, white: 0.03, black: 0.02 },
+      "#d4af37": { r: 0.34, y: 0.94, b: 0.04, white: 0.12, black: 0.1 },
+      "#ffffff": { r: 0.0, y: 0.0, b: 0.0, white: 1.0, black: 0.0 }
+    };
+
+    function normalizeColorKey(color) {
+      return String(color || "").trim().toLowerCase();
+    }
+
+    function pigmentForColor(color) {
+      const normalized = normalizeColorKey(color);
+      if (INK_PIGMENTS[normalized]) {
+        return INK_PIGMENTS[normalized];
+      }
+
+      const rgb = hexToRgb(normalized);
+      if (!rgb) {
+        return INK_PIGMENTS["#ff69b4"];
+      }
+
+      const max = Math.max(rgb.r, rgb.g, rgb.b, 1);
+      return {
+        r: rgb.r / max,
+        y: (rgb.r * 0.5 + rgb.g) / (max * 1.5),
+        b: rgb.b / max,
+        white: 1 - (max / 255),
+        black: 1 - (max / 255)
+      };
+    }
+
+    function pigmentToRgb(pigment) {
+      let rgb = rybToRgb(pigment.r, pigment.y, pigment.b);
+      rgb = mixRgbObjects(rgb, { r: 255, g: 255, b: 255 }, clamp((pigment.white || 0) * 0.88, 0, 0.92));
+      rgb = mixRgbObjects(rgb, { r: 0, g: 0, b: 0 }, clamp((pigment.black || 0) * 0.92, 0, 0.95));
+      return rgb;
+    }
+
+    function mixedInkColor(colors) {
+      const normalizedColors = Array.from(new Set((colors || []).map(normalizeColorKey).filter(Boolean)));
+      if (!normalizedColors.length) {
+        return "#ff69b4";
+      }
+      if (normalizedColors.length === 1) {
+        return normalizedColors[0];
+      }
+
+      const aggregate = normalizedColors.reduce((mix, color) => {
+        const pigment = pigmentForColor(color);
+        mix.r += pigment.r;
+        mix.y += pigment.y;
+        mix.b += pigment.b;
+        mix.white += pigment.white || 0;
+        mix.black += pigment.black || 0;
+        return mix;
+      }, { r: 0, y: 0, b: 0, white: 0, black: 0 });
+
+      const divisor = normalizedColors.length;
+      const averaged = {
+        r: aggregate.r / divisor,
+        y: aggregate.y / divisor,
+        b: aggregate.b / divisor,
+        white: aggregate.white / divisor,
+        black: aggregate.black / divisor
+      };
+
+      let rgb = pigmentToRgb(averaged);
+      const muddiness = clamp((normalizedColors.length - 1) * 0.06, 0, 0.24);
+      if (muddiness > 0) {
+        const muddyBrown = pigmentToRgb({ r: 0.48, y: 0.58, b: 0.08, white: 0.02, black: 0.46 });
+        rgb = mixRgbObjects(rgb, muddyBrown, muddiness);
+      }
+
+      return rgbToHex(rgb.r, rgb.g, rgb.b);
+    }
+
     function pointsToPath(points) {
       return points.map((point, index) => `${index === 0 ? "M" : "L"}${point.x} ${point.y}`).join(" ") + " Z";
     }
@@ -1803,7 +1939,9 @@
       { id: "dream-cloud", label: "Dream Cloud", src: "assets/icon-stickers/dream-cloud.png" },
       { id: "magic-star", label: "Magic Star", src: "assets/icon-stickers/magic-star.png" },
       { id: "dream-moon", label: "Dream Moon", src: "assets/icon-stickers/dream-moon.png" },
-      { id: "pastel-planet", label: "Pastel Planet", src: "assets/icon-stickers/pastel-planet.png" }
+      { id: "pastel-planet", label: "Pastel Planet", src: "assets/icon-stickers/pastel-planet.png" },
+      { id: "crest-d", label: "Golden Crest D", src: "assets/icon-stickers/crest-d.png" },
+      { id: "crest-s", label: "Golden Crest S", src: "assets/icon-stickers/crest-s.png" }
     ].map((icon) => ({
       ...icon,
       assetKind: "emoji",
@@ -1921,6 +2059,14 @@
         delta += 360;
       }
       return delta;
+    }
+
+    function isPrimaryPointerInput(event) {
+      const pointerType = event.pointerType || "mouse";
+      if (pointerType === "mouse") {
+        return event.button === 0;
+      }
+      return true;
     }
 
     function distanceBetweenPoints(firstPoint, secondPoint) {
@@ -2292,9 +2438,9 @@
       } else {
         element.style.removeProperty("height");
       }
-      element.style.left = `${Math.round(item.x)}px`;
-      element.style.top = `${Math.round(item.y)}px`;
-      element.style.transform = `rotate(${normalizeRotation(item.rotation || 0)}deg)`;
+      element.style.left = "0px";
+      element.style.top = "0px";
+      element.style.transform = `translate3d(${Math.round(item.x)}px, ${Math.round(item.y)}px, 0) rotate(${normalizeRotation(item.rotation || 0)}deg)`;
       element.style.zIndex = item.zIndex;
     }
 
@@ -2816,7 +2962,7 @@
     }
 
     function handleBankCardPointerDown(event) {
-      if ((event.pointerType !== "touch" && event.button !== 0) || state.pointerSession) {
+      if (!isPrimaryPointerInput(event) || state.pointerSession) {
         return;
       }
 
@@ -2839,7 +2985,7 @@
     }
 
     function handleIconChipPointerDown(event) {
-      if ((event.pointerType !== "touch" && event.button !== 0) || state.pointerSession) {
+      if (!isPrimaryPointerInput(event) || state.pointerSession) {
         return;
       }
 
@@ -2862,18 +3008,22 @@
     }
 
     function handleSwatchPointerDown(event) {
-      if ((event.pointerType !== "touch" && event.button !== 0) || state.pointerSession) {
+      if (!isPrimaryPointerInput(event) || state.pointerSession) {
         return;
       }
 
       const swatch = event.currentTarget;
+      const swatchColor = normalizeColorKey(swatch.dataset.color);
+      const dragColor = state.activeInkColors.includes(swatchColor) && state.activeInkColors.length > 1
+        ? state.selectedColor
+        : swatch.dataset.color;
       const session = {
         type: "color-swatch",
         pointerType: event.pointerType || "mouse",
         pointerId: event.pointerId,
         swatch,
         captureElement: swatch,
-        color: swatch.dataset.color,
+        color: dragColor,
         startX: event.clientX,
         startY: event.clientY,
         currentX: event.clientX,
@@ -3018,7 +3168,7 @@
         return;
       }
 
-      if ((event.pointerType !== "touch" && event.button !== 0) || state.pointerSession) {
+      if (!isPrimaryPointerInput(event) || state.pointerSession) {
         return;
       }
 
@@ -3296,7 +3446,6 @@
         session.swatch.classList.remove("dragging");
 
         if (session.preview) {
-          setActiveColor(session.color);
           const target = !cancelled ? findBoardColorableItemAt(event.clientX, event.clientY) : null;
           if (target) {
             target.tintColor = session.color;
@@ -3680,9 +3829,9 @@
     function applyBoardItemStyles(element, item) {
       element.style.width = `${item.size}px`;
       element.style.height = `${item.size}px`;
-      element.style.left = `${Math.round(item.x)}px`;
-      element.style.top = `${Math.round(item.y)}px`;
-      element.style.transform = `rotate(${normalizeRotation(item.rotation || 0)}deg)`;
+      element.style.left = "0px";
+      element.style.top = "0px";
+      element.style.transform = `translate3d(${Math.round(item.x)}px, ${Math.round(item.y)}px, 0) rotate(${normalizeRotation(item.rotation || 0)}deg)`;
       element.style.zIndex = item.zIndex;
     }
 
@@ -3955,12 +4104,36 @@
       }
     }
 
-    function setActiveColor(color) {
-      state.selectedColor = color;
-      setEraserMode(false);
+    function updateInkSelectionUI() {
+      const activeColors = state.activeInkColors.map(normalizeColorKey);
       paletteRow.querySelectorAll(".swatch").forEach((swatch) => {
-        swatch.classList.toggle("active", swatch.dataset.color === color);
+        swatch.classList.toggle("active", activeColors.includes(normalizeColorKey(swatch.dataset.color)));
       });
+    }
+
+    function applyActiveInkMix() {
+      const normalized = Array.from(new Set((state.activeInkColors || []).map(normalizeColorKey).filter(Boolean)));
+      state.activeInkColors = normalized.length ? normalized : ["#ff69b4"];
+      state.selectedColor = mixedInkColor(state.activeInkColors);
+      updateInkSelectionUI();
+    }
+
+    function setActiveColor(color) {
+      state.activeInkColors = [normalizeColorKey(color)];
+      applyActiveInkMix();
+      setEraserMode(false);
+    }
+
+    function toggleInkColorSelection(color) {
+      const normalized = normalizeColorKey(color);
+      const activeColors = state.activeInkColors.map(normalizeColorKey);
+      if (activeColors.includes(normalized)) {
+        state.activeInkColors = activeColors.length > 1 ? [normalized] : [normalized];
+      } else {
+        state.activeInkColors = [...activeColors, normalized];
+      }
+      applyActiveInkMix();
+      setEraserMode(false);
     }
 
     function preventBoardZoomGesture(event) {
@@ -4007,7 +4180,8 @@
       const rect = canvas.getBoundingClientRect();
       return {
         x: (event.clientX - rect.left) * (canvas.width / rect.width),
-        y: (event.clientY - rect.top) * (canvas.height / rect.height)
+        y: (event.clientY - rect.top) * (canvas.height / rect.height),
+        pressure: event.pressure || 0
       };
     }
 
@@ -4017,11 +4191,27 @@
       return sizeMap[sizeKey] * ((window.devicePixelRatio || 1) * 0.95);
     }
 
-    function drawSegment(from, to) {
+    function strokeWidthForEvent(event) {
+      const base = currentStrokeWidth();
+      const pointerType = event.pointerType || "mouse";
+
+      if (pointerType === "pen") {
+        const pressure = clamp(event.pressure && event.pressure > 0 ? event.pressure : 0.55, 0.08, 1.2);
+        return base * clamp(0.34 + pressure * 1.04, 0.24, 1.42);
+      }
+
+      if (pointerType === "touch") {
+        return base * 1.02;
+      }
+
+      return base;
+    }
+
+    function drawSegment(from, to, lineWidth = currentStrokeWidth()) {
       ctx.save();
       ctx.globalCompositeOperation = state.eraserOn ? "destination-out" : "source-over";
       ctx.strokeStyle = state.selectedColor;
-      ctx.lineWidth = currentStrokeWidth();
+      ctx.lineWidth = lineWidth;
       ctx.beginPath();
       ctx.moveTo(from.x, from.y);
       ctx.lineTo(to.x, to.y);
@@ -4029,12 +4219,12 @@
       ctx.restore();
     }
 
-    function drawDot(point) {
+    function drawDot(point, dotWidth = currentStrokeWidth()) {
       ctx.save();
       ctx.globalCompositeOperation = state.eraserOn ? "destination-out" : "source-over";
       ctx.fillStyle = state.selectedColor;
       ctx.beginPath();
-      ctx.arc(point.x, point.y, currentStrokeWidth() / 2, 0, Math.PI * 2);
+      ctx.arc(point.x, point.y, dotWidth / 2, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
     }
@@ -4044,14 +4234,14 @@
         return;
       }
 
-      if (event.pointerType !== "touch" && event.button !== 0) {
+      if (!isPrimaryPointerInput(event)) {
         return;
       }
 
       event.preventDefault();
       state.drawing = true;
       state.lastPoint = pointFromEvent(event);
-      drawDot(state.lastPoint);
+      drawDot(state.lastPoint, strokeWidthForEvent(event));
       boardWrap.setPointerCapture(event.pointerId);
     }
 
@@ -4061,9 +4251,15 @@
       }
 
       event.preventDefault();
-      const nextPoint = pointFromEvent(event);
-      drawSegment(state.lastPoint, nextPoint);
-      state.lastPoint = nextPoint;
+      const samples = typeof event.getCoalescedEvents === "function"
+        ? event.getCoalescedEvents()
+        : [event];
+
+      samples.forEach((sample) => {
+        const nextPoint = pointFromEvent(sample);
+        drawSegment(state.lastPoint, nextPoint, strokeWidthForEvent(sample));
+        state.lastPoint = nextPoint;
+      });
     }
 
     function stopDrawing(event) {
@@ -4185,7 +4381,7 @@
 
     swatches.forEach((swatch) => {
       const baseLabel = swatch.getAttribute("aria-label") || "Pencil color";
-      swatch.setAttribute("aria-label", `${baseLabel}. Click once to choose or click twice for size.`);
+      swatch.setAttribute("aria-label", `${baseLabel}. Click once to choose or mix, click twice for size.`);
       swatch.addEventListener("pointerdown", handleSwatchPointerDown);
       swatch.addEventListener("click", (event) => {
         const target = event.currentTarget;
@@ -4195,10 +4391,13 @@
           return;
         }
         const isDoubleClick = isSecondControlClick("pen", target);
-        setActiveColor(target.dataset.color);
         if (isDoubleClick) {
+          if (!state.activeInkColors.includes(normalizeColorKey(target.dataset.color))) {
+            setActiveColor(target.dataset.color);
+          }
           openSizePopup("pen", target);
         } else {
+          toggleInkColorSelection(target.dataset.color);
           closeSizePopup();
         }
       });
