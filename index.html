@@ -16,6 +16,9 @@
       --danger: #d63f52;
       --glow: 0 0 0 2px rgba(255, 223, 122, 0.65), 0 16px 26px rgba(255, 183, 64, 0.24);
       --spell-background-fade: 0;
+      --launcher-motion-ms: 220ms;
+      --launcher-motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
+      --tray-motion-ms: 260ms;
     }
 
     * {
@@ -234,7 +237,15 @@
       position: fixed;
       left: max(12px, calc(env(safe-area-inset-left, 0px) + 12px));
       bottom: max(12px, calc(env(safe-area-inset-bottom, 0px) + 12px));
-      transition: width 0.22s ease, min-height 0.22s ease, height 0.22s ease, padding 0.22s ease, border-radius 0.22s ease, box-shadow 0.22s ease, background 0.22s ease;
+      transition:
+        width var(--tray-motion-ms) var(--launcher-motion-ease),
+        min-height var(--tray-motion-ms) var(--launcher-motion-ease),
+        height var(--tray-motion-ms) var(--launcher-motion-ease),
+        padding var(--tray-motion-ms) var(--launcher-motion-ease),
+        border-radius var(--tray-motion-ms) var(--launcher-motion-ease),
+        box-shadow var(--tray-motion-ms) var(--launcher-motion-ease),
+        background var(--tray-motion-ms) var(--launcher-motion-ease);
+      will-change: width, min-height, height, padding, border-radius, box-shadow, background;
     }
 
     .board-top,
@@ -277,7 +288,7 @@
     }
 
     .board-top.collapsed {
-      overflow: hidden;
+      overflow: visible;
     }
 
     .tray-panel-body {
@@ -291,12 +302,20 @@
       display: none;
     }
 
-    .tray-launcher,
-    .gold-launcher {
+    .tray-launcher-stack {
       position: absolute;
       left: 8px;
-      top: 50%;
-      transform: translateY(-50%);
+      bottom: 8px;
+      z-index: 12;
+      display: grid;
+      gap: 12px;
+      justify-items: center;
+      pointer-events: auto;
+    }
+
+    .tray-launcher,
+    .gold-launcher {
+      position: relative;
       width: 56px;
       height: 56px;
       min-width: 56px;
@@ -314,13 +333,95 @@
         inset 0 1px 0 rgba(255, 255, 255, 0.82),
         inset 0 -1px 0 rgba(164, 103, 0, 0.18);
       z-index: 2;
+      transition:
+        transform var(--launcher-motion-ms) var(--launcher-motion-ease),
+        box-shadow var(--launcher-motion-ms) var(--launcher-motion-ease),
+        filter 0.18s ease,
+        background-color var(--launcher-motion-ms) var(--launcher-motion-ease),
+        border-color var(--launcher-motion-ms) var(--launcher-motion-ease);
+      will-change: transform, box-shadow;
     }
 
-    .bank-card.collapsed .tray-launcher,
-    .board-top.collapsed .tray-launcher,
-    .bank-card.collapsed .gold-launcher {
+    .launcher-module {
+      position: relative;
+      display: grid;
+      justify-items: start;
+    }
+
+    .launcher-popup {
+      --popup-open-transform: translate3d(0, 0, 0) scale(1);
+      --popup-closed-transform: translate3d(0, 12px, 0) scale(0.96);
+      position: absolute;
+      left: 0;
+      bottom: calc(100% + 10px);
+      transform: var(--popup-closed-transform);
+      width: min(296px, calc(100vw - 24px));
+      max-width: calc(100vw - 24px);
+      padding: 14px 16px;
+      border-radius: 24px;
+      background: linear-gradient(180deg, rgba(255, 252, 238, 0.97), rgba(248, 239, 214, 0.95));
+      border: 1px solid rgba(255, 236, 176, 0.96);
+      box-shadow:
+        0 20px 34px rgba(74, 48, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.84),
+        inset 0 -1px 0 rgba(201, 156, 40, 0.14);
+      backdrop-filter: blur(16px) saturate(145%);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition:
+        opacity var(--launcher-motion-ms) var(--launcher-motion-ease),
+        transform var(--launcher-motion-ms) var(--launcher-motion-ease),
+        visibility 0s linear var(--launcher-motion-ms);
+      will-change: opacity, transform;
+      transform-origin: left bottom;
+    }
+
+    .launcher-popup.is-open {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      transform: var(--popup-open-transform);
+      transition:
+        opacity var(--launcher-motion-ms) var(--launcher-motion-ease),
+        transform var(--launcher-motion-ms) var(--launcher-motion-ease),
+        visibility 0s linear 0s;
+    }
+
+    .utility-popup {
+      width: min(324px, calc(100vw - 24px));
+    }
+
+    .utility-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .utility-actions .action-btn,
+    .utility-actions .ghost-btn {
+      width: 100%;
+      min-height: 52px;
+      padding: 12px 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: 0.82rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      white-space: normal;
+    }
+
+    .bank-card.collapsed .tray-launcher-stack,
+    .board-top.collapsed .tray-launcher-stack {
+      left: 0;
+      bottom: 0;
+    }
+
+    .bank-card.collapsed .tray-launcher-stack .tray-launcher,
+    .board-top.collapsed .tray-launcher-stack .tray-launcher {
       position: static;
-      transform: none;
       width: 72px;
       height: 72px;
       min-width: 72px;
@@ -328,6 +429,18 @@
       border: 0;
       box-shadow: none;
       background: transparent;
+    }
+
+    .bank-card.collapsed .tray-launcher-stack .gold-launcher,
+    .board-top.collapsed .tray-launcher-stack .gold-launcher {
+      width: 72px;
+      height: 72px;
+      min-width: 72px;
+      min-height: 72px;
+      box-shadow:
+        0 14px 24px rgba(120, 79, 0, 0.24),
+        inset 0 1px 0 rgba(255, 255, 255, 0.82),
+        inset 0 -1px 0 rgba(164, 103, 0, 0.22);
     }
 
     .tray-launcher-icon {
@@ -338,47 +451,50 @@
       pointer-events: none;
     }
 
-    .background-control {
-      position: absolute;
-      left: 8px;
-      top: -72px;
-      z-index: 12;
-      display: grid;
-      justify-items: start;
-      gap: 12px;
-    }
-
-    .bank-card.collapsed .background-control {
-      left: 0;
-      top: -84px;
-    }
-
     .background-launcher {
-      position: relative;
-      inset: auto;
-      transform: none;
+      letter-spacing: 0;
     }
 
     .background-launcher .tray-launcher-icon {
+      font-size: 1.65rem;
+      line-height: 1;
+    }
+
+    .spell-tools-launcher .tray-launcher-icon {
+      font-size: 1.6rem;
+    }
+
+    .activity-launcher .tray-launcher-icon {
       font-size: 1rem;
       letter-spacing: 0.08em;
       text-transform: uppercase;
     }
 
+    .gold-launcher.inactive {
+      opacity: 0.8;
+      filter: saturate(0.92);
+    }
+
     .background-popup {
-      position: absolute;
-      left: 0;
-      bottom: calc(100% + 10px);
-      width: min(248px, calc(100vw - 36px));
-      padding: 14px 16px;
-      border-radius: 24px;
-      background: linear-gradient(180deg, rgba(255, 252, 238, 0.96), rgba(248, 239, 214, 0.94));
-      border: 1px solid rgba(255, 236, 176, 0.96);
+      --popup-open-transform: translate3d(0, -50%, 0) scale(1);
+      --popup-closed-transform: translate3d(10px, -50%, 0) scale(0.96);
+      width: min(232px, calc(100vw - 32px));
+      max-width: calc(100vw - 104px);
+      display: grid;
+      gap: 10px;
+      left: calc(100% + 10px);
+      top: 50%;
+      bottom: auto;
+      transform-origin: left center;
+    }
+
+    .tray-launcher[aria-expanded="true"],
+    .gold-launcher[aria-expanded="true"] {
+      transform: translate3d(0, -1px, 0) scale(1.04);
       box-shadow:
-        0 20px 34px rgba(74, 48, 0, 0.2),
-        inset 0 1px 0 rgba(255, 255, 255, 0.84),
-        inset 0 -1px 0 rgba(201, 156, 40, 0.14);
-      backdrop-filter: blur(16px) saturate(145%);
+        0 16px 28px rgba(120, 79, 0, 0.26),
+        inset 0 1px 0 rgba(255, 255, 255, 0.86),
+        inset 0 -1px 0 rgba(164, 103, 0, 0.22);
     }
 
     .background-popup-title,
@@ -389,6 +505,7 @@
       letter-spacing: 0.16em;
       text-transform: uppercase;
       color: rgba(90, 57, 0, 0.88);
+      text-align: center;
     }
 
     .background-slider-copy {
@@ -1124,6 +1241,26 @@
       overscroll-behavior: none;
     }
 
+    #activityProductModal {
+      z-index: 26;
+      background: rgba(13, 18, 36, 0.52);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition:
+        opacity var(--launcher-motion-ms) var(--launcher-motion-ease),
+        visibility 0s linear var(--launcher-motion-ms);
+    }
+
+    #activityProductModal.modal-open {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      transition:
+        opacity var(--launcher-motion-ms) var(--launcher-motion-ease),
+        visibility 0s linear 0s;
+    }
+
     .hidden {
       display: none !important;
     }
@@ -1152,6 +1289,328 @@
     .overlay-copy {
       margin: 10px 0 0;
       color: rgba(32, 48, 74, 0.78);
+    }
+
+    .activity-modal-card {
+      width: min(100%, 1120px);
+      max-height: min(92vh, 920px);
+      padding: 22px;
+      display: grid;
+      grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
+      gap: 18px;
+      border-radius: 32px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 248, 232, 0.94));
+      box-shadow: 0 32px 58px rgba(12, 18, 35, 0.28);
+      border: 1px solid rgba(255, 255, 255, 0.84);
+      overflow: auto;
+      transform: translate3d(0, 20px, 0) scale(0.98);
+      opacity: 0.96;
+      transition:
+        transform var(--launcher-motion-ms) var(--launcher-motion-ease),
+        opacity var(--launcher-motion-ms) var(--launcher-motion-ease);
+      will-change: transform, opacity;
+    }
+
+    #activityProductModal.modal-open .activity-modal-card {
+      transform: translate3d(0, 0, 0) scale(1);
+      opacity: 1;
+    }
+
+    .activity-side,
+    .activity-repository-panel {
+      min-height: 0;
+      border-radius: 28px;
+      padding: 18px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.58), rgba(255, 250, 239, 0.36));
+      border: 1px solid rgba(255, 240, 201, 0.9);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.84),
+        inset 0 -1px 0 rgba(207, 171, 90, 0.12);
+      backdrop-filter: blur(14px) saturate(140%);
+    }
+
+    .activity-side {
+      display: grid;
+      gap: 14px;
+      align-content: start;
+    }
+
+    .activity-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .activity-title-wrap {
+      display: grid;
+      gap: 10px;
+    }
+
+    .activity-title {
+      margin: 0;
+      font-size: clamp(1.5rem, 2vw, 2rem);
+      line-height: 1;
+      letter-spacing: -0.04em;
+      color: #20304a;
+    }
+
+    .activity-source-tag {
+      display: inline-flex;
+      width: fit-content;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: rgba(255, 215, 106, 0.34);
+      font-size: 0.76rem;
+      font-weight: 900;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #6a4300;
+    }
+
+    .activity-close-btn {
+      min-width: 104px;
+      min-height: 48px;
+      flex: 0 0 auto;
+    }
+
+    .activity-preview-stage {
+      position: relative;
+      aspect-ratio: 4 / 3;
+      border-radius: 24px;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at 50% 18%, rgba(255, 214, 104, 0.18), transparent 34%),
+        linear-gradient(180deg, rgba(255, 252, 242, 0.98), rgba(248, 239, 221, 0.94));
+      border: 1px solid rgba(255, 232, 170, 0.94);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.9),
+        0 14px 24px rgba(120, 79, 0, 0.12);
+    }
+
+    .activity-preview-image,
+    .activity-camera-view {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      background: transparent;
+    }
+
+    .activity-preview-empty {
+      padding: 0 20px;
+      text-align: center;
+      color: rgba(32, 48, 74, 0.7);
+      font-weight: 800;
+      line-height: 1.45;
+    }
+
+    .activity-controls {
+      display: grid;
+      gap: 10px;
+    }
+
+    .activity-controls .action-btn,
+    .activity-controls .ghost-btn {
+      width: 100%;
+      min-height: 52px;
+      padding: 12px 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: 0.84rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      white-space: normal;
+    }
+
+    .activity-status {
+      margin: 0;
+      min-height: 1.5em;
+      font-size: 0.92rem;
+      font-weight: 800;
+      color: rgba(32, 48, 74, 0.72);
+    }
+
+    .activity-status.good {
+      color: var(--success);
+    }
+
+    .activity-status.warn {
+      color: var(--warning);
+    }
+
+    .activity-status.bad {
+      color: var(--danger);
+    }
+
+    .activity-repository-panel {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      gap: 14px;
+    }
+
+    .activity-repository-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .activity-repository-title {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 900;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(90, 57, 0, 0.88);
+    }
+
+    .activity-repository-note {
+      margin: 0;
+      color: rgba(32, 48, 74, 0.62);
+      font-size: 0.82rem;
+      font-weight: 800;
+    }
+
+    .activity-repository-grid {
+      min-height: 0;
+      overflow: auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 12px;
+      align-content: start;
+      padding-right: 4px;
+    }
+
+    .activity-product-card {
+      padding: 10px;
+      border-radius: 22px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 245, 222, 0.52));
+      border: 1px solid rgba(255, 235, 182, 0.94);
+      box-shadow:
+        0 12px 22px rgba(120, 79, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.84);
+      display: grid;
+      gap: 8px;
+      text-align: left;
+    }
+
+    .activity-product-card.active {
+      box-shadow:
+        0 0 0 3px rgba(255, 208, 53, 0.95),
+        0 14px 24px rgba(120, 79, 0, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.88);
+    }
+
+    .activity-product-thumb {
+      aspect-ratio: 4 / 3;
+      border-radius: 16px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.7);
+    }
+
+    .activity-product-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .activity-product-meta {
+      display: grid;
+      gap: 4px;
+    }
+
+    .activity-product-label {
+      font-size: 0.76rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #5a3900;
+      line-height: 1.3;
+    }
+
+    .activity-product-date {
+      font-size: 0.75rem;
+      color: rgba(32, 48, 74, 0.62);
+      line-height: 1.35;
+    }
+
+    .activity-ai-badge {
+      display: inline-flex;
+      width: fit-content;
+      padding: 5px 8px;
+      border-radius: 999px;
+      background: rgba(255, 215, 106, 0.28);
+      font-size: 0.68rem;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #7a4a00;
+    }
+
+    .activity-empty-repository {
+      grid-column: 1 / -1;
+      padding: 26px 20px;
+      border-radius: 24px;
+      text-align: center;
+      color: rgba(32, 48, 74, 0.68);
+      font-weight: 800;
+      line-height: 1.5;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.52), rgba(255, 245, 222, 0.36));
+      border: 1px dashed rgba(201, 156, 40, 0.34);
+    }
+
+    .motion-float {
+      animation: productFloat 3.8s ease-in-out infinite;
+    }
+
+    .motion-tilt {
+      animation: productTilt 3.2s ease-in-out infinite;
+    }
+
+    .motion-glow {
+      animation: productGlow 2.9s ease-in-out infinite;
+    }
+
+    @keyframes productFloat {
+      0%,
+      100% {
+        transform: translateY(0) scale(1);
+      }
+      50% {
+        transform: translateY(-10px) scale(1.02);
+      }
+    }
+
+    @keyframes productTilt {
+      0%,
+      100% {
+        transform: rotate(-1.5deg) scale(1);
+      }
+      50% {
+        transform: rotate(1.8deg) scale(1.03);
+      }
+    }
+
+    @keyframes productGlow {
+      0%,
+      100% {
+        filter: drop-shadow(0 0 0 rgba(255, 208, 53, 0));
+        transform: scale(1);
+      }
+      50% {
+        filter: drop-shadow(0 0 18px rgba(255, 208, 53, 0.46));
+        transform: scale(1.04);
+      }
     }
 
     .unlock-row {
@@ -1405,12 +1864,8 @@
         justify-items: stretch;
       }
 
-      .background-control {
-        top: -70px;
-      }
-
       .background-popup {
-        width: min(240px, calc(100vw - 34px));
+        width: min(240px, calc(100vw - 104px));
       }
 
       .letter-bank {
@@ -1524,17 +1979,29 @@
         flex-basis: 66px;
       }
 
-      .background-control {
-        top: -66px;
-      }
-
-      .bank-card.collapsed .background-control {
-        top: -78px;
-      }
-
       .background-popup {
-        width: min(220px, calc(100vw - 28px));
+        width: min(220px, calc(100vw - 104px));
         padding: 12px 14px;
+      }
+
+      .activity-modal-card {
+        grid-template-columns: 1fr;
+        max-height: calc(100vh - 18px);
+        padding: 16px;
+      }
+
+      .activity-side,
+      .activity-repository-panel {
+        padding: 16px;
+        border-radius: 24px;
+      }
+
+      .activity-repository-grid {
+        grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+      }
+
+      .utility-actions {
+        grid-template-columns: 1fr;
       }
 
       .letter-bank {
@@ -1583,15 +2050,6 @@
 <body>
   <div class="spell-background-wash" id="spellBackgroundWash" aria-hidden="true"></div>
   <div class="app">
-    <header class="topbar">
-      <div class="top-actions">
-        <button class="action-btn" id="fullscreenBtn" type="button">Fullscreen</button>
-        <button class="ghost-btn" id="openBoardBtn" type="button">Open Screen Board</button>
-        <button class="ghost-btn" id="removeBtn" type="button">Remove Last</button>
-        <button class="action-btn" id="clearBtn" type="button">Clear All</button>
-      </div>
-    </header>
-
     <main class="layout">
       <section class="card game-panel">
         <div class="stack">
@@ -1600,23 +2058,36 @@
           </section>
 
           <section class="bank-card collapsed" id="spellTray">
-            <div class="background-control" id="backgroundControl">
-              <button class="gold-launcher background-launcher" id="backgroundLauncher" type="button" aria-label="Background controls closed. Tap once to open." aria-expanded="false">
-                <span class="tray-launcher-icon">Bg</span>
-              </button>
-              <div class="background-popup hidden" id="backgroundPopup" aria-hidden="true">
-                <p class="background-popup-title">Background Fade</p>
-                <p class="background-slider-copy">Slide from full picture color to a soft dirty-white background.</p>
-                <input class="background-slider" id="backgroundTransparencyRange" type="range" min="0" max="100" value="0" aria-label="Background fade level">
-                <div class="background-slider-ends">
-                  <span>Full picture</span>
-                  <span>Dirty white</span>
+            <div class="tray-launcher-stack">
+              <div class="launcher-module" id="spellingToolsControl">
+                <button class="gold-launcher spell-tools-launcher" id="spellingToolsLauncher" type="button" aria-label="Spelling board tools." aria-expanded="false">
+                  <span class="tray-launcher-icon">≡</span>
+                </button>
+                <div class="launcher-popup utility-popup hidden" id="spellingToolsPopup" aria-hidden="true">
+                  <div class="utility-actions">
+                    <button class="action-btn" id="fullscreenBtn" type="button">Fullscreen</button>
+                    <button class="ghost-btn" id="openBoardBtn" type="button">Open Screen Board</button>
+                    <button class="ghost-btn" id="removeBtn" type="button">Remove Last</button>
+                    <button class="action-btn" id="clearBtn" type="button">Clear All</button>
+                  </div>
                 </div>
               </div>
+              <div class="launcher-module background-control" id="backgroundControl">
+                <button class="gold-launcher background-launcher" id="backgroundLauncher" type="button" aria-label="Background controls closed. Tap once to open." aria-expanded="false">
+                  <span class="tray-launcher-icon">◐</span>
+                </button>
+                <div class="launcher-popup background-popup hidden" id="backgroundPopup" aria-hidden="true">
+                  <p class="background-popup-title">Background Fade</p>
+                  <input class="background-slider" id="backgroundTransparencyRange" type="range" min="0" max="100" value="0" aria-label="Background fade level">
+                </div>
+              </div>
+              <button class="gold-launcher activity-launcher" id="spellActivityLauncher" type="button" aria-label="Open Activity Product for the spelling board." aria-expanded="false">
+                <span class="tray-launcher-icon">AP</span>
+              </button>
+              <button class="tray-launcher" id="spellTrayLauncher" type="button" aria-label="Spelling tray launcher. Tap once to open the tray.">
+                <span class="tray-launcher-icon">Aa</span>
+              </button>
             </div>
-            <button class="tray-launcher" id="spellTrayLauncher" type="button" aria-label="Spelling tray launcher. Double tap to open the tray.">
-              <span class="tray-launcher-icon">Aa</span>
-            </button>
             <div class="tray-panel-body">
               <div class="letter-bank-stack">
                 <section class="letter-line-panel">
@@ -1682,9 +2153,14 @@
         </div>
 
         <section class="board-top collapsed" id="boardTop">
-          <button class="tray-launcher" id="boardTrayLauncher" type="button" aria-label="Screen Board tray launcher. Double tap to open the tray.">
-            <span class="tray-launcher-icon">✦</span>
-          </button>
+          <div class="tray-launcher-stack">
+            <button class="gold-launcher activity-launcher" id="boardActivityLauncher" type="button" aria-label="Open Activity Product for the screen board." aria-expanded="false">
+              <span class="tray-launcher-icon">AP</span>
+            </button>
+            <button class="tray-launcher" id="boardTrayLauncher" type="button" aria-label="Screen Board tray launcher. Tap once to open the tray.">
+              <span class="tray-launcher-icon">✦</span>
+            </button>
+          </div>
           <div class="tray-panel-body">
             <div class="board-toolbar-row">
               <div class="palette-row" id="paletteRow" aria-label="Pencil colors">
@@ -1741,6 +2217,40 @@
     </div>
   </div>
 
+  <div class="modal-backdrop hidden" id="activityProductModal" aria-hidden="true">
+    <div class="activity-modal-card" role="dialog" aria-modal="true" aria-labelledby="activityProductTitle">
+      <section class="activity-side">
+        <div class="activity-header">
+          <div class="activity-title-wrap">
+            <span class="activity-source-tag" id="activitySourceTag">Spelling</span>
+            <h2 class="activity-title" id="activityProductTitle">Activity Product</h2>
+          </div>
+          <button class="close-btn activity-close-btn" id="closeActivityProductBtn" type="button">Close</button>
+        </div>
+        <div class="activity-preview-stage" id="activityPreviewStage">
+          <p class="activity-preview-empty" id="activityPreviewEmpty">Save a screenshot or take a photo to build your activity product repository.</p>
+          <img class="activity-preview-image hidden" id="activityPreviewImage" alt="Selected activity product preview">
+          <video class="activity-camera-view hidden" id="activityCamera" autoplay playsinline muted></video>
+        </div>
+        <div class="activity-controls">
+          <button class="action-btn" id="activityCaptureBtn" type="button">Save Screenshot</button>
+          <button class="ghost-btn" id="activityCameraBtn" type="button">Open Camera</button>
+          <button class="ghost-btn" id="activitySwitchCameraBtn" type="button">Switch Camera</button>
+          <button class="action-btn" id="activityTakePhotoBtn" type="button">Take Photo</button>
+          <button class="action-btn" id="activityAnimateBtn" type="button">AI Animate Selected</button>
+        </div>
+        <p class="activity-status" id="activityStatus"></p>
+      </section>
+      <section class="activity-repository-panel">
+        <div class="activity-repository-head">
+          <h3 class="activity-repository-title">Repository</h3>
+          <p class="activity-repository-note">Latest saved products stay here on this device.</p>
+        </div>
+        <div class="activity-repository-grid" id="activityRepository"></div>
+      </section>
+    </div>
+  </div>
+
   <script>
     const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
@@ -1766,17 +2276,26 @@
       pointerSession: null,
       spellTrayExpanded: false,
       boardTrayExpanded: false,
+      spellingToolsPanelVisible: false,
       backgroundPanelVisible: false,
-      backgroundWash: 0
+      backgroundWash: 0,
+      activityProductSurface: "spell",
+      activityProducts: [],
+      selectedActivityProductId: null,
+      activityCameraFacingMode: "environment"
     };
 
     const coverScreen = document.getElementById("coverScreen");
     const enterGameBtn = document.getElementById("enterGameBtn");
     const spellTray = document.getElementById("spellTray");
+    const spellingToolsControl = document.getElementById("spellingToolsControl");
+    const spellingToolsLauncher = document.getElementById("spellingToolsLauncher");
+    const spellingToolsPopup = document.getElementById("spellingToolsPopup");
     const backgroundControl = document.getElementById("backgroundControl");
     const backgroundLauncher = document.getElementById("backgroundLauncher");
     const backgroundPopup = document.getElementById("backgroundPopup");
     const backgroundTransparencyRange = document.getElementById("backgroundTransparencyRange");
+    const spellActivityLauncher = document.getElementById("spellActivityLauncher");
     const spellTrayLauncher = document.getElementById("spellTrayLauncher");
     const letterBank = document.getElementById("letterBank");
     const lineLetterBank = document.getElementById("lineLetterBank");
@@ -1805,9 +2324,23 @@
     const toolSizePopup = document.getElementById("toolSizePopup");
     const popupSizeButtons = Array.from(toolSizePopup.querySelectorAll("[data-popup-size]"));
     const boardTop = document.querySelector(".board-top");
+    const boardActivityLauncher = document.getElementById("boardActivityLauncher");
     const boardTrayLauncher = document.getElementById("boardTrayLauncher");
     const boardWrap = document.getElementById("boardWrap");
     const boardStickerLayer = document.getElementById("boardStickerLayer");
+    const activityProductModal = document.getElementById("activityProductModal");
+    const activitySourceTag = document.getElementById("activitySourceTag");
+    const closeActivityProductBtn = document.getElementById("closeActivityProductBtn");
+    const activityCaptureBtn = document.getElementById("activityCaptureBtn");
+    const activityCameraBtn = document.getElementById("activityCameraBtn");
+    const activitySwitchCameraBtn = document.getElementById("activitySwitchCameraBtn");
+    const activityTakePhotoBtn = document.getElementById("activityTakePhotoBtn");
+    const activityAnimateBtn = document.getElementById("activityAnimateBtn");
+    const activityStatus = document.getElementById("activityStatus");
+    const activityRepository = document.getElementById("activityRepository");
+    const activityPreviewEmpty = document.getElementById("activityPreviewEmpty");
+    const activityPreviewImage = document.getElementById("activityPreviewImage");
+    const activityCamera = document.getElementById("activityCamera");
     const canvas = document.getElementById("drawCanvas");
     const ctx = canvas.getContext("2d");
     const LETTER_HEIGHT_RATIO = 1.5;
@@ -1822,6 +2355,11 @@
     const LONG_PRESS_MS = 280;
     const GESTURE_MOVE_THRESHOLD = 10;
     const LINE_LETTER_HEIGHT_RATIO = 1;
+    const LAUNCHER_TRANSITION_MS = 220;
+    const EXPORT_SCALE = 1;
+    const ACTIVITY_REPOSITORY_LIMIT = 8;
+    const ACTIVITY_PRODUCT_STORAGE_KEY = "spell-scribble-activity-products-v1";
+    const ACTIVITY_MOTION_PRESETS = ["motion-float", "motion-tilt", "motion-glow"];
     const PEN_STROKE_WIDTHS = {
       small: 4,
       medium: 8,
@@ -1856,9 +2394,42 @@
     let lastControlChooserTool = null;
     let lastControlChooserTarget = null;
     let lastControlChooserTime = 0;
+    let activityCameraStream = null;
+    const imageAssetCache = new Map();
+    const animatedVisibilityTimers = new WeakMap();
 
     function getLetterVariant(variantId = "classic") {
       return LETTER_VARIANTS[variantId] || LETTER_VARIANTS.classic;
+    }
+
+    function setAnimatedVisibility(element, visible, openClass = "is-open") {
+      if (!element) {
+        return;
+      }
+
+      const existingTimer = animatedVisibilityTimers.get(element);
+      if (existingTimer) {
+        clearTimeout(existingTimer);
+        animatedVisibilityTimers.delete(element);
+      }
+
+      if (visible) {
+        element.dataset.visibilityState = "open";
+        element.classList.remove("hidden");
+        void element.offsetWidth;
+        element.classList.add(openClass);
+        return;
+      }
+
+      element.dataset.visibilityState = "closed";
+      element.classList.remove(openClass);
+      const timer = window.setTimeout(() => {
+        if (element.dataset.visibilityState === "closed") {
+          element.classList.add("hidden");
+        }
+        animatedVisibilityTimers.delete(element);
+      }, LAUNCHER_TRANSITION_MS);
+      animatedVisibilityTimers.set(element, timer);
     }
     function svgToDataUri(svg) {
       return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
@@ -2256,6 +2827,542 @@
       }
 
       return asset.src || item.src;
+    }
+
+    function activitySourceLabel(surface) {
+      if (surface === "board") {
+        return "Screen Board";
+      }
+      if (surface === "camera") {
+        return "Camera";
+      }
+      return "Spelling";
+    }
+
+    function createActivityProductId() {
+      return `activity-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+    }
+
+    function setActivityStatus(message = "", tone = "") {
+      activityStatus.textContent = message;
+      activityStatus.className = `activity-status${tone ? ` ${tone}` : ""}`;
+    }
+
+    function currentActivityProduct() {
+      return state.activityProducts.find((product) => product.id === state.selectedActivityProductId) || null;
+    }
+
+    function persistActivityProducts() {
+      try {
+        localStorage.setItem(ACTIVITY_PRODUCT_STORAGE_KEY, JSON.stringify(state.activityProducts));
+        return true;
+      } catch (error) {
+        return false;
+      }
+    }
+
+    function loadActivityProducts() {
+      try {
+        const raw = localStorage.getItem(ACTIVITY_PRODUCT_STORAGE_KEY);
+        if (!raw) {
+          return;
+        }
+
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) {
+          return;
+        }
+
+        state.activityProducts = parsed
+          .filter((product) => product && typeof product.id === "string" && typeof product.dataUrl === "string")
+          .slice(0, ACTIVITY_REPOSITORY_LIMIT);
+
+        if (state.activityProducts.length) {
+          state.selectedActivityProductId = state.activityProducts[0].id;
+        }
+      } catch (error) {
+        state.activityProducts = [];
+        state.selectedActivityProductId = null;
+      }
+    }
+
+    function updateActivityControlState() {
+      const hasCameraApi = Boolean(navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === "function");
+      const surfaceLabel = activitySourceLabel(state.activityProductSurface);
+      const hasSelection = Boolean(currentActivityProduct());
+
+      activitySourceTag.textContent = surfaceLabel;
+      activityCaptureBtn.textContent = `Save ${surfaceLabel} Screenshot`;
+      activityCameraBtn.textContent = activityCameraStream ? "Close Camera" : "Open Camera";
+      activitySwitchCameraBtn.disabled = !hasCameraApi;
+      activityTakePhotoBtn.disabled = !activityCameraStream;
+      activityAnimateBtn.disabled = !hasSelection;
+    }
+
+    function renderActivityPreview() {
+      const product = currentActivityProduct();
+      const showingCamera = Boolean(activityCameraStream);
+
+      if (showingCamera) {
+        activityPreviewEmpty.classList.add("hidden");
+        activityPreviewImage.classList.add("hidden");
+        activityCamera.classList.remove("hidden");
+        return;
+      }
+
+      activityCamera.classList.add("hidden");
+
+      if (!product) {
+        activityPreviewImage.className = "activity-preview-image hidden";
+        activityPreviewImage.removeAttribute("src");
+        activityPreviewEmpty.classList.remove("hidden");
+        return;
+      }
+
+      activityPreviewImage.src = product.dataUrl;
+      activityPreviewImage.className = `activity-preview-image${product.motionPreset ? ` ${product.motionPreset}` : ""}`;
+      activityPreviewEmpty.classList.add("hidden");
+    }
+
+    function renderActivityProductRepository() {
+      activityRepository.innerHTML = "";
+
+      if (!state.activityProducts.length) {
+        const emptyState = document.createElement("div");
+        emptyState.className = "activity-empty-repository";
+        emptyState.textContent = "Your saved screenshots and photos will appear here.";
+        activityRepository.appendChild(emptyState);
+        renderActivityPreview();
+        updateActivityControlState();
+        return;
+      }
+
+      if (!currentActivityProduct()) {
+        state.selectedActivityProductId = state.activityProducts[0].id;
+      }
+
+      state.activityProducts.forEach((product) => {
+        const card = document.createElement("button");
+        card.type = "button";
+        card.className = `activity-product-card${product.id === state.selectedActivityProductId ? " active" : ""}`;
+        card.setAttribute("aria-label", `${product.label}. Select activity product.`);
+
+        const thumb = document.createElement("div");
+        thumb.className = "activity-product-thumb";
+
+        const image = document.createElement("img");
+        image.src = product.dataUrl;
+        image.alt = product.label;
+        thumb.appendChild(image);
+
+        const meta = document.createElement("div");
+        meta.className = "activity-product-meta";
+
+        const label = document.createElement("div");
+        label.className = "activity-product-label";
+        label.textContent = product.label;
+        meta.appendChild(label);
+
+        const date = document.createElement("div");
+        date.className = "activity-product-date";
+        date.textContent = new Date(product.createdAt).toLocaleString();
+        meta.appendChild(date);
+
+        if (product.motionPreset) {
+          const badge = document.createElement("span");
+          badge.className = "activity-ai-badge";
+          badge.textContent = "AI Motion";
+          meta.appendChild(badge);
+        }
+
+        card.appendChild(thumb);
+        card.appendChild(meta);
+        card.addEventListener("click", () => {
+          state.selectedActivityProductId = product.id;
+          renderActivityProductRepository();
+        });
+        activityRepository.appendChild(card);
+      });
+
+      renderActivityPreview();
+      updateActivityControlState();
+    }
+
+    function saveActivityProduct(entry) {
+      state.activityProducts = [
+        entry,
+        ...state.activityProducts.filter((product) => product.id !== entry.id)
+      ].slice(0, ACTIVITY_REPOSITORY_LIMIT);
+      state.selectedActivityProductId = entry.id;
+      renderActivityProductRepository();
+      return persistActivityProducts();
+    }
+
+    function setActivityLauncherExpanded(surface, expanded) {
+      const isSpell = surface === "spell";
+      spellActivityLauncher.setAttribute("aria-expanded", String(isSpell && expanded));
+      boardActivityLauncher.setAttribute("aria-expanded", String(!isSpell && expanded));
+    }
+
+    function openActivityProductModal(surface = "spell") {
+      state.activityProductSurface = surface === "board" ? "board" : "spell";
+      setSpellingToolsPanelVisible(false);
+      setBackgroundPanelVisible(false);
+      setActivityLauncherExpanded(state.activityProductSurface, true);
+      setAnimatedVisibility(activityProductModal, true, "modal-open");
+      activityProductModal.setAttribute("aria-hidden", "false");
+      setActivityStatus("");
+      updateActivityControlState();
+      renderActivityProductRepository();
+    }
+
+    async function stopActivityCamera() {
+      if (activityCameraStream) {
+        activityCameraStream.getTracks().forEach((track) => track.stop());
+        activityCameraStream = null;
+      }
+      activityCamera.pause();
+      activityCamera.srcObject = null;
+      renderActivityPreview();
+      updateActivityControlState();
+    }
+
+    async function closeActivityProductModal() {
+      await stopActivityCamera();
+      setActivityLauncherExpanded(state.activityProductSurface, false);
+      setAnimatedVisibility(activityProductModal, false, "modal-open");
+      activityProductModal.setAttribute("aria-hidden", "true");
+      setActivityStatus("");
+    }
+
+    function toggleActivityProductModal(surface = "spell") {
+      const normalizedSurface = surface === "board" ? "board" : "spell";
+      const modalOpen = activityProductModal.classList.contains("modal-open");
+      if (modalOpen && state.activityProductSurface === normalizedSurface) {
+        closeActivityProductModal();
+        return;
+      }
+      openActivityProductModal(normalizedSurface);
+    }
+
+    function loadImageAsset(src) {
+      return new Promise((resolve, reject) => {
+        if (!src) {
+          reject(new Error("Missing image source."));
+          return;
+        }
+
+        const cached = imageAssetCache.get(src);
+        if (cached) {
+          if (cached.complete && cached.naturalWidth) {
+            resolve(cached);
+            return;
+          }
+          cached.addEventListener("load", () => resolve(cached), { once: true });
+          cached.addEventListener("error", () => reject(new Error(`Unable to load ${src}`)), { once: true });
+          return;
+        }
+
+        const image = new Image();
+        image.decoding = "async";
+        image.onload = () => resolve(image);
+        image.onerror = () => reject(new Error(`Unable to load ${src}`));
+        imageAssetCache.set(src, image);
+        image.src = src;
+      });
+    }
+
+    function createExportSurface(width, height) {
+      const exportCanvas = document.createElement("canvas");
+      exportCanvas.width = Math.max(1, Math.round(width * EXPORT_SCALE));
+      exportCanvas.height = Math.max(1, Math.round(height * EXPORT_SCALE));
+      const exportCtx = exportCanvas.getContext("2d");
+      exportCtx.scale(exportCanvas.width / width, exportCanvas.height / height);
+      return { canvas: exportCanvas, ctx: exportCtx };
+    }
+
+    function drawCoverImage(targetCtx, image, width, height) {
+      const imageRatio = image.naturalWidth / image.naturalHeight;
+      const frameRatio = width / height;
+      let drawWidth = width;
+      let drawHeight = height;
+      let offsetX = 0;
+      let offsetY = 0;
+
+      if (imageRatio > frameRatio) {
+        drawHeight = height;
+        drawWidth = drawHeight * imageRatio;
+        offsetX = (width - drawWidth) / 2;
+      } else {
+        drawWidth = width;
+        drawHeight = drawWidth / imageRatio;
+        offsetY = (height - drawHeight) / 2;
+      }
+
+      targetCtx.drawImage(image, offsetX, offsetY, drawWidth, drawHeight);
+    }
+
+    function drawRoundedRect(targetCtx, x, y, width, height, radius) {
+      const boundedRadius = Math.min(radius, width / 2, height / 2);
+      targetCtx.beginPath();
+      targetCtx.moveTo(x + boundedRadius, y);
+      targetCtx.arcTo(x + width, y, x + width, y + height, boundedRadius);
+      targetCtx.arcTo(x + width, y + height, x, y + height, boundedRadius);
+      targetCtx.arcTo(x, y + height, x, y, boundedRadius);
+      targetCtx.arcTo(x, y, x + width, y, boundedRadius);
+      targetCtx.closePath();
+    }
+
+    async function drawSpellingBackdrop(targetCtx, width, height) {
+      targetCtx.fillStyle = "#070b1a";
+      targetCtx.fillRect(0, 0, width, height);
+
+      const mainBackground = await loadImageAsset("assets/game-background-main.png");
+      drawCoverImage(targetCtx, mainBackground, width, height);
+
+      const darkOverlay = targetCtx.createLinearGradient(0, 0, 0, height);
+      darkOverlay.addColorStop(0, "rgba(10, 12, 28, 0.28)");
+      darkOverlay.addColorStop(1, "rgba(7, 10, 26, 0.44)");
+      targetCtx.fillStyle = darkOverlay;
+      targetCtx.fillRect(0, 0, width, height);
+
+      const topGlow = targetCtx.createRadialGradient(width * 0.5, height * 0.18, 0, width * 0.5, height * 0.18, width * 0.28);
+      topGlow.addColorStop(0, "rgba(193, 151, 255, 0.16)");
+      topGlow.addColorStop(1, "rgba(193, 151, 255, 0)");
+      targetCtx.fillStyle = topGlow;
+      targetCtx.fillRect(0, 0, width, height);
+
+      const sideGlow = targetCtx.createRadialGradient(width * 0.82, height * 0.22, 0, width * 0.82, height * 0.22, width * 0.26);
+      sideGlow.addColorStop(0, "rgba(107, 212, 255, 0.14)");
+      sideGlow.addColorStop(1, "rgba(107, 212, 255, 0)");
+      targetCtx.fillStyle = sideGlow;
+      targetCtx.fillRect(0, 0, width, height);
+
+      if (state.backgroundWash > 0) {
+        targetCtx.save();
+        targetCtx.globalAlpha = state.backgroundWash;
+        const washGlow = targetCtx.createRadialGradient(width * 0.5, height * 0.28, 0, width * 0.5, height * 0.28, width * 0.34);
+        washGlow.addColorStop(0, "rgba(255, 255, 255, 0.54)");
+        washGlow.addColorStop(1, "rgba(255, 255, 255, 0)");
+        targetCtx.fillStyle = washGlow;
+        targetCtx.fillRect(0, 0, width, height);
+
+        const wash = targetCtx.createLinearGradient(0, 0, 0, height);
+        wash.addColorStop(0, "rgba(248, 246, 239, 0.98)");
+        wash.addColorStop(1, "rgba(236, 231, 220, 0.98)");
+        targetCtx.fillStyle = wash;
+        targetCtx.fillRect(0, 0, width, height);
+        targetCtx.restore();
+      }
+    }
+
+    async function drawPlacedItemToExport(targetCtx, item) {
+      const width = item.size;
+      const height = itemHeight(item);
+      const rotation = ((item.rotation || 0) * Math.PI) / 180;
+
+      targetCtx.save();
+      targetCtx.translate(item.x + width / 2, item.y + height / 2);
+      targetCtx.rotate(rotation);
+
+      if (item.kind === "space") {
+        const gradient = targetCtx.createLinearGradient(-width / 2, -height / 2, -width / 2, height / 2);
+        gradient.addColorStop(0, "rgba(233, 246, 255, 0.96)");
+        gradient.addColorStop(1, "rgba(217, 239, 255, 0.92)");
+        drawRoundedRect(targetCtx, -width / 2, -height / 2, width, height, Math.min(18, width * 0.18));
+        targetCtx.fillStyle = gradient;
+        targetCtx.fill();
+        targetCtx.fillStyle = "rgba(32, 48, 74, 0.68)";
+        targetCtx.font = `900 ${Math.max(12, height * 0.28)}px "Avenir Next Rounded", "Trebuchet MS", sans-serif`;
+        targetCtx.textAlign = "center";
+        targetCtx.textBaseline = "middle";
+        targetCtx.fillText("SPACE", 0, height * 0.03);
+        targetCtx.restore();
+        return;
+      }
+
+      const source = item.kind === "icon" ? item.src : imagePathForCharacter(item.char, item.letterVariant);
+      const image = await loadImageAsset(source);
+      targetCtx.shadowColor = "rgba(48, 53, 84, 0.18)";
+      targetCtx.shadowBlur = item.kind === "icon" ? 14 : 18;
+      targetCtx.drawImage(image, -width / 2, -height / 2, width, height);
+      targetCtx.restore();
+    }
+
+    async function drawBoardBackdrop(targetCtx, width, height) {
+      targetCtx.fillStyle = "#fdf6dd";
+      targetCtx.fillRect(0, 0, width, height);
+      const boardBackground = await loadImageAsset("assets/screen-board-background.png");
+      drawCoverImage(targetCtx, boardBackground, width, height);
+    }
+
+    async function drawBoardItemToExport(targetCtx, item) {
+      const image = await loadImageAsset(boardStickerSource(item));
+      targetCtx.save();
+      targetCtx.translate(item.x + item.size / 2, item.y + item.size / 2);
+      targetCtx.rotate(((item.rotation || 0) * Math.PI) / 180);
+      targetCtx.drawImage(image, -item.size / 2, -item.size / 2, item.size, item.size);
+      targetCtx.restore();
+    }
+
+    async function captureSpellingProduct() {
+      const width = Math.max(1, Math.round(window.innerWidth));
+      const height = Math.max(1, Math.round(window.innerHeight));
+      const exportSurface = createExportSurface(width, height);
+      await drawSpellingBackdrop(exportSurface.ctx, width, height);
+
+      const orderedItems = [...state.placedItems].sort((a, b) => a.zIndex - b.zIndex);
+      for (const item of orderedItems) {
+        await drawPlacedItemToExport(exportSurface.ctx, item);
+      }
+
+      return exportSurface.canvas.toDataURL("image/jpeg", 0.84);
+    }
+
+    async function captureBoardProduct() {
+      const rect = boardRect();
+      const width = Math.max(1, Math.round(rect.width || boardWrap.clientWidth));
+      const height = Math.max(1, Math.round(rect.height || boardWrap.clientHeight));
+      if (!width || !height) {
+        throw new Error("Open the Screen Board before saving a screenshot.");
+      }
+
+      const exportSurface = createExportSurface(width, height);
+      await drawBoardBackdrop(exportSurface.ctx, width, height);
+      exportSurface.ctx.drawImage(canvas, 0, 0, width, height);
+
+      const orderedItems = [...state.boardItems].sort((a, b) => a.zIndex - b.zIndex);
+      for (const item of orderedItems) {
+        await drawBoardItemToExport(exportSurface.ctx, item);
+      }
+
+      return exportSurface.canvas.toDataURL("image/jpeg", 0.84);
+    }
+
+    async function handleActivityScreenshotSave() {
+      activityCaptureBtn.disabled = true;
+      setActivityStatus(`Saving ${activitySourceLabel(state.activityProductSurface)} screenshot...`);
+
+      try {
+        const dataUrl = state.activityProductSurface === "board"
+          ? await captureBoardProduct()
+          : await captureSpellingProduct();
+
+        const persisted = saveActivityProduct({
+          id: createActivityProductId(),
+          source: state.activityProductSurface,
+          label: `${activitySourceLabel(state.activityProductSurface)} Screenshot`,
+          createdAt: new Date().toISOString(),
+          dataUrl,
+          motionPreset: ""
+        });
+        setActivityStatus(
+          persisted
+            ? "Screenshot saved in Activity Product."
+            : "Screenshot saved, but the repository is full on this device.",
+          persisted ? "good" : "warn"
+        );
+      } catch (error) {
+        setActivityStatus(error.message || "Unable to save the screenshot.", "bad");
+      } finally {
+        activityCaptureBtn.disabled = false;
+        updateActivityControlState();
+      }
+    }
+
+    async function startActivityCamera() {
+      if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== "function") {
+        setActivityStatus("Camera access needs a live front or back camera connection in this app.", "warn");
+        return;
+      }
+
+      try {
+        await stopActivityCamera();
+        activityCameraStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: {
+              ideal: state.activityCameraFacingMode
+            }
+          },
+          audio: false
+        });
+        activityCamera.srcObject = activityCameraStream;
+        await activityCamera.play();
+        renderActivityPreview();
+        updateActivityControlState();
+        setActivityStatus(`${state.activityCameraFacingMode === "user" ? "Front" : "Back"} camera ready.`, "good");
+      } catch (error) {
+        setActivityStatus("Camera access was blocked or no matching camera is available.", "bad");
+      }
+    }
+
+    async function toggleActivityCamera() {
+      if (activityCameraStream) {
+        await stopActivityCamera();
+        setActivityStatus("Camera closed.");
+        return;
+      }
+      await startActivityCamera();
+    }
+
+    async function switchActivityCamera() {
+      state.activityCameraFacingMode = state.activityCameraFacingMode === "user" ? "environment" : "user";
+      if (activityCameraStream) {
+        await startActivityCamera();
+        return;
+      }
+      updateActivityControlState();
+      setActivityStatus(`${state.activityCameraFacingMode === "user" ? "Front" : "Back"} camera selected.`);
+    }
+
+    async function captureActivityPhoto() {
+      if (!activityCameraStream || !activityCamera.videoWidth || !activityCamera.videoHeight) {
+        setActivityStatus("Open the camera before taking a photo.", "warn");
+        return;
+      }
+
+      const photoCanvas = document.createElement("canvas");
+      photoCanvas.width = activityCamera.videoWidth;
+      photoCanvas.height = activityCamera.videoHeight;
+      photoCanvas.getContext("2d").drawImage(activityCamera, 0, 0, photoCanvas.width, photoCanvas.height);
+
+      const persisted = saveActivityProduct({
+        id: createActivityProductId(),
+        source: "camera",
+        label: `${state.activityCameraFacingMode === "user" ? "Front" : "Back"} Camera Photo`,
+        createdAt: new Date().toISOString(),
+        dataUrl: photoCanvas.toDataURL("image/jpeg", 0.86),
+        motionPreset: ""
+      });
+      await stopActivityCamera();
+      setActivityStatus(
+        persisted
+          ? "Photo saved in Activity Product."
+          : "Photo saved, but the repository is full on this device.",
+        persisted ? "good" : "warn"
+      );
+    }
+
+    async function animateSelectedActivityProduct() {
+      const product = currentActivityProduct();
+      if (!product) {
+        setActivityStatus("Choose a saved product before starting AI animation.", "warn");
+        return;
+      }
+      if (!navigator.onLine) {
+        setActivityStatus("AI animation needs Wi-Fi before it can run.", "warn");
+        return;
+      }
+
+      activityAnimateBtn.disabled = true;
+      setActivityStatus("Preparing AI motion preview...");
+      await new Promise((resolve) => window.setTimeout(resolve, 720));
+
+      product.motionPreset = ACTIVITY_MOTION_PRESETS[Math.floor(Math.random() * ACTIVITY_MOTION_PRESETS.length)];
+      renderActivityProductRepository();
+      persistActivityProducts();
+      setActivityStatus("AI motion preview is ready.", "good");
+      activityAnimateBtn.disabled = false;
     }
 
     function setStatus(message, tone = "") {
@@ -2984,6 +4091,19 @@
       toolSizePopup.style.removeProperty("top");
     }
 
+    function setSpellingToolsPanelVisible(visible) {
+      state.spellingToolsPanelVisible = Boolean(visible);
+      setAnimatedVisibility(spellingToolsPopup, state.spellingToolsPanelVisible);
+      spellingToolsPopup.setAttribute("aria-hidden", String(!state.spellingToolsPanelVisible));
+      spellingToolsLauncher.setAttribute("aria-expanded", String(state.spellingToolsPanelVisible));
+      spellingToolsLauncher.setAttribute(
+        "aria-label",
+        state.spellingToolsPanelVisible
+          ? "Spelling board tools open. Tap again to close."
+          : "Spelling board tools."
+      );
+    }
+
     function setSpellTrayExpanded(expanded) {
       state.spellTrayExpanded = Boolean(expanded);
       spellTray.classList.toggle("collapsed", !state.spellTrayExpanded);
@@ -2992,7 +4112,7 @@
         "aria-label",
         state.spellTrayExpanded
           ? "Spelling tray open. Tap once to collapse."
-          : "Spelling tray closed. Double tap to open."
+          : "Spelling tray closed. Tap once to open."
       );
     }
 
@@ -3004,7 +4124,7 @@
         "aria-label",
         state.boardTrayExpanded
           ? "Screen Board tray open. Tap once to collapse."
-          : "Screen Board tray closed. Double tap to open."
+          : "Screen Board tray closed. Tap once to open."
       );
 
       if (!state.boardTrayExpanded) {
@@ -3016,34 +4136,11 @@
 
     function handleTrayLauncherTap(kind, launcher) {
       const isExpanded = kind === "spell" ? state.spellTrayExpanded : state.boardTrayExpanded;
-      if (isExpanded) {
-        if (kind === "spell") {
-          setSpellTrayExpanded(false);
-        } else {
-          setBoardTrayExpanded(false);
-        }
-        launcher.dataset.lastTapAt = "0";
-        return;
+      if (kind === "spell") {
+        setSpellTrayExpanded(!isExpanded);
+      } else {
+        setBoardTrayExpanded(!isExpanded);
       }
-
-      const now = performance.now();
-      const lastTapAt = Number(launcher.dataset.lastTapAt || 0);
-      if (now - lastTapAt <= DOUBLE_TAP_MS) {
-        launcher.dataset.lastTapAt = "0";
-        if (kind === "spell") {
-          setSpellTrayExpanded(true);
-        } else {
-          setBoardTrayExpanded(true);
-        }
-        return;
-      }
-
-      launcher.dataset.lastTapAt = String(now);
-      window.setTimeout(() => {
-        if (launcher.dataset.lastTapAt === String(now)) {
-          launcher.dataset.lastTapAt = "0";
-        }
-      }, DOUBLE_TAP_MS + 20);
     }
 
     function toggleCardFlip(card) {
@@ -3952,7 +5049,7 @@
 
     function setBackgroundPanelVisible(visible) {
       state.backgroundPanelVisible = Boolean(visible);
-      backgroundPopup.classList.toggle("hidden", !state.backgroundPanelVisible);
+      setAnimatedVisibility(backgroundPopup, state.backgroundPanelVisible);
       backgroundPopup.setAttribute("aria-hidden", String(!state.backgroundPanelVisible));
       backgroundLauncher.setAttribute("aria-expanded", String(state.backgroundPanelVisible));
       backgroundLauncher.setAttribute(
@@ -4369,6 +5466,8 @@
     }
 
     function openCodeModal() {
+      setSpellingToolsPanelVisible(false);
+      setBackgroundPanelVisible(false);
       codeModal.classList.remove("hidden");
       codeModal.setAttribute("aria-hidden", "false");
       boardCodeInput.value = "";
@@ -4397,6 +5496,7 @@
       closeSizePopup();
       resetControlChooserSession();
       stopDrawing();
+      closeActivityProductModal();
       state.boardVisible = false;
       state.drawing = false;
       state.lastPoint = null;
@@ -4620,6 +5720,16 @@
       }
 
       if (event.key === "Escape") {
+        if (activityProductModal.classList.contains("modal-open")) {
+          event.preventDefault();
+          closeActivityProductModal();
+          return;
+        }
+        if (state.spellingToolsPanelVisible) {
+          event.preventDefault();
+          setSpellingToolsPanelVisible(false);
+          return;
+        }
         if (state.backgroundPanelVisible) {
           event.preventDefault();
           setBackgroundPanelVisible(false);
@@ -4649,7 +5759,10 @@
     }
 
     enterGameBtn.addEventListener("click", closeCoverScreen);
-    openBoardBtn.addEventListener("click", openCodeModal);
+    openBoardBtn.addEventListener("click", () => {
+      setSpellingToolsPanelVisible(false);
+      openCodeModal();
+    });
     cancelCodeBtn.addEventListener("click", closeCodeModal);
     unlockBtn.addEventListener("click", verifyBoardCode);
     boardCodeInput.addEventListener("keydown", (event) => {
@@ -4658,9 +5771,18 @@
       }
     });
 
-    removeBtn.addEventListener("click", removeLastCharacter);
-    clearBtn.addEventListener("click", clearSpelling);
-    fullscreenBtn.addEventListener("click", toggleFullscreen);
+    removeBtn.addEventListener("click", () => {
+      setSpellingToolsPanelVisible(false);
+      removeLastCharacter();
+    });
+    clearBtn.addEventListener("click", () => {
+      setSpellingToolsPanelVisible(false);
+      clearSpelling();
+    });
+    fullscreenBtn.addEventListener("click", () => {
+      setSpellingToolsPanelVisible(false);
+      toggleFullscreen();
+    });
     document.addEventListener("fullscreenchange", updateFullscreenLabel);
     document.addEventListener("keydown", handleKeyboardShortcuts);
     spellStage.addEventListener("pointerdown", handleSpellStagePointerDown);
@@ -4669,6 +5791,9 @@
     document.addEventListener("pointerup", finishPointerSession);
     document.addEventListener("pointercancel", finishPointerSession);
     document.addEventListener("pointerdown", (event) => {
+      if (state.spellingToolsPanelVisible && spellingToolsControl && !spellingToolsControl.contains(event.target)) {
+        setSpellingToolsPanelVisible(false);
+      }
       if (state.backgroundPanelVisible && backgroundControl && !backgroundControl.contains(event.target)) {
         setBackgroundPanelVisible(false);
       }
@@ -4699,6 +5824,12 @@
       }
     });
 
+    activityProductModal.addEventListener("click", (event) => {
+      if (event.target === activityProductModal) {
+        closeActivityProductModal();
+      }
+    });
+
     swatches.forEach((swatch) => {
       const baseLabel = swatch.getAttribute("aria-label") || "Pencil color";
       swatch.setAttribute("aria-label", `${baseLabel}. Click once to choose or mix, click twice for size.`);
@@ -4724,13 +5855,21 @@
     });
 
     closeBoardBtn.addEventListener("click", closeBoardModal);
+    closeActivityProductBtn.addEventListener("click", closeActivityProductModal);
+    spellingToolsLauncher.addEventListener("click", () => {
+      setBackgroundPanelVisible(false);
+      setSpellingToolsPanelVisible(!state.spellingToolsPanelVisible);
+    });
     backgroundLauncher.addEventListener("click", () => {
+      setSpellingToolsPanelVisible(false);
       setBackgroundPanelVisible(!state.backgroundPanelVisible);
     });
     backgroundTransparencyRange.addEventListener("input", (event) => {
       setBackgroundWash(Number(event.currentTarget.value) / 100);
     });
+    spellActivityLauncher.addEventListener("click", () => toggleActivityProductModal("spell"));
     spellTrayLauncher.addEventListener("click", () => handleTrayLauncherTap("spell", spellTrayLauncher));
+    boardActivityLauncher.addEventListener("click", () => toggleActivityProductModal("board"));
     boardTrayLauncher.addEventListener("click", () => handleTrayLauncherTap("board", boardTrayLauncher));
     penModeBtn.addEventListener("click", () => {
       setBoardPenMode(!state.boardPenMode);
@@ -4757,6 +5896,11 @@
         closeSizePopup();
       });
     });
+    activityCaptureBtn.addEventListener("click", handleActivityScreenshotSave);
+    activityCameraBtn.addEventListener("click", toggleActivityCamera);
+    activitySwitchCameraBtn.addEventListener("click", switchActivityCamera);
+    activityTakePhotoBtn.addEventListener("click", captureActivityPhoto);
+    activityAnimateBtn.addEventListener("click", animateSelectedActivityProduct);
 
     boardWrap.addEventListener("pointerdown", startDrawing);
     boardWrap.addEventListener("pointermove", continueDrawing);
@@ -4788,6 +5932,9 @@
     renderBoardAssetBank();
     renderPlacedSpelling();
     renderBoardStickers();
+    loadActivityProducts();
+    renderActivityProductRepository();
+    setSpellingToolsPanelVisible(false);
     setSpellTrayExpanded(false);
     setBoardTrayExpanded(false);
     setBackgroundPanelVisible(false);
