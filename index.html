@@ -841,6 +841,33 @@
       filter: drop-shadow(0 18px 28px rgba(48, 53, 84, 0.22));
     }
 
+    .drag-preview.color-drag-preview {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      border: 4px solid rgba(255, 244, 181, 0.98);
+      box-shadow:
+        0 16px 26px rgba(73, 49, 0, 0.24),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+      filter: none;
+    }
+
+    .drag-preview.color-drag-preview::after {
+      content: "";
+      position: absolute;
+      inset: 10px;
+      border-radius: 50%;
+      background: var(--drag-color, #ff69b4);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
+    }
+
+    .board-sticker.colorable.color-drag-target {
+      box-shadow:
+        0 0 0 4px rgba(255, 223, 122, 0.92),
+        0 16px 28px rgba(48, 53, 84, 0.2);
+      border-radius: 18px;
+    }
+
     .drag-preview img {
       display: block;
       width: 100%;
@@ -1086,6 +1113,11 @@
       inset: -6px;
       border-radius: 50%;
       border: 2px solid rgba(32, 48, 74, 0.55);
+    }
+
+    .swatch.dragging {
+      opacity: 0.45;
+      transform: scale(0.94);
     }
 
     .board-wrap {
@@ -1587,6 +1619,133 @@
       return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
     }
 
+    function hexToRgb(hex) {
+      if (!hex) {
+        return null;
+      }
+
+      let normalized = String(hex).replace("#", "").trim();
+      if (normalized.length === 3) {
+        normalized = normalized.split("").map((char) => char + char).join("");
+      }
+
+      if (normalized.length !== 6) {
+        return null;
+      }
+
+      const value = Number.parseInt(normalized, 16);
+      if (Number.isNaN(value)) {
+        return null;
+      }
+
+      return {
+        r: (value >> 16) & 255,
+        g: (value >> 8) & 255,
+        b: value & 255
+      };
+    }
+
+    function rgbToHex(r, g, b) {
+      const toHex = (value) => clamp(Math.round(value), 0, 255).toString(16).padStart(2, "0");
+      return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+    }
+
+    function mixHexColors(base, target, ratio) {
+      const start = hexToRgb(base);
+      const end = hexToRgb(target);
+      if (!start || !end) {
+        return target;
+      }
+
+      const mix = clamp(ratio, 0, 1);
+      return rgbToHex(
+        start.r + (end.r - start.r) * mix,
+        start.g + (end.g - start.g) * mix,
+        start.b + (end.b - start.b) * mix
+      );
+    }
+
+    function deriveBoardFillGradient(color = "#8b5eff") {
+      return {
+        start: mixHexColors("#e3f7ff", color, 0.38),
+        end: mixHexColors("#5d2cff", color, 0.86)
+      };
+    }
+
+    function buildBoardShapeSvg(content, fillColor = null) {
+      const gradient = deriveBoardFillGradient(fillColor || "#8b5eff");
+      return `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+          <defs>
+            <linearGradient id="shapeFill" x1="96" y1="104" x2="416" y2="408" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="${gradient.start}"/>
+              <stop offset="1" stop-color="${gradient.end}"/>
+            </linearGradient>
+            <linearGradient id="shapeStroke" x1="84" y1="72" x2="430" y2="430" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#fff7b0"/>
+              <stop offset="0.48" stop-color="#ffd400"/>
+              <stop offset="1" stop-color="#ffb300"/>
+            </linearGradient>
+          </defs>
+          ${content}
+        </svg>
+      `;
+    }
+
+    function buildBoardNumberSvg(number, fillColor = null) {
+      const fontSize = number >= 10 ? 240 : 276;
+      const baseline = number >= 10 ? 334 : 340;
+      const outerStrokeWidth = number >= 10 ? 38 : 34;
+      const innerStrokeWidth = number >= 10 ? 16 : 14;
+      const gradient = deriveBoardFillGradient(fillColor || "#8b5eff");
+      return `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+          <defs>
+            <linearGradient id="numFill" x1="120" y1="112" x2="392" y2="400" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="${gradient.start}"/>
+              <stop offset="1" stop-color="${gradient.end}"/>
+            </linearGradient>
+            <linearGradient id="numOuterStroke" x1="76" y1="62" x2="442" y2="438" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#fff9c9"/>
+              <stop offset="0.32" stop-color="#ffe46f"/>
+              <stop offset="0.68" stop-color="#ffc821"/>
+              <stop offset="1" stop-color="#f4a300"/>
+            </linearGradient>
+            <linearGradient id="numInnerStroke" x1="92" y1="84" x2="420" y2="414" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#fff6b3"/>
+              <stop offset="0.46" stop-color="#ffd53d"/>
+              <stop offset="1" stop-color="#ffbc00"/>
+            </linearGradient>
+          </defs>
+          <g
+            text-anchor="middle"
+            font-family="Avenir Next, Arial Rounded MT Bold, Arial, sans-serif"
+            font-weight="900"
+            stroke-linejoin="round"
+            stroke-linecap="round"
+            paint-order="stroke fill"
+          >
+            <text
+              x="256"
+              y="${baseline}"
+              font-size="${fontSize}"
+              fill="none"
+              stroke="url(#numOuterStroke)"
+              stroke-width="${outerStrokeWidth}"
+            >${number}</text>
+            <text
+              x="256"
+              y="${baseline}"
+              font-size="${fontSize}"
+              fill="url(#numFill)"
+              stroke="url(#numInnerStroke)"
+              stroke-width="${innerStrokeWidth}"
+            >${number}</text>
+          </g>
+        </svg>
+      `;
+    }
+
     function pointsToPath(points) {
       return points.map((point, index) => `${index === 0 ? "M" : "L"}${point.x} ${point.y}`).join(" ") + " Z";
     }
@@ -1606,79 +1765,21 @@
       return {
         id,
         label,
-        src: svgToDataUri(`
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
-            <defs>
-              <linearGradient id="shapeFill" x1="96" y1="104" x2="416" y2="408" gradientUnits="userSpaceOnUse">
-                <stop offset="0" stop-color="#8edcff"/>
-                <stop offset="1" stop-color="#8b5eff"/>
-              </linearGradient>
-              <linearGradient id="shapeStroke" x1="84" y1="72" x2="430" y2="430" gradientUnits="userSpaceOnUse">
-                <stop offset="0" stop-color="#fff7b0"/>
-                <stop offset="0.48" stop-color="#ffd400"/>
-                <stop offset="1" stop-color="#ffb300"/>
-              </linearGradient>
-            </defs>
-            ${content}
-          </svg>
-        `)
+        assetKind: "shape",
+        colorable: true,
+        buildSrc: (fillColor) => svgToDataUri(buildBoardShapeSvg(content, fillColor)),
+        src: svgToDataUri(buildBoardShapeSvg(content))
       };
     }
 
     function makeBoardNumberAsset(number) {
-      const fontSize = number >= 10 ? 240 : 276;
-      const baseline = number >= 10 ? 334 : 340;
-      const outerStrokeWidth = number >= 10 ? 38 : 34;
-      const innerStrokeWidth = number >= 10 ? 16 : 14;
       return {
         id: `number-${number}`,
         label: `Number ${number}`,
-        src: svgToDataUri(`
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
-            <defs>
-              <linearGradient id="numFill" x1="120" y1="112" x2="392" y2="400" gradientUnits="userSpaceOnUse">
-                <stop offset="0" stop-color="#8edcff"/>
-                <stop offset="1" stop-color="#8b5eff"/>
-              </linearGradient>
-              <linearGradient id="numOuterStroke" x1="76" y1="62" x2="442" y2="438" gradientUnits="userSpaceOnUse">
-                <stop offset="0" stop-color="#fff9c9"/>
-                <stop offset="0.32" stop-color="#ffe46f"/>
-                <stop offset="0.68" stop-color="#ffc821"/>
-                <stop offset="1" stop-color="#f4a300"/>
-              </linearGradient>
-              <linearGradient id="numInnerStroke" x1="92" y1="84" x2="420" y2="414" gradientUnits="userSpaceOnUse">
-                <stop offset="0" stop-color="#fff6b3"/>
-                <stop offset="0.46" stop-color="#ffd53d"/>
-                <stop offset="1" stop-color="#ffbc00"/>
-              </linearGradient>
-            </defs>
-            <g
-              text-anchor="middle"
-              font-family="Avenir Next, Arial Rounded MT Bold, Arial, sans-serif"
-              font-weight="900"
-              stroke-linejoin="round"
-              stroke-linecap="round"
-              paint-order="stroke fill"
-            >
-              <text
-                x="256"
-                y="${baseline}"
-                font-size="${fontSize}"
-                fill="none"
-                stroke="url(#numOuterStroke)"
-                stroke-width="${outerStrokeWidth}"
-              >${number}</text>
-              <text
-                x="256"
-                y="${baseline}"
-                font-size="${fontSize}"
-                fill="url(#numFill)"
-                stroke="url(#numInnerStroke)"
-                stroke-width="${innerStrokeWidth}"
-              >${number}</text>
-            </g>
-          </svg>
-        `)
+        assetKind: "number",
+        colorable: true,
+        buildSrc: (fillColor) => svgToDataUri(buildBoardNumberSvg(number, fillColor)),
+        src: svgToDataUri(buildBoardNumberSvg(number))
       };
     }
 
@@ -1703,7 +1804,11 @@
       { id: "magic-star", label: "Magic Star", src: "assets/icon-stickers/magic-star.png" },
       { id: "dream-moon", label: "Dream Moon", src: "assets/icon-stickers/dream-moon.png" },
       { id: "pastel-planet", label: "Pastel Planet", src: "assets/icon-stickers/pastel-planet.png" }
-    ];
+    ].map((icon) => ({
+      ...icon,
+      assetKind: "emoji",
+      colorable: false
+    }));
     const BOARD_SHAPE_DEFS = [
       makeBoardShapeAsset("shape-circle", "Circle Shape", `<circle cx="256" cy="256" r="160" fill="url(#shapeFill)" stroke="url(#shapeStroke)" stroke-width="22"/>`),
       makeBoardShapeAsset("shape-oval", "Oval Shape", `<ellipse cx="256" cy="256" rx="178" ry="128" fill="url(#shapeFill)" stroke="url(#shapeStroke)" stroke-width="22"/>`),
@@ -1762,6 +1867,19 @@
       return BOARD_ASSET_MAP.get(assetId) || null;
     }
 
+    function boardStickerSource(item) {
+      const asset = getBoardAssetDef(item.iconId);
+      if (!asset) {
+        return item.src;
+      }
+
+      if (item.colorable && item.tintColor && typeof asset.buildSrc === "function") {
+        return asset.buildSrc(item.tintColor);
+      }
+
+      return asset.src || item.src;
+    }
+
     function setStatus(message, tone = "") {
       if (!statusText) {
         return;
@@ -1818,6 +1936,49 @@
 
     function getSurfaceItem(surface, itemId) {
       return surface === "board" ? getBoardItem(itemId) : getPlacedItem(itemId);
+    }
+
+    function removeSurfaceItem(surface, itemId) {
+      const numericId = Number(itemId);
+      if (surface === "board") {
+        const previousLength = state.boardItems.length;
+        state.boardItems = state.boardItems.filter((item) => item.id !== numericId);
+        if (state.boardItems.length !== previousLength) {
+          renderBoardStickers();
+          return true;
+        }
+        return false;
+      }
+
+      const previousLength = state.placedItems.length;
+      state.placedItems = state.placedItems.filter((item) => item.id !== numericId);
+      if (state.placedItems.length !== previousLength) {
+        renderPlacedSpelling();
+        return true;
+      }
+      return false;
+    }
+
+    function registerSurfaceTap(surface, itemId) {
+      const item = getSurfaceItem(surface, itemId);
+      if (!item) {
+        return false;
+      }
+
+      const now = performance.now();
+      const lastTapAt = Number(item.lastTapAt || 0);
+      const tapCount = Number(item.tapCount || 0);
+      const nextTapCount = now - lastTapAt <= DOUBLE_TAP_MS ? tapCount + 1 : 1;
+      item.lastTapAt = now;
+      item.tapCount = nextTapCount;
+
+      if (nextTapCount >= 3) {
+        item.lastTapAt = 0;
+        item.tapCount = 0;
+        return removeSurfaceItem(surface, itemId);
+      }
+
+      return false;
     }
 
     function bringSurfaceItemToFront(surface, itemId) {
@@ -1951,15 +2112,21 @@
       }, LONG_PRESS_MS);
     }
 
-    function finishGestureSession(session) {
+    function finishGestureSession(session, event = null) {
       clearGestureHold(session);
-      if (session.element) {
+      const removedByTap = session.mode === "pending" && event && event.type !== "pointercancel"
+        ? registerSurfaceTap(session.surface, session.itemId)
+        : false;
+
+      if (!removedByTap && session.element) {
         session.element.classList.remove("moving");
       }
       if (state.pointerSession === session) {
         state.pointerSession = null;
       }
-      refreshBuiltWord();
+      if (!removedByTap) {
+        refreshBuiltWord();
+      }
     }
 
     function minTileSize(kind = "letter") {
@@ -2514,16 +2681,75 @@
       return preview;
     }
 
+    function createColorDragPreview(color, swatchRect) {
+      const preview = document.createElement("div");
+      preview.className = "drag-preview color-drag-preview";
+      preview.style.setProperty("--drag-color", color);
+      preview.style.width = `${Math.max(56, swatchRect.width + 8)}px`;
+      preview.style.height = `${Math.max(56, swatchRect.height + 8)}px`;
+      document.body.appendChild(preview);
+      return preview;
+    }
+
+    function clearBoardColorTarget() {
+      boardStickerLayer.querySelectorAll(".color-drag-target").forEach((element) => {
+        element.classList.remove("color-drag-target");
+      });
+    }
+
+    function findBoardColorableItemAt(clientX, clientY) {
+      const point = boardPoint(clientX, clientY);
+      if (!point.inside) {
+        return null;
+      }
+
+      return [...state.boardItems]
+        .sort((a, b) => b.zIndex - a.zIndex)
+        .find((item) => {
+          if (!item.colorable) {
+            return false;
+          }
+
+          return (
+            point.x >= item.x &&
+            point.x <= item.x + item.size &&
+            point.y >= item.y &&
+            point.y <= item.y + item.size
+          );
+        }) || null;
+    }
+
+    function highlightBoardColorTarget(itemId) {
+      clearBoardColorTarget();
+      if (!itemId) {
+        return;
+      }
+
+      const target = boardStickerLayer.querySelector(`.board-sticker[data-item-id="${itemId}"]`);
+      if (target) {
+        target.classList.add("color-drag-target");
+      }
+    }
+
+    function clearColorSwatchHold(session) {
+      if (session && session.holdTimer) {
+        clearTimeout(session.holdTimer);
+        session.holdTimer = null;
+      }
+    }
+
     function tryCaptureSessionPointer(session) {
       if (!session || session.captured) {
         return;
       }
 
-      const captureTarget = session.type === "bank-card"
-        ? session.card
-        : session.type === "bank-icon"
-          ? session.sourceElement
-          : null;
+      const captureTarget = session.captureElement || (
+        session.type === "bank-card"
+          ? session.card
+          : session.type === "bank-icon"
+            ? session.sourceElement
+            : null
+      );
 
       if (!captureTarget || typeof captureTarget.setPointerCapture !== "function") {
         return;
@@ -2542,11 +2768,13 @@
         return;
       }
 
-      const captureTarget = session.type === "bank-card"
-        ? session.card
-        : session.type === "bank-icon"
-          ? session.sourceElement
-          : null;
+      const captureTarget = session.captureElement || (
+        session.type === "bank-card"
+          ? session.card
+          : session.type === "bank-icon"
+            ? session.sourceElement
+            : null
+      );
 
       if (!captureTarget || typeof captureTarget.releasePointerCapture !== "function") {
         session.captured = false;
@@ -2631,6 +2859,45 @@
         preview: null,
         captured: false
       };
+    }
+
+    function handleSwatchPointerDown(event) {
+      if ((event.pointerType !== "touch" && event.button !== 0) || state.pointerSession) {
+        return;
+      }
+
+      const swatch = event.currentTarget;
+      const session = {
+        type: "color-swatch",
+        pointerType: event.pointerType || "mouse",
+        pointerId: event.pointerId,
+        swatch,
+        captureElement: swatch,
+        color: swatch.dataset.color,
+        startX: event.clientX,
+        startY: event.clientY,
+        currentX: event.clientX,
+        currentY: event.clientY,
+        preview: null,
+        captured: false,
+        holdTimer: null
+      };
+
+      session.holdTimer = setTimeout(() => {
+        if (state.pointerSession !== session) {
+          return;
+        }
+
+        session.preview = createColorDragPreview(session.color, swatch.getBoundingClientRect());
+        swatch.classList.add("dragging");
+        swatch.dataset.suppressClickUntil = String(performance.now() + 700);
+        tryCaptureSessionPointer(session);
+        updateDragPreview(session, session.currentX, session.currentY);
+        const target = findBoardColorableItemAt(session.currentX, session.currentY);
+        highlightBoardColorTarget(target ? target.id : null);
+      }, LONG_PRESS_MS);
+
+      state.pointerSession = session;
     }
 
     function createPlacedLetter(char, clientPoint = null) {
@@ -3010,7 +3277,7 @@
       if (!session || event.pointerId !== session.pointerId) {
         if (session && session.type === "gesture-item" && session.pointers.has(event.pointerId)) {
           session.pointers.delete(event.pointerId);
-          finishGestureSession(session);
+          finishGestureSession(session, event);
         }
         return;
       }
@@ -3019,7 +3286,27 @@
 
       if (session.type === "gesture-item") {
         session.pointers.delete(event.pointerId);
-        finishGestureSession(session);
+        finishGestureSession(session, event);
+        return;
+      }
+
+      if (session.type === "color-swatch") {
+        clearColorSwatchHold(session);
+        releaseSessionPointer(session);
+        session.swatch.classList.remove("dragging");
+
+        if (session.preview) {
+          setActiveColor(session.color);
+          const target = !cancelled ? findBoardColorableItemAt(event.clientX, event.clientY) : null;
+          if (target) {
+            target.tintColor = session.color;
+            renderBoardStickers();
+          }
+          session.preview.remove();
+          clearBoardColorTarget();
+        }
+
+        state.pointerSession = null;
         return;
       }
 
@@ -3098,6 +3385,23 @@
         } else if (session.mode === "resize") {
           event.preventDefault();
           updateSurfaceResizeGesture(session);
+        }
+        return;
+      }
+
+      if (session.type === "color-swatch") {
+        if (event.pointerId !== session.pointerId) {
+          return;
+        }
+
+        session.currentX = event.clientX;
+        session.currentY = event.clientY;
+
+        if (session.preview) {
+          event.preventDefault();
+          updateDragPreview(session, event.clientX, event.clientY);
+          const target = findBoardColorableItemAt(event.clientX, event.clientY);
+          highlightBoardColorTarget(target ? target.id : null);
         }
         return;
       }
@@ -3389,12 +3693,13 @@
         .sort((a, b) => a.zIndex - b.zIndex)
         .forEach((item) => {
           const sticker = document.createElement("div");
-          sticker.className = "board-sticker";
+          sticker.className = `board-sticker${item.colorable ? " colorable" : ""}`;
           sticker.dataset.itemId = item.id;
+          sticker.dataset.colorable = item.colorable ? "true" : "false";
           applyBoardItemStyles(sticker, item);
 
           const image = document.createElement("img");
-          image.src = item.src;
+          image.src = boardStickerSource(item);
           image.alt = item.label;
           image.draggable = false;
           sticker.appendChild(image);
@@ -3414,6 +3719,9 @@
         iconId: assetId,
         label: icon.label,
         src: icon.src,
+        assetKind: icon.assetKind || "emoji",
+        colorable: Boolean(icon.colorable),
+        tintColor: null,
         size: defaultBoardStickerSize(),
         x: 0,
         y: 0,
@@ -3878,8 +4186,14 @@
     swatches.forEach((swatch) => {
       const baseLabel = swatch.getAttribute("aria-label") || "Pencil color";
       swatch.setAttribute("aria-label", `${baseLabel}. Click once to choose or click twice for size.`);
+      swatch.addEventListener("pointerdown", handleSwatchPointerDown);
       swatch.addEventListener("click", (event) => {
         const target = event.currentTarget;
+        const suppressUntil = Number(target.dataset.suppressClickUntil || 0);
+        if (suppressUntil > performance.now()) {
+          target.dataset.suppressClickUntil = "0";
+          return;
+        }
         const isDoubleClick = isSecondControlClick("pen", target);
         setActiveColor(target.dataset.color);
         if (isDoubleClick) {
