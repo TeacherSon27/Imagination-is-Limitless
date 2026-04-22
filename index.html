@@ -2260,6 +2260,7 @@
 
     function finishGestureSession(session, event = null) {
       clearGestureHold(session);
+      releaseSessionPointer(session);
       const removedByTap = session.mode === "pending" && event && event.type !== "pointercancel"
         ? registerSurfaceTap(session.surface, session.itemId)
         : false;
@@ -3012,6 +3013,9 @@
         return;
       }
 
+      if (event.pointerType !== "mouse") {
+        event.preventDefault();
+      }
       const swatch = event.currentTarget;
       const swatchColor = normalizeColorKey(swatch.dataset.color);
       const dragColor = state.activeInkColors.includes(swatchColor) && state.activeInkColors.length > 1
@@ -3033,6 +3037,7 @@
         holdTimer: null
       };
 
+      tryCaptureSessionPointer(session);
       session.holdTimer = setTimeout(() => {
         if (state.pointerSession !== session) {
           return;
@@ -3182,9 +3187,13 @@
       applySurfaceItemStyles(surface, element, item);
       const session = {
         type: "gesture-item",
+        pointerType: event.pointerType || "mouse",
+        pointerId: event.pointerId,
         surface,
         itemId: item.id,
         element,
+        captureElement: element,
+        captured: false,
         mode: "pending",
         pointers: new Map([
           [event.pointerId, {
@@ -3202,6 +3211,7 @@
         holdTimer: null
       };
       state.pointerSession = session;
+      tryCaptureSessionPointer(session);
       scheduleGestureRotate(session);
     }
 
