@@ -2479,7 +2479,7 @@
             <p class="activity-live-note">Enter the live website URL once, then send the selected Activity Product from the Product Repository.</p>
           </div>
           <div class="activity-live-row">
-            <input class="activity-live-input" id="activityLiveServerInput" type="url" placeholder="http://192.168.50.169:8787" aria-label="Teacher website URL">
+            <input class="activity-live-input" id="activityLiveServerInput" type="url" placeholder="http://127.0.0.1:8787 or your Mac Wi-Fi address" aria-label="Teacher website URL">
             <button class="action-btn" id="activitySendLiveBtn" type="button">Send Selected AP</button>
           </div>
         </section>
@@ -3553,7 +3553,10 @@
         return storedOrigin;
       }
 
-      return /^https?:$/i.test(window.location.protocol) ? window.location.origin : "";
+      if (/^https?:$/i.test(window.location.protocol)) {
+        return window.location.origin;
+      }
+      return "http://127.0.0.1:8787";
     }
 
     function setLiveServerOrigin(value, { persist = true } = {}) {
@@ -3585,6 +3588,19 @@
         return "";
       }
       return new URL(pathname, `${origin}/`).toString();
+    }
+
+    function candidateLiveServerOrigins(preferredValue = "") {
+      const candidates = [
+        normalizeLiveServerOrigin(preferredValue),
+        normalizeLiveServerOrigin(activityLiveServerInput && activityLiveServerInput.value),
+        getStoredLiveServerOrigin(),
+        /^https?:$/i.test(window.location.protocol) ? normalizeLiveServerOrigin(window.location.origin) : "",
+        "http://127.0.0.1:8787",
+        "http://localhost:8787"
+      ];
+
+      return candidates.filter((candidate, index) => candidate && candidates.indexOf(candidate) === index);
     }
 
     function liveActivitySubmissionsEnabled() {
@@ -3641,8 +3657,8 @@
         return false;
       }
 
-      const endpoint = liveActivityApiUrl(LIVE_ACTIVITY_PRODUCT_ENDPOINT);
-      if (!endpoint) {
+      const origins = candidateLiveServerOrigins(activityLiveServerInput ? activityLiveServerInput.value : "");
+      if (!origins.length) {
         if (manual) {
           throw new Error("Enter the Teacher Website URL first.");
         }
@@ -3654,32 +3670,42 @@
       clearLiveActivityRetry(product.id);
 
       const playerId = getLiveActivityPlayerId();
-      try {
-        const response = await fetch(endpoint, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            originProductId: product.id,
-            source: product.source,
-            label: product.label,
-            createdAt: product.createdAt,
-            dataUrl: product.dataUrl,
-            filterStyle: product.filterStyle,
-            submittedBy: {
-              id: playerId,
-              label: liveActivityPlayerLabel(playerId)
-            }
-          })
-        });
-        if (!response.ok) {
-          const payload = await response.json().catch(() => ({}));
-          throw new Error(payload.error || "Teacher Website submission failed.");
+      let lastError = null;
+      for (const origin of origins) {
+        try {
+          const response = await fetch(new URL(LIVE_ACTIVITY_PRODUCT_ENDPOINT, `${origin}/`).toString(), {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              originProductId: product.id,
+              source: product.source,
+              label: product.label,
+              createdAt: product.createdAt,
+              dataUrl: product.dataUrl,
+              filterStyle: product.filterStyle,
+              submittedBy: {
+                id: playerId,
+                label: liveActivityPlayerLabel(playerId)
+              }
+            })
+          });
+          if (!response.ok) {
+            const payload = await response.json().catch(() => ({}));
+            throw new Error(payload.error || "Teacher Website submission failed.");
+          }
+          setLiveServerOrigin(origin);
+          liveActivitySubmissionAttempts.delete(product.id);
+          clearLiveActivityRetry(product.id);
+          return true;
+        } catch (error) {
+          lastError = error;
         }
-        liveActivitySubmissionAttempts.delete(product.id);
-        clearLiveActivityRetry(product.id);
-        return true;
+      }
+
+      try {
+        throw lastError || new Error("Teacher Website submission failed.");
       } catch (error) {
         if (manual) {
           liveActivitySubmissionAttempts.delete(product.id);
@@ -3706,7 +3732,7 @@
 
       const normalizedOrigin = setLiveServerOrigin(activityLiveServerInput ? activityLiveServerInput.value : defaultLiveServerOrigin());
       if (!normalizedOrigin) {
-        setActivityStatus("Enter the Teacher Website URL first, for example http://192.168.50.169:8787.", "warn");
+        setActivityStatus("Enter the Teacher Website URL first, for example http://127.0.0.1:8787 or your Mac Wi-Fi address.", "warn");
         return;
       }
 
@@ -7231,7 +7257,7 @@
     activityLiveServerInput.addEventListener("change", (event) => {
       const normalized = setLiveServerOrigin(event.currentTarget.value);
       if (!normalized && event.currentTarget.value.trim()) {
-        setActivityStatus("Enter a valid Teacher Website URL, for example http://192.168.50.169:8787.", "warn");
+        setActivityStatus("Enter a valid Teacher Website URL, for example http://127.0.0.1:8787 or your Mac Wi-Fi address.", "warn");
         return;
       }
       if (normalized) {
