@@ -1437,6 +1437,99 @@
       gap: 10px;
     }
 
+    .activity-filter-panel {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+      border-radius: 22px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 248, 230, 0.42));
+      border: 1px solid rgba(255, 235, 182, 0.92);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.86),
+        0 10px 20px rgba(120, 79, 0, 0.08);
+    }
+
+    .activity-filter-head {
+      display: grid;
+      gap: 4px;
+    }
+
+    .activity-filter-title {
+      margin: 0;
+      font-size: 0.9rem;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #6a4300;
+    }
+
+    .activity-filter-note {
+      margin: 0;
+      color: rgba(32, 48, 74, 0.62);
+      font-size: 0.75rem;
+      font-weight: 800;
+      line-height: 1.4;
+    }
+
+    .activity-filter-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .activity-filter-btn {
+      min-height: 42px;
+      padding: 8px 10px;
+      border: 1px solid rgba(255, 239, 187, 0.96);
+      border-radius: 16px;
+      background:
+        linear-gradient(180deg, rgba(255, 252, 239, 0.98), rgba(255, 233, 165, 0.88));
+      color: #6a4300;
+      font-size: 0.62rem;
+      font-weight: 900;
+      letter-spacing: 0.05em;
+      line-height: 1.25;
+      text-transform: uppercase;
+      box-shadow:
+        0 10px 18px rgba(120, 79, 0, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.84),
+        inset 0 -1px 0 rgba(176, 116, 6, 0.14);
+      transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease,
+        filter 0.18s ease;
+    }
+
+    .activity-filter-btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow:
+        0 12px 20px rgba(120, 79, 0, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.88),
+        inset 0 -1px 0 rgba(176, 116, 6, 0.16);
+      filter: brightness(1.02);
+    }
+
+    .activity-filter-btn.active {
+      background:
+        linear-gradient(180deg, #fff2a2, #ffc62b);
+      box-shadow:
+        0 0 0 2px rgba(255, 206, 64, 0.9),
+        0 12px 20px rgba(120, 79, 0, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.88),
+        inset 0 -1px 0 rgba(176, 116, 6, 0.18);
+    }
+
+    .activity-filter-btn:disabled {
+      opacity: 0.54;
+      filter: grayscale(0.08);
+      cursor: default;
+      transform: none;
+      box-shadow:
+        0 8px 14px rgba(120, 79, 0, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.76);
+    }
+
     .activity-file-input {
       display: none;
     }
@@ -2309,21 +2402,27 @@
           <button class="ghost-btn" id="activityCameraBtn" type="button">Open Camera</button>
           <button class="ghost-btn" id="activitySwitchCameraBtn" type="button">Switch Camera</button>
           <button class="action-btn" id="activityTakePhotoBtn" type="button">Take Photo</button>
-          <button class="action-btn" id="activityAnimateBtn" type="button">AI Cartoonize Selected</button>
         </div>
+        <section class="activity-filter-panel" aria-labelledby="activityFilterTitle">
+          <div class="activity-filter-head">
+            <p class="activity-filter-title" id="activityFilterTitle">Filters</p>
+            <p class="activity-filter-note">Choose one filter to save a new filtered version of the selected preview.</p>
+          </div>
+          <div class="activity-filter-grid" id="activityFilterGrid"></div>
+        </section>
         <p class="activity-status" id="activityStatus"></p>
         <input class="activity-file-input" id="activityPhotoInput" type="file" accept="image/*">
       </section>
       <section class="activity-repository-panel">
         <div class="activity-repository-head">
           <h3 class="activity-repository-title">Repositories</h3>
-          <p class="activity-repository-note">Use the Product Repository for screenshots, camera photos, and AI versions. Use the Upload Photo Repository to paste gallery photos onto the current board.</p>
+          <p class="activity-repository-note">Use the Product Repository for screenshots, camera photos, and filtered versions. Use the Upload Photo Repository to paste gallery photos onto the current board.</p>
         </div>
         <div class="activity-repository-stack">
           <section class="activity-repository-section">
             <div class="activity-repository-subhead">
               <h4 class="activity-repository-title">Product Repository</h4>
-              <p class="activity-repository-note">Saved screenshots, camera photos, and AI cartoon results stay here on this device.</p>
+              <p class="activity-repository-note">Saved screenshots, camera photos, and filtered results stay here on this device.</p>
             </div>
             <div class="activity-repository-grid" id="activityRepository"></div>
           </section>
@@ -2427,7 +2526,7 @@
     const activityCameraBtn = document.getElementById("activityCameraBtn");
     const activitySwitchCameraBtn = document.getElementById("activitySwitchCameraBtn");
     const activityTakePhotoBtn = document.getElementById("activityTakePhotoBtn");
-    const activityAnimateBtn = document.getElementById("activityAnimateBtn");
+    const activityFilterGrid = document.getElementById("activityFilterGrid");
     const activityPhotoInput = document.getElementById("activityPhotoInput");
     const activityStatus = document.getElementById("activityStatus");
     const activityRepository = document.getElementById("activityRepository");
@@ -2456,7 +2555,19 @@
     const ACTIVITY_PHOTO_REPOSITORY_LIMIT = 8;
     const ACTIVITY_PRODUCT_STORAGE_KEY = "spell-scribble-activity-products-v1";
     const ACTIVITY_PHOTO_STORAGE_KEY = "spell-scribble-activity-upload-photos-v1";
-    const ACTIVITY_AI_CARTOON_STYLE = "cartoon";
+    const ACTIVITY_LEGACY_CARTOON_STYLE = "cartoon";
+    const ACTIVITY_FILTER_DEFS = [
+      { id: "beautify", label: "Beauty / Beautify", badge: "Beautify" },
+      { id: "smooth-skin", label: "Smooth Skin", badge: "Smooth Skin" },
+      { id: "brighten", label: "Bright / Brighten", badge: "Brighten" },
+      { id: "natural", label: "Natural", badge: "Natural" },
+      { id: "glow", label: "Glow", badge: "Glow" },
+      { id: "portrait", label: "Portrait", badge: "Portrait" },
+      { id: "soft-light", label: "Soft Light", badge: "Soft Light" },
+      { id: "vivid", label: "Vivid", badge: "Vivid" },
+      { id: "warm", label: "Warm", badge: "Warm" },
+      { id: "cool", label: "Cool", badge: "Cool" }
+    ];
     const PEN_STROKE_WIDTHS = {
       small: 4,
       medium: 8,
@@ -2498,7 +2609,7 @@
     const activityBusyState = {
       capture: false,
       camera: false,
-      ai: false,
+      filter: false,
       save: false,
       upload: false,
       paste: false
@@ -3163,6 +3274,18 @@
       return Object.values(activityBusyState).some(Boolean);
     }
 
+    function normalizeActivityFilterStyle(style = "") {
+      const normalized = String(style || "").trim().toLowerCase();
+      if (normalized === ACTIVITY_LEGACY_CARTOON_STYLE) {
+        return ACTIVITY_LEGACY_CARTOON_STYLE;
+      }
+      return ACTIVITY_FILTER_DEFS.some((filterDef) => filterDef.id === normalized) ? normalized : "";
+    }
+
+    function getActivityFilterDef(filterId = "") {
+      return ACTIVITY_FILTER_DEFS.find((filterDef) => filterDef.id === normalizeActivityFilterStyle(filterId)) || null;
+    }
+
     function normalizeActivityProduct(entry) {
       return {
         id: typeof entry.id === "string" ? entry.id : createActivityProductId(),
@@ -3170,13 +3293,18 @@
         label: typeof entry.label === "string" ? entry.label : "Activity Product",
         createdAt: typeof entry.createdAt === "string" ? entry.createdAt : new Date().toISOString(),
         dataUrl: typeof entry.dataUrl === "string" ? entry.dataUrl : "",
-        aiStyle: entry.aiStyle === ACTIVITY_AI_CARTOON_STYLE ? ACTIVITY_AI_CARTOON_STYLE : ""
+        filterStyle: normalizeActivityFilterStyle(entry.filterStyle || entry.aiStyle)
       };
     }
 
     function activityProductBadgeText(product) {
-      if (product.aiStyle === ACTIVITY_AI_CARTOON_STYLE) {
+      const filterStyle = normalizeActivityFilterStyle(product && product.filterStyle);
+      if (filterStyle === ACTIVITY_LEGACY_CARTOON_STYLE) {
         return "AI Cartoon";
+      }
+      const filterDef = getActivityFilterDef(filterStyle);
+      if (filterDef) {
+        return filterDef.badge;
       }
       return "";
     }
@@ -3354,24 +3482,48 @@
       return "Upload Photo";
     }
 
+    function renderActivityFilterGrid() {
+      if (!activityFilterGrid) {
+        return;
+      }
+
+      const activeEntry = currentActivityPreviewEntry();
+      const activeFilter = activeEntry
+        ? normalizeActivityFilterStyle(activeEntry.filterStyle || activeEntry.aiStyle)
+        : "";
+      const canApplyFilter = Boolean(activeEntry) && !activityCameraStream && !activityControlsBusy();
+
+      activityFilterGrid.innerHTML = "";
+      ACTIVITY_FILTER_DEFS.forEach((filterDef) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `activity-filter-btn${activeFilter === filterDef.id ? " active" : ""}`;
+        button.textContent = filterDef.label;
+        button.disabled = !canApplyFilter;
+        button.setAttribute("aria-label", `Apply the ${filterDef.label} filter to the selected preview and save a new filtered version.`);
+        button.addEventListener("click", () => {
+          applyActivityFilterToSelectedProduct(filterDef.id);
+        });
+        activityFilterGrid.appendChild(button);
+      });
+    }
+
     function updateActivityControlState() {
       ensureActivitySelection();
       const hasCameraApi = Boolean(navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === "function");
       const surfaceLabel = activitySourceLabel(state.activityProductSurface);
-      const hasProductSelection = state.activitySelectionMode === "product" && Boolean(currentActivityProduct());
       const controlsLocked = activityControlsBusy();
 
       activitySourceTag.textContent = surfaceLabel;
       activityCaptureBtn.textContent = `Save ${surfaceLabel} Screenshot`;
       activityUploadPhotoBtn.textContent = "Upload Photo";
       activityCameraBtn.textContent = activityCameraStream ? "Close Camera" : "Open Camera";
-      activityAnimateBtn.textContent = "AI Cartoonize Selected";
       activityCaptureBtn.disabled = controlsLocked;
       activityUploadPhotoBtn.disabled = controlsLocked;
       activityCameraBtn.disabled = controlsLocked;
       activitySwitchCameraBtn.disabled = !hasCameraApi || controlsLocked;
       activityTakePhotoBtn.disabled = !activityCameraStream || controlsLocked;
-      activityAnimateBtn.disabled = !hasProductSelection || controlsLocked;
+      renderActivityFilterGrid();
     }
 
     function renderActivityPreview() {
@@ -3408,7 +3560,7 @@
       if (!state.activityProducts.length) {
         const emptyState = document.createElement("div");
         emptyState.className = "activity-empty-repository";
-        emptyState.textContent = "Saved screenshots, camera photos, and AI cartoon results will appear here.";
+        emptyState.textContent = "Saved screenshots, camera photos, and filtered results will appear here.";
         activityRepository.appendChild(emptyState);
       } else {
         state.activityProducts.forEach((product) => {
@@ -3884,187 +4036,131 @@
       return largeCtx.getImageData(0, 0, width, height).data;
     }
 
-    async function createCartoonizedActivityDataUrl(dataUrl) {
+    function drawActivityImageLayer(targetCtx, image, width, height, filter = "none", alpha = 1) {
+      targetCtx.save();
+      targetCtx.globalAlpha = alpha;
+      targetCtx.filter = filter || "none";
+      targetCtx.drawImage(image, 0, 0, width, height);
+      targetCtx.restore();
+    }
+
+    function fillActivityOverlay(targetCtx, width, height, fillStyle, alpha = 1) {
+      targetCtx.save();
+      targetCtx.globalAlpha = alpha;
+      targetCtx.fillStyle = fillStyle;
+      targetCtx.fillRect(0, 0, width, height);
+      targetCtx.restore();
+    }
+
+    function activityRadialGlow(targetCtx, width, height, innerColor, outerColor, centerX = 0.5, centerY = 0.32, radius = 0.72) {
+      const gradient = targetCtx.createRadialGradient(
+        width * centerX,
+        height * centerY,
+        0,
+        width * centerX,
+        height * centerY,
+        Math.max(width, height) * radius
+      );
+      gradient.addColorStop(0, innerColor);
+      gradient.addColorStop(1, outerColor);
+      return gradient;
+    }
+
+    function drawActivityVignette(targetCtx, width, height, alpha = 0.12) {
+      targetCtx.save();
+      const gradient = targetCtx.createRadialGradient(
+        width * 0.5,
+        height * 0.4,
+        Math.min(width, height) * 0.18,
+        width * 0.5,
+        height * 0.5,
+        Math.max(width, height) * 0.78
+      );
+      gradient.addColorStop(0, "rgba(255,255,255,0)");
+      gradient.addColorStop(1, `rgba(28, 22, 18, ${alpha})`);
+      targetCtx.fillStyle = gradient;
+      targetCtx.fillRect(0, 0, width, height);
+      targetCtx.restore();
+    }
+
+    async function createFilteredActivityDataUrl(dataUrl, filterId) {
+      const filterDef = getActivityFilterDef(filterId);
+      if (!filterDef) {
+        throw new Error("Choose one of the available filters first.");
+      }
+
       const image = await loadImageAsset(dataUrl);
       const sourceWidth = image.naturalWidth || image.width;
       const sourceHeight = image.naturalHeight || image.height;
-      const maxSide = 1400;
+      const maxSide = 1600;
       const scale = Math.min(1, maxSide / Math.max(sourceWidth, sourceHeight, 1));
       const width = Math.max(1, Math.round(sourceWidth * scale));
       const height = Math.max(1, Math.round(sourceHeight * scale));
       const renderCanvas = document.createElement("canvas");
       renderCanvas.width = width;
       renderCanvas.height = height;
-      const renderCtx = renderCanvas.getContext("2d", { willReadFrequently: true }) || renderCanvas.getContext("2d");
-      renderCtx.drawImage(image, 0, 0, width, height);
+      const renderCtx = renderCanvas.getContext("2d");
+      renderCtx.imageSmoothingEnabled = true;
+      renderCtx.imageSmoothingQuality = "high";
 
-      const sourceFrame = renderCtx.getImageData(0, 0, width, height);
-      const pixels = sourceFrame.data;
-      const beautyPixels = drawFilteredActivityFrame(
-        width,
-        height,
-        image,
-        "blur(0.9px) saturate(1.02) contrast(1.05) brightness(1.03)"
-      );
-      const paintPixels = drawResampledActivityFrame(
-        width,
-        height,
-        image,
-        0.22,
-        "saturate(1.03) contrast(1.02) brightness(1.05)"
-      );
-      const tonePixels = drawResampledActivityFrame(
-        width,
-        height,
-        image,
-        0.16,
-        "blur(1px) saturate(0.98) contrast(0.99) brightness(1.08)"
-      );
-      const output = new Uint8ClampedArray(pixels.length);
-      const luminance = new Float32Array(width * height);
+      const warmGlow = activityRadialGlow(renderCtx, width, height, "rgba(255, 226, 198, 0.52)", "rgba(255, 226, 198, 0)");
+      const brightGlow = activityRadialGlow(renderCtx, width, height, "rgba(255, 255, 255, 0.6)", "rgba(255, 255, 255, 0)", 0.5, 0.24, 0.68);
+      const coolGlow = activityRadialGlow(renderCtx, width, height, "rgba(166, 206, 255, 0.44)", "rgba(166, 206, 255, 0)", 0.54, 0.24, 0.7);
 
-      for (let index = 0; index < pixels.length; index += 4) {
-        luminance[index / 4] = pixelLuminance(
-          beautyPixels[index],
-          beautyPixels[index + 1],
-          beautyPixels[index + 2]
-        );
+      switch (filterDef.id) {
+        case "beautify":
+          drawActivityImageLayer(renderCtx, image, width, height, "blur(0.7px) brightness(1.06) saturate(1.05) contrast(1.04)");
+          drawActivityImageLayer(renderCtx, image, width, height, "contrast(1.02)", 0.22);
+          fillActivityOverlay(renderCtx, width, height, warmGlow, 0.36);
+          break;
+        case "smooth-skin":
+          drawActivityImageLayer(renderCtx, image, width, height, "blur(1.8px) brightness(1.05) saturate(0.98) contrast(1.01)");
+          drawActivityImageLayer(renderCtx, image, width, height, "none", 0.12);
+          fillActivityOverlay(renderCtx, width, height, "rgba(255, 238, 227, 0.12)", 1);
+          break;
+        case "brighten":
+          drawActivityImageLayer(renderCtx, image, width, height, "brightness(1.18) contrast(1.04) saturate(1.03)");
+          fillActivityOverlay(renderCtx, width, height, brightGlow, 0.34);
+          break;
+        case "natural":
+          drawActivityImageLayer(renderCtx, image, width, height, "brightness(1.02) contrast(1.01) saturate(0.98)");
+          fillActivityOverlay(renderCtx, width, height, "rgba(255, 248, 236, 0.05)", 1);
+          break;
+        case "glow":
+          drawActivityImageLayer(renderCtx, image, width, height, "brightness(1.08) contrast(1.03) saturate(1.08)");
+          drawActivityImageLayer(renderCtx, image, width, height, "blur(12px) brightness(1.18) saturate(1.12)", 0.22);
+          fillActivityOverlay(renderCtx, width, height, brightGlow, 0.42);
+          break;
+        case "portrait":
+          drawActivityImageLayer(renderCtx, image, width, height, "brightness(1.04) contrast(1.08) saturate(1.03)");
+          fillActivityOverlay(renderCtx, width, height, warmGlow, 0.24);
+          drawActivityVignette(renderCtx, width, height, 0.14);
+          break;
+        case "soft-light":
+          drawActivityImageLayer(renderCtx, image, width, height, "brightness(1.07) contrast(0.96) saturate(0.96)");
+          fillActivityOverlay(renderCtx, width, height, "rgba(255, 239, 228, 0.14)", 1);
+          fillActivityOverlay(renderCtx, width, height, brightGlow, 0.18);
+          break;
+        case "vivid":
+          drawActivityImageLayer(renderCtx, image, width, height, "brightness(1.04) contrast(1.16) saturate(1.28)");
+          drawActivityImageLayer(renderCtx, image, width, height, "contrast(1.08)", 0.16);
+          break;
+        case "warm":
+          drawActivityImageLayer(renderCtx, image, width, height, "brightness(1.04) contrast(1.03) saturate(1.08)");
+          fillActivityOverlay(renderCtx, width, height, "rgba(255, 175, 112, 0.12)", 1);
+          fillActivityOverlay(renderCtx, width, height, warmGlow, 0.26);
+          break;
+        case "cool":
+          drawActivityImageLayer(renderCtx, image, width, height, "brightness(1.03) contrast(1.02) saturate(0.98)");
+          fillActivityOverlay(renderCtx, width, height, "rgba(138, 186, 255, 0.12)", 1);
+          fillActivityOverlay(renderCtx, width, height, coolGlow, 0.28);
+          break;
+        default:
+          drawActivityImageLayer(renderCtx, image, width, height);
+          break;
       }
 
-      for (let y = 0; y < height; y += 1) {
-        for (let x = 0; x < width; x += 1) {
-          const pixelIndex = (y * width + x) * 4;
-          const alpha = pixels[pixelIndex + 3];
-          if (!alpha) {
-            output[pixelIndex + 3] = 0;
-            continue;
-          }
-
-          const sourceRgb = {
-            r: pixels[pixelIndex],
-            g: pixels[pixelIndex + 1],
-            b: pixels[pixelIndex + 2]
-          };
-          const beautyRgb = {
-            r: beautyPixels[pixelIndex],
-            g: beautyPixels[pixelIndex + 1],
-            b: beautyPixels[pixelIndex + 2]
-          };
-          const paintRgb = {
-            r: paintPixels[pixelIndex],
-            g: paintPixels[pixelIndex + 1],
-            b: paintPixels[pixelIndex + 2]
-          };
-          const toneRgb = {
-            r: tonePixels[pixelIndex],
-            g: tonePixels[pixelIndex + 1],
-            b: tonePixels[pixelIndex + 2]
-          };
-          const toneLuma = pixelLuminance(toneRgb.r, toneRgb.g, toneRgb.b);
-          const beautyHsl = rgbToHsl(beautyRgb.r, beautyRgb.g, beautyRgb.b);
-          const isSkin = isSkinToneRgb(beautyRgb.r, beautyRgb.g, beautyRgb.b);
-          const isNearWhite = beautyHsl.s < 0.1 && beautyHsl.l > 0.74;
-          const lineStrength = edgeStrengthAt(luminance, width, height, x, y);
-          const isDarkNeutral = toneLuma < 74 && beautyHsl.s < 0.34;
-          const basePaintMix = isSkin
-            ? 0.88
-            : isNearWhite
-              ? 0.93
-              : 0.84;
-          let stylizedRgb = mixRgbObjects(paintRgb, beautyRgb, basePaintMix);
-          const detailMix = lineStrength > 260
-            ? 0.46
-            : lineStrength > 150
-              ? 0.34
-              : 0.22;
-          stylizedRgb = mixRgbObjects(stylizedRgb, sourceRgb, detailMix);
-
-          const stylizedHsl = rgbToHsl(stylizedRgb.r, stylizedRgb.g, stylizedRgb.b);
-          const toneBias = toneLuma >= 214
-            ? 0.06
-            : toneLuma >= 170
-              ? 0.03
-              : toneLuma >= 118
-                ? 0
-                : toneLuma >= 88
-                  ? -0.025
-                  : -0.07;
-
-          const toonSaturation = clamp(
-            stylizedHsl.s * (isSkin ? 1.01 : isNearWhite ? 0.56 : 1.06) + (isSkin ? 0.01 : isNearWhite ? 0 : 0.025),
-            0,
-            isNearWhite ? 0.1 : 1
-          );
-          const adjustedLightness = clamp(stylizedHsl.l + toneBias, 0, 1);
-          const toonLightness = (
-            quantizeUnit(adjustedLightness, isSkin ? 14 : isNearWhite ? 14 : 11) * 0.72
-          ) + (adjustedLightness * 0.28);
-          let finalRgb = hslToRgb(stylizedHsl.h, toonSaturation, toonLightness);
-
-          if (isSkin) {
-            finalRgb = mixRgbObjects(finalRgb, { r: 255, g: 236, b: 220 }, 0.1);
-          } else if (isNearWhite) {
-            finalRgb = mixRgbObjects(finalRgb, { r: 246, g: 245, b: 242 }, 0.16);
-          } else if (stylizedHsl.l < 0.18) {
-            finalRgb = mixRgbObjects(finalRgb, { r: 38, g: 35, b: 40 }, 0.14);
-          }
-
-          const shadowAmount = clamp((128 - toneLuma) / 88, 0, isSkin ? 0.1 : 0.15);
-          const highlightAmount = clamp((toneLuma - 206) / 64, 0, isSkin ? 0.09 : 0.07);
-          if (shadowAmount > 0) {
-            finalRgb = mixRgbObjects(
-              finalRgb,
-              isSkin
-                ? { r: 182, g: 132, b: 98 }
-                : isNearWhite
-                  ? { r: 192, g: 195, b: 203 }
-                  : { r: 82, g: 72, b: 64 },
-              shadowAmount
-            );
-          }
-          if (highlightAmount > 0) {
-            finalRgb = mixRgbObjects(
-              finalRgb,
-              isSkin ? { r: 255, g: 247, b: 242 } : { r: 255, g: 251, b: 247 },
-              highlightAmount
-            );
-          }
-
-          if (toneLuma > 242 && beautyHsl.s < 0.05 && lineStrength < 46) {
-            finalRgb = { r: 250, g: 250, b: 248 };
-          }
-
-          if (!isSkin && !isNearWhite && lineStrength < 36 && stylizedHsl.s < 0.16 && toneLuma > 208) {
-            finalRgb = mixRgbObjects(finalRgb, { r: 249, g: 248, b: 246 }, 0.2);
-          }
-
-          const lineColor = isSkin
-            ? { r: 110, g: 82, b: 64 }
-            : isNearWhite
-              ? { r: 126, g: 123, b: 128 }
-              : isDarkNeutral
-                ? { r: 38, g: 36, b: 40 }
-                : { r: 74, g: 60, b: 54 };
-          const lineMix = lineStrength > 380
-            ? 0.42
-            : lineStrength > 280
-              ? 0.18
-              : lineStrength > 190
-                ? 0.08
-                : 0;
-          if (lineMix > 0) {
-            finalRgb = mixRgbObjects(finalRgb, lineColor, lineMix);
-          }
-
-          output[pixelIndex] = clamp(Math.round(finalRgb.r), 0, 255);
-          output[pixelIndex + 1] = clamp(Math.round(finalRgb.g), 0, 255);
-          output[pixelIndex + 2] = clamp(Math.round(finalRgb.b), 0, 255);
-          output[pixelIndex + 3] = alpha;
-        }
-      }
-
-      renderCtx.putImageData(new ImageData(output, width, height), 0, 0);
-      return renderCanvas.toDataURL("image/png");
+      return renderCanvas.toDataURL("image/jpeg", 0.9);
     }
 
     function setActivityLauncherExpanded(surface, expanded) {
@@ -4341,7 +4437,7 @@
           label: `${activitySourceLabel(state.activityProductSurface)} Screenshot`,
           createdAt: new Date().toISOString(),
           dataUrl,
-          aiStyle: ""
+          filterStyle: ""
         });
         setActivityStatus(
           persisted
@@ -4434,7 +4530,7 @@
           label: `${state.activityCameraFacingMode === "user" ? "Front" : "Back"} Camera Photo`,
           createdAt: new Date().toISOString(),
           dataUrl: photoCanvas.toDataURL("image/jpeg", 0.86),
-          aiStyle: ""
+          filterStyle: ""
         });
         await stopActivityCamera();
         setActivityStatus(
@@ -4450,14 +4546,15 @@
       }
     }
 
-    async function cartoonizeSelectedActivityProduct() {
-      const product = currentActivityProduct();
-      if (!product) {
-        setActivityStatus("Choose a saved product before starting AI cartoon mode.", "warn");
+    async function applyActivityFilterToSelectedProduct(filterId) {
+      const filterDef = getActivityFilterDef(filterId);
+      const previewEntry = currentActivityPreviewEntry();
+      if (!filterDef) {
+        setActivityStatus("Choose one of the available filters first.", "warn");
         return;
       }
-      if (!navigator.onLine) {
-        setActivityStatus("AI cartoon mode needs Wi-Fi before it can run.", "warn");
+      if (!previewEntry || activityCameraStream) {
+        setActivityStatus("Select a saved screenshot, camera photo, or uploaded photo before applying a filter.", "warn");
         return;
       }
 
@@ -4465,28 +4562,28 @@
         return;
       }
 
-      setActivityBusy("ai", true);
-      setActivityStatus("AI is turning your picture into a colorful cartoon...");
+      setActivityBusy("filter", true);
+      setActivityStatus(`Applying ${filterDef.label} filter...`);
       try {
-        const cartoonDataUrl = await createCartoonizedActivityDataUrl(product.dataUrl);
+        const filteredDataUrl = await createFilteredActivityDataUrl(previewEntry.dataUrl, filterDef.id);
         const persisted = saveActivityProduct({
           id: createActivityProductId(),
-          source: product.source,
-          label: `${product.label} Cartoon`,
+          source: typeof previewEntry.source === "string" ? previewEntry.source : "upload",
+          label: `${previewEntry.label} ${filterDef.badge}`,
           createdAt: new Date().toISOString(),
-          dataUrl: cartoonDataUrl,
-          aiStyle: ACTIVITY_AI_CARTOON_STYLE
+          dataUrl: filteredDataUrl,
+          filterStyle: filterDef.id
         });
         setActivityStatus(
           persisted
-            ? "AI cartoon version saved in Activity Product."
-            : "AI cartoon version created, but the repository is full on this device.",
+            ? `${filterDef.label} filter saved in Activity Product.`
+            : `${filterDef.label} filter created, but the repository is full on this device.`,
           persisted ? "good" : "warn"
         );
       } catch (error) {
-        setActivityStatus("Unable to create the AI cartoon version right now.", "bad");
+        setActivityStatus(`Unable to apply the ${filterDef.label} filter right now.`, "bad");
       } finally {
-        setActivityBusy("ai", false);
+        setActivityBusy("filter", false);
       }
     }
 
@@ -6702,7 +6799,6 @@
     activityCameraBtn.addEventListener("click", toggleActivityCamera);
     activitySwitchCameraBtn.addEventListener("click", switchActivityCamera);
     activityTakePhotoBtn.addEventListener("click", captureActivityPhoto);
-    activityAnimateBtn.addEventListener("click", cartoonizeSelectedActivityProduct);
     activityPhotoInput.addEventListener("change", handleActivityPhotoFileChange);
 
     boardWrap.addEventListener("pointerdown", startDrawing);
