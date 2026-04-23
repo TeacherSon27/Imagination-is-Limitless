@@ -1484,13 +1484,15 @@
       min-height: 0;
       overflow: auto;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 232px), 1fr));
       gap: 12px;
       align-content: start;
       padding-right: 4px;
     }
 
     .activity-product-card {
+      width: min(100%, 244px);
+      justify-self: center;
       padding: 10px;
       border-radius: 22px;
       background:
@@ -1586,8 +1588,8 @@
     .activity-product-action {
       min-height: 32px;
       padding: 6px 7px;
-      font-size: 0.56rem;
-      letter-spacing: 0.04em;
+      font-size: 0.52rem;
+      letter-spacing: 0.03em;
       text-transform: uppercase;
     }
 
@@ -2006,7 +2008,7 @@
       }
 
       .activity-repository-grid {
-        grid-template-columns: repeat(auto-fit, minmax(min(100%, 172px), 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 184px), 1fr));
       }
 
       .utility-actions {
@@ -3435,11 +3437,34 @@
       return filteredCtx.getImageData(0, 0, width, height).data;
     }
 
+    function drawResampledActivityFrame(width, height, image, scale = 0.24, filter = "") {
+      const smallCanvas = document.createElement("canvas");
+      smallCanvas.width = Math.max(18, Math.round(width * scale));
+      smallCanvas.height = Math.max(18, Math.round(height * scale));
+      const smallCtx = smallCanvas.getContext("2d");
+      if (filter) {
+        smallCtx.filter = filter;
+      }
+      smallCtx.drawImage(image, 0, 0, smallCanvas.width, smallCanvas.height);
+      if (filter) {
+        smallCtx.filter = "none";
+      }
+
+      const largeCanvas = document.createElement("canvas");
+      largeCanvas.width = width;
+      largeCanvas.height = height;
+      const largeCtx = largeCanvas.getContext("2d", { willReadFrequently: true }) || largeCanvas.getContext("2d");
+      largeCtx.imageSmoothingEnabled = true;
+      largeCtx.imageSmoothingQuality = "high";
+      largeCtx.drawImage(smallCanvas, 0, 0, width, height);
+      return largeCtx.getImageData(0, 0, width, height).data;
+    }
+
     async function createCartoonizedActivityDataUrl(dataUrl) {
       const image = await loadImageAsset(dataUrl);
       const sourceWidth = image.naturalWidth || image.width;
       const sourceHeight = image.naturalHeight || image.height;
-      const maxSide = 1360;
+      const maxSide = 1400;
       const scale = Math.min(1, maxSide / Math.max(sourceWidth, sourceHeight, 1));
       const width = Math.max(1, Math.round(sourceWidth * scale));
       const height = Math.max(1, Math.round(sourceHeight * scale));
@@ -3455,19 +3480,21 @@
         width,
         height,
         image,
-        "blur(1.25px) saturate(1.02) contrast(1.05) brightness(1.03)"
+        "blur(0.9px) saturate(1.02) contrast(1.05) brightness(1.03)"
       );
-      const paintPixels = drawFilteredActivityFrame(
+      const paintPixels = drawResampledActivityFrame(
         width,
         height,
         image,
-        "blur(3.6px) saturate(1.06) contrast(1.03) brightness(1.05)"
+        0.22,
+        "saturate(1.03) contrast(1.02) brightness(1.05)"
       );
-      const tonePixels = drawFilteredActivityFrame(
+      const tonePixels = drawResampledActivityFrame(
         width,
         height,
         image,
-        "blur(12px) saturate(0.98) contrast(1.01) brightness(1.09)"
+        0.16,
+        "blur(1px) saturate(0.98) contrast(0.99) brightness(1.08)"
       );
       const output = new Uint8ClampedArray(pixels.length);
       const luminance = new Float32Array(width * height);
@@ -3512,69 +3539,69 @@
           const toneLuma = pixelLuminance(toneRgb.r, toneRgb.g, toneRgb.b);
           const beautyHsl = rgbToHsl(beautyRgb.r, beautyRgb.g, beautyRgb.b);
           const isSkin = isSkinToneRgb(beautyRgb.r, beautyRgb.g, beautyRgb.b);
-          const isNearWhite = beautyHsl.s < 0.12 && beautyHsl.l > 0.72;
+          const isNearWhite = beautyHsl.s < 0.1 && beautyHsl.l > 0.74;
           const lineStrength = edgeStrengthAt(luminance, width, height, x, y);
           const isDarkNeutral = toneLuma < 74 && beautyHsl.s < 0.34;
           const basePaintMix = isSkin
-            ? 0.82
+            ? 0.88
             : isNearWhite
-              ? 0.88
-              : 0.76;
+              ? 0.93
+              : 0.84;
           let stylizedRgb = mixRgbObjects(paintRgb, beautyRgb, basePaintMix);
-          const detailMix = lineStrength > 240
-            ? 0.44
-            : lineStrength > 120
-              ? 0.31
-              : 0.18;
+          const detailMix = lineStrength > 260
+            ? 0.46
+            : lineStrength > 150
+              ? 0.34
+              : 0.22;
           stylizedRgb = mixRgbObjects(stylizedRgb, sourceRgb, detailMix);
 
           const stylizedHsl = rgbToHsl(stylizedRgb.r, stylizedRgb.g, stylizedRgb.b);
           const toneBias = toneLuma >= 214
-            ? 0.08
+            ? 0.06
             : toneLuma >= 170
-              ? 0.04
+              ? 0.03
               : toneLuma >= 118
                 ? 0
                 : toneLuma >= 88
-                  ? -0.03
-                  : -0.08;
+                  ? -0.025
+                  : -0.07;
 
           const toonSaturation = clamp(
-            stylizedHsl.s * (isSkin ? 1.02 : isNearWhite ? 0.6 : 1.08) + (isSkin ? 0.01 : isNearWhite ? 0 : 0.03),
+            stylizedHsl.s * (isSkin ? 1.01 : isNearWhite ? 0.56 : 1.06) + (isSkin ? 0.01 : isNearWhite ? 0 : 0.025),
             0,
-            isNearWhite ? 0.12 : 1
+            isNearWhite ? 0.1 : 1
           );
-          const toonLightness = quantizeUnit(
-            clamp(stylizedHsl.l + toneBias, 0, 1),
-            isSkin ? 12 : isNearWhite ? 12 : 9
-          );
+          const adjustedLightness = clamp(stylizedHsl.l + toneBias, 0, 1);
+          const toonLightness = (
+            quantizeUnit(adjustedLightness, isSkin ? 14 : isNearWhite ? 14 : 11) * 0.72
+          ) + (adjustedLightness * 0.28);
           let finalRgb = hslToRgb(stylizedHsl.h, toonSaturation, toonLightness);
 
           if (isSkin) {
-            finalRgb = mixRgbObjects(finalRgb, { r: 255, g: 233, b: 216 }, 0.12);
+            finalRgb = mixRgbObjects(finalRgb, { r: 255, g: 236, b: 220 }, 0.1);
           } else if (isNearWhite) {
-            finalRgb = mixRgbObjects(finalRgb, { r: 245, g: 244, b: 240 }, 0.18);
+            finalRgb = mixRgbObjects(finalRgb, { r: 246, g: 245, b: 242 }, 0.16);
           } else if (stylizedHsl.l < 0.18) {
-            finalRgb = mixRgbObjects(finalRgb, { r: 35, g: 32, b: 36 }, 0.16);
+            finalRgb = mixRgbObjects(finalRgb, { r: 38, g: 35, b: 40 }, 0.14);
           }
 
-          const shadowAmount = clamp((132 - toneLuma) / 96, 0, isSkin ? 0.12 : 0.18);
-          const highlightAmount = clamp((toneLuma - 205) / 72, 0, isSkin ? 0.1 : 0.08);
+          const shadowAmount = clamp((128 - toneLuma) / 88, 0, isSkin ? 0.1 : 0.15);
+          const highlightAmount = clamp((toneLuma - 206) / 64, 0, isSkin ? 0.09 : 0.07);
           if (shadowAmount > 0) {
             finalRgb = mixRgbObjects(
               finalRgb,
               isSkin
-                ? { r: 178, g: 126, b: 94 }
+                ? { r: 182, g: 132, b: 98 }
                 : isNearWhite
-                  ? { r: 189, g: 192, b: 202 }
-                  : { r: 80, g: 68, b: 60 },
+                  ? { r: 192, g: 195, b: 203 }
+                  : { r: 82, g: 72, b: 64 },
               shadowAmount
             );
           }
           if (highlightAmount > 0) {
             finalRgb = mixRgbObjects(
               finalRgb,
-              isSkin ? { r: 255, g: 246, b: 240 } : { r: 255, g: 251, b: 246 },
+              isSkin ? { r: 255, g: 247, b: 242 } : { r: 255, g: 251, b: 247 },
               highlightAmount
             );
           }
@@ -3588,18 +3615,18 @@
           }
 
           const lineColor = isSkin
-            ? { r: 104, g: 76, b: 58 }
+            ? { r: 110, g: 82, b: 64 }
             : isNearWhite
-              ? { r: 124, g: 121, b: 126 }
+              ? { r: 126, g: 123, b: 128 }
               : isDarkNeutral
-                ? { r: 36, g: 34, b: 38 }
-                : { r: 72, g: 58, b: 52 };
-          const lineMix = lineStrength > 360
-            ? 0.52
-            : lineStrength > 260
-              ? 0.28
-              : lineStrength > 180
-                ? 0.12
+                ? { r: 38, g: 36, b: 40 }
+                : { r: 74, g: 60, b: 54 };
+          const lineMix = lineStrength > 380
+            ? 0.42
+            : lineStrength > 280
+              ? 0.18
+              : lineStrength > 190
+                ? 0.08
                 : 0;
           if (lineMix > 0) {
             finalRgb = mixRgbObjects(finalRgb, lineColor, lineMix);
