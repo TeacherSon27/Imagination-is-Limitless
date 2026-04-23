@@ -1484,7 +1484,7 @@
       min-height: 0;
       overflow: auto;
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
       gap: 12px;
       align-content: start;
       padding-right: 4px;
@@ -1531,7 +1531,7 @@
     }
 
     .activity-product-thumb {
-      aspect-ratio: 4 / 3;
+      aspect-ratio: 16 / 9;
       border-radius: 16px;
       overflow: hidden;
       background: rgba(255, 255, 255, 0.7);
@@ -1584,10 +1584,10 @@
     }
 
     .activity-product-action {
-      min-height: 34px;
-      padding: 7px 7px;
-      font-size: 0.62rem;
-      letter-spacing: 0.05em;
+      min-height: 32px;
+      padding: 6px 7px;
+      font-size: 0.56rem;
+      letter-spacing: 0.04em;
       text-transform: uppercase;
     }
 
@@ -2006,7 +2006,7 @@
       }
 
       .activity-repository-grid {
-        grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 172px), 1fr));
       }
 
       .utility-actions {
@@ -3439,7 +3439,7 @@
       const image = await loadImageAsset(dataUrl);
       const sourceWidth = image.naturalWidth || image.width;
       const sourceHeight = image.naturalHeight || image.height;
-      const maxSide = 1280;
+      const maxSide = 1360;
       const scale = Math.min(1, maxSide / Math.max(sourceWidth, sourceHeight, 1));
       const width = Math.max(1, Math.round(sourceWidth * scale));
       const height = Math.max(1, Math.round(sourceHeight * scale));
@@ -3455,19 +3455,19 @@
         width,
         height,
         image,
-        "blur(1.8px) saturate(1.08) contrast(1.06) brightness(1.02)"
+        "blur(1.25px) saturate(1.02) contrast(1.05) brightness(1.03)"
       );
       const paintPixels = drawFilteredActivityFrame(
         width,
         height,
         image,
-        "blur(4.8px) saturate(1.12) contrast(1.08) brightness(1.05)"
+        "blur(3.6px) saturate(1.06) contrast(1.03) brightness(1.05)"
       );
       const tonePixels = drawFilteredActivityFrame(
         width,
         height,
         image,
-        "blur(10px) saturate(1.04) contrast(1.02) brightness(1.08)"
+        "blur(12px) saturate(0.98) contrast(1.01) brightness(1.09)"
       );
       const output = new Uint8ClampedArray(pixels.length);
       const luminance = new Float32Array(width * height);
@@ -3512,68 +3512,69 @@
           const toneLuma = pixelLuminance(toneRgb.r, toneRgb.g, toneRgb.b);
           const beautyHsl = rgbToHsl(beautyRgb.r, beautyRgb.g, beautyRgb.b);
           const isSkin = isSkinToneRgb(beautyRgb.r, beautyRgb.g, beautyRgb.b);
-          const isNearWhite = beautyHsl.s < 0.12 && beautyHsl.l > 0.7;
+          const isNearWhite = beautyHsl.s < 0.12 && beautyHsl.l > 0.72;
           const lineStrength = edgeStrengthAt(luminance, width, height, x, y);
+          const isDarkNeutral = toneLuma < 74 && beautyHsl.s < 0.34;
           const basePaintMix = isSkin
-            ? 0.72
+            ? 0.82
             : isNearWhite
-              ? 0.78
-              : 0.64;
+              ? 0.88
+              : 0.76;
           let stylizedRgb = mixRgbObjects(paintRgb, beautyRgb, basePaintMix);
-          const detailMix = lineStrength > 220
-            ? 0.42
-            : lineStrength > 128
-              ? 0.28
-              : 0.16;
+          const detailMix = lineStrength > 240
+            ? 0.44
+            : lineStrength > 120
+              ? 0.31
+              : 0.18;
           stylizedRgb = mixRgbObjects(stylizedRgb, sourceRgb, detailMix);
 
           const stylizedHsl = rgbToHsl(stylizedRgb.r, stylizedRgb.g, stylizedRgb.b);
           const toneBias = toneLuma >= 214
-            ? 0.12
-            : toneLuma >= 178
-              ? 0.06
-              : toneLuma >= 126
+            ? 0.08
+            : toneLuma >= 170
+              ? 0.04
+              : toneLuma >= 118
                 ? 0
                 : toneLuma >= 88
-                  ? -0.05
-                  : -0.12;
+                  ? -0.03
+                  : -0.08;
 
           const toonSaturation = clamp(
-            stylizedHsl.s * (isSkin ? 1.04 : isNearWhite ? 0.68 : 1.12) + (isSkin ? 0.02 : isNearWhite ? 0 : 0.04),
+            stylizedHsl.s * (isSkin ? 1.02 : isNearWhite ? 0.6 : 1.08) + (isSkin ? 0.01 : isNearWhite ? 0 : 0.03),
             0,
-            isNearWhite ? 0.16 : 1
+            isNearWhite ? 0.12 : 1
           );
           const toonLightness = quantizeUnit(
             clamp(stylizedHsl.l + toneBias, 0, 1),
-            isSkin ? 9 : isNearWhite ? 10 : 7
+            isSkin ? 12 : isNearWhite ? 12 : 9
           );
           let finalRgb = hslToRgb(stylizedHsl.h, toonSaturation, toonLightness);
 
           if (isSkin) {
-            finalRgb = mixRgbObjects(finalRgb, { r: 255, g: 229, b: 208 }, 0.14);
+            finalRgb = mixRgbObjects(finalRgb, { r: 255, g: 233, b: 216 }, 0.12);
           } else if (isNearWhite) {
-            finalRgb = mixRgbObjects(finalRgb, { r: 246, g: 244, b: 239 }, 0.24);
+            finalRgb = mixRgbObjects(finalRgb, { r: 245, g: 244, b: 240 }, 0.18);
           } else if (stylizedHsl.l < 0.18) {
-            finalRgb = mixRgbObjects(finalRgb, { r: 28, g: 26, b: 28 }, 0.18);
+            finalRgb = mixRgbObjects(finalRgb, { r: 35, g: 32, b: 36 }, 0.16);
           }
 
-          const shadowAmount = clamp((146 - toneLuma) / 118, 0, isSkin ? 0.2 : 0.28);
-          const highlightAmount = clamp((toneLuma - 194) / 90, 0, isSkin ? 0.16 : 0.13);
+          const shadowAmount = clamp((132 - toneLuma) / 96, 0, isSkin ? 0.12 : 0.18);
+          const highlightAmount = clamp((toneLuma - 205) / 72, 0, isSkin ? 0.1 : 0.08);
           if (shadowAmount > 0) {
             finalRgb = mixRgbObjects(
               finalRgb,
               isSkin
-                ? { r: 184, g: 128, b: 92 }
+                ? { r: 178, g: 126, b: 94 }
                 : isNearWhite
-                  ? { r: 192, g: 197, b: 208 }
-                  : { r: 78, g: 62, b: 54 },
+                  ? { r: 189, g: 192, b: 202 }
+                  : { r: 80, g: 68, b: 60 },
               shadowAmount
             );
           }
           if (highlightAmount > 0) {
             finalRgb = mixRgbObjects(
               finalRgb,
-              isSkin ? { r: 255, g: 242, b: 232 } : { r: 255, g: 250, b: 244 },
+              isSkin ? { r: 255, g: 246, b: 240 } : { r: 255, g: 251, b: 246 },
               highlightAmount
             );
           }
@@ -3582,19 +3583,23 @@
             finalRgb = { r: 250, g: 250, b: 248 };
           }
 
+          if (!isSkin && !isNearWhite && lineStrength < 36 && stylizedHsl.s < 0.16 && toneLuma > 208) {
+            finalRgb = mixRgbObjects(finalRgb, { r: 249, g: 248, b: 246 }, 0.2);
+          }
+
           const lineColor = isSkin
-            ? { r: 98, g: 64, b: 46 }
+            ? { r: 104, g: 76, b: 58 }
             : isNearWhite
-              ? { r: 128, g: 126, b: 132 }
-              : stylizedHsl.l < 0.24
-                ? { r: 42, g: 38, b: 38 }
-                : { r: 66, g: 52, b: 46 };
-          const lineMix = lineStrength > 320
-            ? 0.68
-            : lineStrength > 236
-              ? 0.38
-              : lineStrength > 164
-                ? 0.16
+              ? { r: 124, g: 121, b: 126 }
+              : isDarkNeutral
+                ? { r: 36, g: 34, b: 38 }
+                : { r: 72, g: 58, b: 52 };
+          const lineMix = lineStrength > 360
+            ? 0.52
+            : lineStrength > 260
+              ? 0.28
+              : lineStrength > 180
+                ? 0.12
                 : 0;
           if (lineMix > 0) {
             finalRgb = mixRgbObjects(finalRgb, lineColor, lineMix);
