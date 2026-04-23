@@ -1399,6 +1399,8 @@
       object-fit: contain;
       display: block;
       background: transparent;
+      pointer-events: none;
+      user-select: none;
     }
 
     .activity-preview-empty {
@@ -1499,7 +1501,7 @@
         inset 0 1px 0 rgba(255, 255, 255, 0.84);
       display: grid;
       gap: 8px;
-      text-align: left;
+      align-content: start;
     }
 
     .activity-product-card.active {
@@ -1507,6 +1509,25 @@
         0 0 0 3px rgba(255, 208, 53, 0.95),
         0 14px 24px rgba(120, 79, 0, 0.16),
         inset 0 1px 0 rgba(255, 255, 255, 0.88);
+    }
+
+    .activity-product-select {
+      width: 100%;
+      padding: 0;
+      border: 0;
+      border-radius: 18px;
+      background: transparent;
+      box-shadow: none;
+      display: grid;
+      gap: 8px;
+      text-align: left;
+      color: inherit;
+    }
+
+    .activity-product-select:hover,
+    .activity-product-select:active {
+      box-shadow: none;
+      filter: none;
     }
 
     .activity-product-thumb {
@@ -1556,6 +1577,38 @@
       color: #7a4a00;
     }
 
+    .activity-product-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .activity-product-action {
+      min-height: 42px;
+      padding: 10px 10px;
+      font-size: 0.74rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .activity-product-action.delete {
+      color: #7b1122;
+      background: linear-gradient(180deg, #ffe3e7, #ffb4c0);
+      border-color: rgba(255, 245, 248, 0.96);
+      box-shadow:
+        0 10px 18px rgba(156, 38, 67, 0.14),
+        inset 0 1px 0 rgba(255, 255, 255, 0.82),
+        inset 0 -1px 0 rgba(170, 54, 82, 0.12);
+    }
+
+    .activity-product-action.delete:hover {
+      background: linear-gradient(180deg, #ffedf0, #ffc1cc);
+      box-shadow:
+        0 12px 20px rgba(156, 38, 67, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.86),
+        inset 0 -1px 0 rgba(170, 54, 82, 0.14);
+    }
+
     .activity-empty-repository {
       grid-column: 1 / -1;
       padding: 26px 20px;
@@ -1567,50 +1620,6 @@
       background:
         linear-gradient(180deg, rgba(255, 255, 255, 0.52), rgba(255, 245, 222, 0.36));
       border: 1px dashed rgba(201, 156, 40, 0.34);
-    }
-
-    .motion-float {
-      animation: productFloat 3.8s ease-in-out infinite;
-    }
-
-    .motion-tilt {
-      animation: productTilt 3.2s ease-in-out infinite;
-    }
-
-    .motion-glow {
-      animation: productGlow 2.9s ease-in-out infinite;
-    }
-
-    @keyframes productFloat {
-      0%,
-      100% {
-        transform: translateY(0) scale(1);
-      }
-      50% {
-        transform: translateY(-10px) scale(1.02);
-      }
-    }
-
-    @keyframes productTilt {
-      0%,
-      100% {
-        transform: rotate(-1.5deg) scale(1);
-      }
-      50% {
-        transform: rotate(1.8deg) scale(1.03);
-      }
-    }
-
-    @keyframes productGlow {
-      0%,
-      100% {
-        filter: drop-shadow(0 0 0 rgba(255, 208, 53, 0));
-        transform: scale(1);
-      }
-      50% {
-        filter: drop-shadow(0 0 18px rgba(255, 208, 53, 0.46));
-        transform: scale(1.04);
-      }
     }
 
     .unlock-row {
@@ -2237,14 +2246,14 @@
           <button class="ghost-btn" id="activityCameraBtn" type="button">Open Camera</button>
           <button class="ghost-btn" id="activitySwitchCameraBtn" type="button">Switch Camera</button>
           <button class="action-btn" id="activityTakePhotoBtn" type="button">Take Photo</button>
-          <button class="action-btn" id="activityAnimateBtn" type="button">AI Animate Selected</button>
+          <button class="action-btn" id="activityAnimateBtn" type="button">AI Cartoonize Selected</button>
         </div>
         <p class="activity-status" id="activityStatus"></p>
       </section>
       <section class="activity-repository-panel">
         <div class="activity-repository-head">
           <h3 class="activity-repository-title">Repository</h3>
-          <p class="activity-repository-note">Latest saved products stay here on this device.</p>
+          <p class="activity-repository-note">Latest saved products stay here on this device. Use Save or Delete on each card.</p>
         </div>
         <div class="activity-repository-grid" id="activityRepository"></div>
       </section>
@@ -2359,7 +2368,7 @@
     const EXPORT_SCALE = 1;
     const ACTIVITY_REPOSITORY_LIMIT = 8;
     const ACTIVITY_PRODUCT_STORAGE_KEY = "spell-scribble-activity-products-v1";
-    const ACTIVITY_MOTION_PRESETS = ["motion-float", "motion-tilt", "motion-glow"];
+    const ACTIVITY_AI_CARTOON_STYLE = "cartoon";
     const PEN_STROKE_WIDTHS = {
       small: 4,
       medium: 8,
@@ -2398,6 +2407,12 @@
     const imageAssetCache = new Map();
     const animatedVisibilityTimers = new WeakMap();
     const pendingLetterPlacementTimers = new WeakMap();
+    const activityBusyState = {
+      capture: false,
+      camera: false,
+      ai: false,
+      save: false
+    };
 
     function getLetterVariant(variantId = "classic") {
       return LETTER_VARIANTS[variantId] || LETTER_VARIANTS.classic;
@@ -2516,6 +2531,102 @@
       return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
     }
 
+    function rgbToHsl(r, g, b) {
+      const red = clamp(r / 255, 0, 1);
+      const green = clamp(g / 255, 0, 1);
+      const blue = clamp(b / 255, 0, 1);
+      const max = Math.max(red, green, blue);
+      const min = Math.min(red, green, blue);
+      const lightness = (max + min) / 2;
+      const delta = max - min;
+
+      if (!delta) {
+        return { h: 0, s: 0, l: lightness };
+      }
+
+      const saturation = lightness > 0.5
+        ? delta / (2 - max - min)
+        : delta / (max + min);
+
+      let hue;
+      switch (max) {
+        case red:
+          hue = ((green - blue) / delta) + (green < blue ? 6 : 0);
+          break;
+        case green:
+          hue = ((blue - red) / delta) + 2;
+          break;
+        default:
+          hue = ((red - green) / delta) + 4;
+          break;
+      }
+
+      return {
+        h: hue * 60,
+        s: saturation,
+        l: lightness
+      };
+    }
+
+    function hslToRgb(h, s, l) {
+      const hue = ((h % 360) + 360) % 360;
+      const saturation = clamp(s, 0, 1);
+      const lightness = clamp(l, 0, 1);
+      const chroma = (1 - Math.abs(2 * lightness - 1)) * saturation;
+      const segment = hue / 60;
+      const secondary = chroma * (1 - Math.abs((segment % 2) - 1));
+      let red = 0;
+      let green = 0;
+      let blue = 0;
+
+      if (segment >= 0 && segment < 1) {
+        red = chroma;
+        green = secondary;
+      } else if (segment < 2) {
+        red = secondary;
+        green = chroma;
+      } else if (segment < 3) {
+        green = chroma;
+        blue = secondary;
+      } else if (segment < 4) {
+        green = secondary;
+        blue = chroma;
+      } else if (segment < 5) {
+        red = secondary;
+        blue = chroma;
+      } else {
+        red = chroma;
+        blue = secondary;
+      }
+
+      const match = lightness - chroma / 2;
+      return {
+        r: Math.round((red + match) * 255),
+        g: Math.round((green + match) * 255),
+        b: Math.round((blue + match) * 255)
+      };
+    }
+
+    function adjustHexColor(color, {
+      saturationScale = 1,
+      lightnessScale = 1,
+      lightnessShift = 0,
+      hueShift = 0
+    } = {}) {
+      const rgb = hexToRgb(color);
+      if (!rgb) {
+        return color;
+      }
+
+      const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+      const adjusted = hslToRgb(
+        hsl.h + hueShift,
+        clamp(hsl.s * saturationScale, 0, 1),
+        clamp(hsl.l * lightnessScale + lightnessShift, 0, 1)
+      );
+      return rgbToHex(adjusted.r, adjusted.g, adjusted.b);
+    }
+
     function mixHexColors(base, target, ratio) {
       const start = hexToRgb(base);
       const end = hexToRgb(target);
@@ -2532,9 +2643,18 @@
     }
 
     function deriveBoardFillGradient(color = "#8b5eff") {
+      const vividBase = intensifyInkColor(color, 1);
       return {
-        start: mixHexColors("#e3f7ff", color, 0.38),
-        end: mixHexColors("#5d2cff", color, 0.86)
+        start: adjustHexColor(vividBase, {
+          saturationScale: 1.08,
+          lightnessScale: 1.02,
+          lightnessShift: 0.16
+        }),
+        end: adjustHexColor(vividBase, {
+          saturationScale: 1.18,
+          lightnessScale: 0.82,
+          lightnessShift: -0.1
+        })
       };
     }
 
@@ -2558,54 +2678,73 @@
       `;
     }
 
+    const BOARD_NUMBER_LAYOUTS = {
+      0: { viewWidth: 316, fontSize: 286, baseline: 344, outerStrokeWidth: 34, innerStrokeWidth: 15 },
+      1: { viewWidth: 214, fontSize: 286, baseline: 344, outerStrokeWidth: 34, innerStrokeWidth: 15 },
+      2: { viewWidth: 296, fontSize: 286, baseline: 344, outerStrokeWidth: 34, innerStrokeWidth: 15 },
+      3: { viewWidth: 304, fontSize: 286, baseline: 344, outerStrokeWidth: 34, innerStrokeWidth: 15 },
+      4: { viewWidth: 320, fontSize: 286, baseline: 344, outerStrokeWidth: 34, innerStrokeWidth: 15 },
+      5: { viewWidth: 300, fontSize: 286, baseline: 344, outerStrokeWidth: 34, innerStrokeWidth: 15 },
+      6: { viewWidth: 308, fontSize: 286, baseline: 344, outerStrokeWidth: 34, innerStrokeWidth: 15 },
+      7: { viewWidth: 292, fontSize: 286, baseline: 344, outerStrokeWidth: 34, innerStrokeWidth: 15 },
+      8: { viewWidth: 316, fontSize: 286, baseline: 344, outerStrokeWidth: 34, innerStrokeWidth: 15 },
+      9: { viewWidth: 308, fontSize: 286, baseline: 344, outerStrokeWidth: 34, innerStrokeWidth: 15 }
+    };
+
+    function getBoardNumberLayout(number) {
+      return BOARD_NUMBER_LAYOUTS[number] || BOARD_NUMBER_LAYOUTS[8];
+    }
+
     function buildBoardNumberSvg(number, fillColor = null) {
-      const fontSize = number >= 10 ? 240 : 276;
-      const baseline = number >= 10 ? 334 : 340;
-      const outerStrokeWidth = number >= 10 ? 38 : 34;
-      const innerStrokeWidth = number >= 10 ? 16 : 14;
+      const layout = getBoardNumberLayout(number);
+      const {
+        viewWidth,
+        fontSize,
+        baseline,
+        outerStrokeWidth,
+        innerStrokeWidth
+      } = layout;
       const gradient = deriveBoardFillGradient(fillColor || "#8b5eff");
+      const centerX = viewWidth / 2;
       return `
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${viewWidth} 512" fill="none">
           <defs>
-            <linearGradient id="numFill" x1="120" y1="112" x2="392" y2="400" gradientUnits="userSpaceOnUse">
+            <linearGradient id="numFill" x1="${Math.round(viewWidth * 0.16)}" y1="108" x2="${Math.round(viewWidth * 0.84)}" y2="404" gradientUnits="userSpaceOnUse">
               <stop offset="0" stop-color="${gradient.start}"/>
               <stop offset="1" stop-color="${gradient.end}"/>
-            </linearGradient>
-            <linearGradient id="numOuterStroke" x1="76" y1="62" x2="442" y2="438" gradientUnits="userSpaceOnUse">
-              <stop offset="0" stop-color="#fff9c9"/>
-              <stop offset="0.32" stop-color="#ffe46f"/>
-              <stop offset="0.68" stop-color="#ffc821"/>
-              <stop offset="1" stop-color="#f4a300"/>
-            </linearGradient>
-            <linearGradient id="numInnerStroke" x1="92" y1="84" x2="420" y2="414" gradientUnits="userSpaceOnUse">
-              <stop offset="0" stop-color="#fff6b3"/>
-              <stop offset="0.46" stop-color="#ffd53d"/>
-              <stop offset="1" stop-color="#ffbc00"/>
             </linearGradient>
           </defs>
           <g
             text-anchor="middle"
-            font-family="Avenir Next, Arial Rounded MT Bold, Arial, sans-serif"
+            font-family="Avenir Next Rounded, Avenir Next, Arial Rounded MT Bold, Arial, sans-serif"
             font-weight="900"
             stroke-linejoin="round"
             stroke-linecap="round"
             paint-order="stroke fill"
+            text-rendering="geometricPrecision"
           >
             <text
-              x="256"
+              x="${centerX}"
               y="${baseline}"
               font-size="${fontSize}"
               fill="none"
-              stroke="url(#numOuterStroke)"
+              stroke="#c98a00"
               stroke-width="${outerStrokeWidth}"
             >${number}</text>
             <text
-              x="256"
+              x="${centerX}"
+              y="${baseline}"
+              font-size="${fontSize}"
+              fill="none"
+              stroke="#ffe6a0"
+              stroke-width="${innerStrokeWidth + 2}"
+            >${number}</text>
+            <text
+              x="${centerX}"
               y="${baseline}"
               font-size="${fontSize}"
               fill="url(#numFill)"
-              stroke="url(#numInnerStroke)"
-              stroke-width="${innerStrokeWidth}"
+              stroke="none"
             >${number}</text>
           </g>
         </svg>
@@ -2677,6 +2816,19 @@
       return String(color || "").trim().toLowerCase();
     }
 
+    function intensifyInkColor(color, mixCount = 1) {
+      const normalized = normalizeColorKey(color);
+      if (!normalized || normalized === "#ffffff" || normalized === "#101010") {
+        return normalized || "#ff69b4";
+      }
+
+      return adjustHexColor(normalized, {
+        saturationScale: mixCount > 1 ? 1.28 : 1.16,
+        lightnessScale: mixCount > 1 ? 0.95 : 0.98,
+        lightnessShift: mixCount > 1 ? -0.04 : -0.025
+      });
+    }
+
     function pigmentForColor(color) {
       const normalized = normalizeColorKey(color);
       if (INK_PIGMENTS[normalized]) {
@@ -2734,7 +2886,7 @@
       };
 
       let rgb = pigmentToRgb(averaged);
-      const muddiness = clamp((normalizedColors.length - 1) * 0.06, 0, 0.24);
+      const muddiness = clamp((normalizedColors.length - 1) * 0.026, 0, 0.08);
       if (muddiness > 0) {
         const muddyBrown = pigmentToRgb({ r: 0.48, y: 0.58, b: 0.08, white: 0.02, black: 0.46 });
         rgb = mixRgbObjects(rgb, muddyBrown, muddiness);
@@ -2764,17 +2916,20 @@
         label,
         assetKind: "shape",
         colorable: true,
+        widthRatio: 1,
         buildSrc: (fillColor) => svgToDataUri(buildBoardShapeSvg(content, fillColor)),
         src: svgToDataUri(buildBoardShapeSvg(content))
       };
     }
 
     function makeBoardNumberAsset(number) {
+      const layout = getBoardNumberLayout(number);
       return {
         id: `number-${number}`,
         label: `Number ${number}`,
         assetKind: "number",
         colorable: true,
+        widthRatio: layout.viewWidth / 512,
         buildSrc: (fillColor) => svgToDataUri(buildBoardNumberSvg(number, fillColor)),
         src: svgToDataUri(buildBoardNumberSvg(number))
       };
@@ -2806,7 +2961,8 @@
     ].map((icon) => ({
       ...icon,
       assetKind: "emoji",
-      colorable: false
+      colorable: false,
+      widthRatio: 1
     }));
     const BOARD_SHAPE_DEFS = [
       makeBoardShapeAsset("shape-circle", "Circle Shape", `<circle cx="256" cy="256" r="160" fill="url(#shapeFill)" stroke="url(#shapeStroke)" stroke-width="22"/>`),
@@ -2898,8 +3054,73 @@
       activityStatus.className = `activity-status${tone ? ` ${tone}` : ""}`;
     }
 
+    function setActivityBusy(key, busy) {
+      if (!Object.prototype.hasOwnProperty.call(activityBusyState, key)) {
+        return;
+      }
+      activityBusyState[key] = Boolean(busy);
+      updateActivityControlState();
+      if (activityProductModal.classList.contains("modal-open")) {
+        renderActivityProductRepository();
+      }
+    }
+
+    function activityControlsBusy() {
+      return Object.values(activityBusyState).some(Boolean);
+    }
+
+    function normalizeActivityProduct(entry) {
+      return {
+        id: typeof entry.id === "string" ? entry.id : createActivityProductId(),
+        source: typeof entry.source === "string" ? entry.source : "spell",
+        label: typeof entry.label === "string" ? entry.label : "Activity Product",
+        createdAt: typeof entry.createdAt === "string" ? entry.createdAt : new Date().toISOString(),
+        dataUrl: typeof entry.dataUrl === "string" ? entry.dataUrl : "",
+        aiStyle: entry.aiStyle === ACTIVITY_AI_CARTOON_STYLE ? ACTIVITY_AI_CARTOON_STYLE : ""
+      };
+    }
+
+    function activityProductBadgeText(product) {
+      if (product.aiStyle === ACTIVITY_AI_CARTOON_STYLE) {
+        return "AI Cartoon";
+      }
+      return "";
+    }
+
+    function activityProductFileStem(label) {
+      const stem = String(label || "activity-product")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+      return stem || "activity-product";
+    }
+
+    function dataUrlToBlob(dataUrl) {
+      const [header, payload] = String(dataUrl || "").split(",");
+      if (!header || !payload) {
+        throw new Error("Missing image data.");
+      }
+
+      const mimeMatch = header.match(/data:(.*?);base64/i);
+      const mimeType = mimeMatch ? mimeMatch[1] : "image/png";
+      const binary = window.atob(payload);
+      const bytes = new Uint8Array(binary.length);
+      for (let index = 0; index < binary.length; index += 1) {
+        bytes[index] = binary.charCodeAt(index);
+      }
+      return new Blob([bytes], { type: mimeType });
+    }
+
     function currentActivityProduct() {
       return state.activityProducts.find((product) => product.id === state.selectedActivityProductId) || null;
+    }
+
+    function selectActivityProduct(productId) {
+      if (!state.activityProducts.some((product) => product.id === productId)) {
+        return;
+      }
+      state.selectedActivityProductId = productId;
+      renderActivityProductRepository();
     }
 
     function persistActivityProducts() {
@@ -2925,7 +3146,8 @@
 
         state.activityProducts = parsed
           .filter((product) => product && typeof product.id === "string" && typeof product.dataUrl === "string")
-          .slice(0, ACTIVITY_REPOSITORY_LIMIT);
+          .slice(0, ACTIVITY_REPOSITORY_LIMIT)
+          .map(normalizeActivityProduct);
 
         if (state.activityProducts.length) {
           state.selectedActivityProductId = state.activityProducts[0].id;
@@ -2940,13 +3162,17 @@
       const hasCameraApi = Boolean(navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === "function");
       const surfaceLabel = activitySourceLabel(state.activityProductSurface);
       const hasSelection = Boolean(currentActivityProduct());
+      const controlsLocked = activityControlsBusy();
 
       activitySourceTag.textContent = surfaceLabel;
       activityCaptureBtn.textContent = `Save ${surfaceLabel} Screenshot`;
       activityCameraBtn.textContent = activityCameraStream ? "Close Camera" : "Open Camera";
-      activitySwitchCameraBtn.disabled = !hasCameraApi;
-      activityTakePhotoBtn.disabled = !activityCameraStream;
-      activityAnimateBtn.disabled = !hasSelection;
+      activityAnimateBtn.textContent = "AI Cartoonize Selected";
+      activityCaptureBtn.disabled = controlsLocked;
+      activityCameraBtn.disabled = controlsLocked;
+      activitySwitchCameraBtn.disabled = !hasCameraApi || controlsLocked;
+      activityTakePhotoBtn.disabled = !activityCameraStream || controlsLocked;
+      activityAnimateBtn.disabled = !hasSelection || controlsLocked;
     }
 
     function renderActivityPreview() {
@@ -2970,12 +3196,13 @@
       }
 
       activityPreviewImage.src = product.dataUrl;
-      activityPreviewImage.className = `activity-preview-image${product.motionPreset ? ` ${product.motionPreset}` : ""}`;
+      activityPreviewImage.className = "activity-preview-image";
       activityPreviewEmpty.classList.add("hidden");
     }
 
     function renderActivityProductRepository() {
       activityRepository.innerHTML = "";
+      const controlsLocked = activityControlsBusy();
 
       if (!state.activityProducts.length) {
         const emptyState = document.createElement("div");
@@ -2992,10 +3219,15 @@
       }
 
       state.activityProducts.forEach((product) => {
-        const card = document.createElement("button");
-        card.type = "button";
+        const card = document.createElement("article");
         card.className = `activity-product-card${product.id === state.selectedActivityProductId ? " active" : ""}`;
-        card.setAttribute("aria-label", `${product.label}. Select activity product.`);
+        card.setAttribute("aria-label", `${product.label} activity product.`);
+
+        const selectBtn = document.createElement("button");
+        selectBtn.type = "button";
+        selectBtn.className = "activity-product-select";
+        selectBtn.setAttribute("aria-label", `${product.label}. Select activity product.`);
+        selectBtn.disabled = controlsLocked;
 
         const thumb = document.createElement("div");
         thumb.className = "activity-product-thumb";
@@ -3018,19 +3250,49 @@
         date.textContent = new Date(product.createdAt).toLocaleString();
         meta.appendChild(date);
 
-        if (product.motionPreset) {
+        const badgeText = activityProductBadgeText(product);
+        if (badgeText) {
           const badge = document.createElement("span");
           badge.className = "activity-ai-badge";
-          badge.textContent = "AI Motion";
+          badge.textContent = badgeText;
           meta.appendChild(badge);
         }
 
-        card.appendChild(thumb);
-        card.appendChild(meta);
-        card.addEventListener("click", () => {
-          state.selectedActivityProductId = product.id;
-          renderActivityProductRepository();
+        selectBtn.appendChild(thumb);
+        selectBtn.appendChild(meta);
+        selectBtn.addEventListener("click", () => {
+          selectActivityProduct(product.id);
         });
+
+        const actions = document.createElement("div");
+        actions.className = "activity-product-actions";
+
+        const saveBtn = document.createElement("button");
+        saveBtn.type = "button";
+        saveBtn.className = "ghost-btn activity-product-action";
+        saveBtn.textContent = "Save";
+        saveBtn.setAttribute("aria-label", `Save ${product.label} to your device gallery.`);
+        saveBtn.disabled = controlsLocked;
+        saveBtn.addEventListener("click", (event) => {
+          event.stopPropagation();
+          saveActivityProductToGallery(product.id);
+        });
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.type = "button";
+        deleteBtn.className = "ghost-btn activity-product-action delete";
+        deleteBtn.textContent = "Delete";
+        deleteBtn.setAttribute("aria-label", `Delete ${product.label} from the repository.`);
+        deleteBtn.disabled = controlsLocked;
+        deleteBtn.addEventListener("click", (event) => {
+          event.stopPropagation();
+          deleteActivityProduct(product.id);
+        });
+
+        actions.appendChild(saveBtn);
+        actions.appendChild(deleteBtn);
+        card.appendChild(selectBtn);
+        card.appendChild(actions);
         activityRepository.appendChild(card);
       });
 
@@ -3039,13 +3301,161 @@
     }
 
     function saveActivityProduct(entry) {
+      const normalizedEntry = normalizeActivityProduct(entry);
       state.activityProducts = [
-        entry,
-        ...state.activityProducts.filter((product) => product.id !== entry.id)
+        normalizedEntry,
+        ...state.activityProducts.filter((product) => product.id !== normalizedEntry.id)
       ].slice(0, ACTIVITY_REPOSITORY_LIMIT);
-      state.selectedActivityProductId = entry.id;
+      state.selectedActivityProductId = normalizedEntry.id;
       renderActivityProductRepository();
       return persistActivityProducts();
+    }
+
+    function deleteActivityProduct(productId) {
+      if (activityControlsBusy()) {
+        return;
+      }
+      const product = state.activityProducts.find((entry) => entry.id === productId);
+      if (!product) {
+        return;
+      }
+
+      state.activityProducts = state.activityProducts.filter((entry) => entry.id !== productId);
+      if (state.selectedActivityProductId === productId) {
+        state.selectedActivityProductId = state.activityProducts[0] ? state.activityProducts[0].id : null;
+      }
+
+      renderActivityProductRepository();
+      persistActivityProducts();
+      setActivityStatus(`${product.label} deleted from Activity Product.`, "good");
+    }
+
+    async function saveActivityProductToGallery(productId) {
+      if (activityControlsBusy()) {
+        return;
+      }
+      const product = state.activityProducts.find((entry) => entry.id === productId);
+      if (!product) {
+        return;
+      }
+
+      setActivityBusy("save", true);
+      try {
+        const blob = dataUrlToBlob(product.dataUrl);
+        const extension = blob.type === "image/jpeg" ? "jpg" : "png";
+        const fileName = `${activityProductFileStem(product.label)}.${extension}`;
+
+        if (typeof File !== "undefined" && navigator.share) {
+          const file = new File([blob], fileName, { type: blob.type || "image/png" });
+          const canShareFiles = typeof navigator.canShare === "function" && navigator.canShare({ files: [file] });
+          if (canShareFiles) {
+            await navigator.share({
+              files: [file],
+              title: product.label
+            });
+            setActivityStatus("Use the share sheet to save the image to Photos or Files.", "good");
+            return;
+          }
+        }
+
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.setTimeout(() => URL.revokeObjectURL(blobUrl), 1200);
+        setActivityStatus("Image download started for this activity product.", "good");
+      } catch (error) {
+        if (error && error.name === "AbortError") {
+          setActivityStatus("Save canceled.");
+        } else {
+          setActivityStatus("Unable to save this product right now.", "bad");
+        }
+      } finally {
+        setActivityBusy("save", false);
+      }
+    }
+
+    function posterizeChannel(value, steps = 6) {
+      const levels = Math.max(2, Math.round(steps));
+      return Math.round((Math.round((clamp(value, 0, 255) / 255) * (levels - 1)) * 255) / (levels - 1));
+    }
+
+    function pixelLuminance(red, green, blue) {
+      return red * 0.299 + green * 0.587 + blue * 0.114;
+    }
+
+    async function createCartoonizedActivityDataUrl(dataUrl) {
+      const image = await loadImageAsset(dataUrl);
+      const sourceWidth = image.naturalWidth || image.width;
+      const sourceHeight = image.naturalHeight || image.height;
+      const maxSide = 1440;
+      const scale = Math.min(1, maxSide / Math.max(sourceWidth, sourceHeight, 1));
+      const width = Math.max(1, Math.round(sourceWidth * scale));
+      const height = Math.max(1, Math.round(sourceHeight * scale));
+      const renderCanvas = document.createElement("canvas");
+      renderCanvas.width = width;
+      renderCanvas.height = height;
+      const renderCtx = renderCanvas.getContext("2d", { willReadFrequently: true }) || renderCanvas.getContext("2d");
+      renderCtx.drawImage(image, 0, 0, width, height);
+
+      const sourceFrame = renderCtx.getImageData(0, 0, width, height);
+      const pixels = sourceFrame.data;
+      const output = new Uint8ClampedArray(pixels.length);
+      const luminance = new Float32Array(width * height);
+
+      for (let index = 0; index < pixels.length; index += 4) {
+        luminance[index / 4] = pixelLuminance(pixels[index], pixels[index + 1], pixels[index + 2]);
+      }
+
+      for (let y = 0; y < height; y += 1) {
+        for (let x = 0; x < width; x += 1) {
+          const pixelIndex = (y * width + x) * 4;
+          const alpha = pixels[pixelIndex + 3];
+          if (!alpha) {
+            output[pixelIndex + 3] = 0;
+            continue;
+          }
+
+          const sample = (sampleX, sampleY) => {
+            const safeX = clamp(sampleX, 0, width - 1);
+            const safeY = clamp(sampleY, 0, height - 1);
+            return luminance[safeY * width + safeX];
+          };
+
+          const edgeStrength = Math.abs(sample(x + 1, y) - sample(x - 1, y)) + Math.abs(sample(x, y + 1) - sample(x, y - 1));
+          const baseHex = rgbToHex(
+            posterizeChannel(pixels[pixelIndex], 6),
+            posterizeChannel(pixels[pixelIndex + 1], 6),
+            posterizeChannel(pixels[pixelIndex + 2], 6)
+          );
+          const vividRgb = hexToRgb(intensifyInkColor(baseHex, 1)) || {
+            r: pixels[pixelIndex],
+            g: pixels[pixelIndex + 1],
+            b: pixels[pixelIndex + 2]
+          };
+
+          let finalRgb;
+          if (edgeStrength > 96) {
+            finalRgb = { r: 44, g: 30, b: 18 };
+          } else if (edgeStrength > 54) {
+            finalRgb = mixRgbObjects(vividRgb, { r: 52, g: 36, b: 20 }, 0.56);
+          } else {
+            const highlightMix = luminance[y * width + x] > 166 ? 0.14 : 0.04;
+            finalRgb = mixRgbObjects(vividRgb, { r: 255, g: 252, b: 235 }, highlightMix);
+          }
+
+          output[pixelIndex] = clamp(Math.round(finalRgb.r), 0, 255);
+          output[pixelIndex + 1] = clamp(Math.round(finalRgb.g), 0, 255);
+          output[pixelIndex + 2] = clamp(Math.round(finalRgb.b), 0, 255);
+          output[pixelIndex + 3] = alpha;
+        }
+      }
+
+      renderCtx.putImageData(new ImageData(output, width, height), 0, 0);
+      return renderCanvas.toDataURL("image/png");
     }
 
     function setActivityLauncherExpanded(surface, expanded) {
@@ -3071,8 +3481,16 @@
         activityCameraStream.getTracks().forEach((track) => track.stop());
         activityCameraStream = null;
       }
-      activityCamera.pause();
-      activityCamera.srcObject = null;
+      try {
+        activityCamera.pause();
+      } catch (error) {
+        // Some mobile browsers throw if pause lands between stream state changes.
+      }
+      try {
+        activityCamera.srcObject = null;
+      } catch (error) {
+        activityCamera.removeAttribute("src");
+      }
       renderActivityPreview();
       updateActivityControlState();
     }
@@ -3247,11 +3665,13 @@
     }
 
     async function drawBoardItemToExport(targetCtx, item) {
+      const width = boardItemWidth(item);
+      const height = boardItemHeight(item);
       const image = await loadImageAsset(boardStickerSource(item));
       targetCtx.save();
-      targetCtx.translate(item.x + item.size / 2, item.y + item.size / 2);
+      targetCtx.translate(item.x + width / 2, item.y + height / 2);
       targetCtx.rotate(((item.rotation || 0) * Math.PI) / 180);
-      targetCtx.drawImage(image, -item.size / 2, -item.size / 2, item.size, item.size);
+      targetCtx.drawImage(image, -width / 2, -height / 2, width, height);
       targetCtx.restore();
     }
 
@@ -3290,7 +3710,10 @@
     }
 
     async function handleActivityScreenshotSave() {
-      activityCaptureBtn.disabled = true;
+      if (activityControlsBusy()) {
+        return;
+      }
+      setActivityBusy("capture", true);
       setActivityStatus(`Saving ${activitySourceLabel(state.activityProductSurface)} screenshot...`);
 
       try {
@@ -3304,7 +3727,7 @@
           label: `${activitySourceLabel(state.activityProductSurface)} Screenshot`,
           createdAt: new Date().toISOString(),
           dataUrl,
-          motionPreset: ""
+          aiStyle: ""
         });
         setActivityStatus(
           persisted
@@ -3315,8 +3738,7 @@
       } catch (error) {
         setActivityStatus(error.message || "Unable to save the screenshot.", "bad");
       } finally {
-        activityCaptureBtn.disabled = false;
-        updateActivityControlState();
+        setActivityBusy("capture", false);
       }
     }
 
@@ -3326,6 +3748,7 @@
         return;
       }
 
+      setActivityBusy("camera", true);
       try {
         await stopActivityCamera();
         activityCameraStream = await navigator.mediaDevices.getUserMedia({
@@ -3343,19 +3766,29 @@
         setActivityStatus(`${state.activityCameraFacingMode === "user" ? "Front" : "Back"} camera ready.`, "good");
       } catch (error) {
         setActivityStatus("Camera access was blocked or no matching camera is available.", "bad");
+      } finally {
+        setActivityBusy("camera", false);
       }
     }
 
     async function toggleActivityCamera() {
+      if (activityControlsBusy()) {
+        return;
+      }
       if (activityCameraStream) {
+        setActivityBusy("camera", true);
         await stopActivityCamera();
         setActivityStatus("Camera closed.");
+        setActivityBusy("camera", false);
         return;
       }
       await startActivityCamera();
     }
 
     async function switchActivityCamera() {
+      if (activityControlsBusy()) {
+        return;
+      }
       state.activityCameraFacingMode = state.activityCameraFacingMode === "user" ? "environment" : "user";
       if (activityCameraStream) {
         await startActivityCamera();
@@ -3366,53 +3799,81 @@
     }
 
     async function captureActivityPhoto() {
+      if (activityControlsBusy()) {
+        return;
+      }
       if (!activityCameraStream || !activityCamera.videoWidth || !activityCamera.videoHeight) {
         setActivityStatus("Open the camera before taking a photo.", "warn");
         return;
       }
 
+      setActivityBusy("camera", true);
       const photoCanvas = document.createElement("canvas");
-      photoCanvas.width = activityCamera.videoWidth;
-      photoCanvas.height = activityCamera.videoHeight;
-      photoCanvas.getContext("2d").drawImage(activityCamera, 0, 0, photoCanvas.width, photoCanvas.height);
+      try {
+        photoCanvas.width = activityCamera.videoWidth;
+        photoCanvas.height = activityCamera.videoHeight;
+        photoCanvas.getContext("2d").drawImage(activityCamera, 0, 0, photoCanvas.width, photoCanvas.height);
 
-      const persisted = saveActivityProduct({
-        id: createActivityProductId(),
-        source: "camera",
-        label: `${state.activityCameraFacingMode === "user" ? "Front" : "Back"} Camera Photo`,
-        createdAt: new Date().toISOString(),
-        dataUrl: photoCanvas.toDataURL("image/jpeg", 0.86),
-        motionPreset: ""
-      });
-      await stopActivityCamera();
-      setActivityStatus(
-        persisted
-          ? "Photo saved in Activity Product."
-          : "Photo saved, but the repository is full on this device.",
-        persisted ? "good" : "warn"
-      );
+        const persisted = saveActivityProduct({
+          id: createActivityProductId(),
+          source: "camera",
+          label: `${state.activityCameraFacingMode === "user" ? "Front" : "Back"} Camera Photo`,
+          createdAt: new Date().toISOString(),
+          dataUrl: photoCanvas.toDataURL("image/jpeg", 0.86),
+          aiStyle: ""
+        });
+        await stopActivityCamera();
+        setActivityStatus(
+          persisted
+            ? "Photo saved in Activity Product."
+            : "Photo saved, but the repository is full on this device.",
+          persisted ? "good" : "warn"
+        );
+      } catch (error) {
+        setActivityStatus("Unable to take a photo right now.", "bad");
+      } finally {
+        setActivityBusy("camera", false);
+      }
     }
 
-    async function animateSelectedActivityProduct() {
+    async function cartoonizeSelectedActivityProduct() {
       const product = currentActivityProduct();
       if (!product) {
-        setActivityStatus("Choose a saved product before starting AI animation.", "warn");
+        setActivityStatus("Choose a saved product before starting AI cartoon mode.", "warn");
         return;
       }
       if (!navigator.onLine) {
-        setActivityStatus("AI animation needs Wi-Fi before it can run.", "warn");
+        setActivityStatus("AI cartoon mode needs Wi-Fi before it can run.", "warn");
         return;
       }
 
-      activityAnimateBtn.disabled = true;
-      setActivityStatus("Preparing AI motion preview...");
-      await new Promise((resolve) => window.setTimeout(resolve, 720));
+      if (activityControlsBusy()) {
+        return;
+      }
 
-      product.motionPreset = ACTIVITY_MOTION_PRESETS[Math.floor(Math.random() * ACTIVITY_MOTION_PRESETS.length)];
-      renderActivityProductRepository();
-      persistActivityProducts();
-      setActivityStatus("AI motion preview is ready.", "good");
-      activityAnimateBtn.disabled = false;
+      setActivityBusy("ai", true);
+      setActivityStatus("AI is turning your picture into a colorful cartoon...");
+      try {
+        const cartoonDataUrl = await createCartoonizedActivityDataUrl(product.dataUrl);
+        const persisted = saveActivityProduct({
+          id: createActivityProductId(),
+          source: product.source,
+          label: `${product.label} Cartoon`,
+          createdAt: new Date().toISOString(),
+          dataUrl: cartoonDataUrl,
+          aiStyle: ACTIVITY_AI_CARTOON_STYLE
+        });
+        setActivityStatus(
+          persisted
+            ? "AI cartoon version saved in Activity Product."
+            : "AI cartoon version created, but the repository is full on this device.",
+          persisted ? "good" : "warn"
+        );
+      } catch (error) {
+        setActivityStatus("Unable to create the AI cartoon version right now.", "bad");
+      } finally {
+        setActivityBusy("ai", false);
+      }
     }
 
     function setStatus(message, tone = "") {
@@ -3554,7 +4015,7 @@
     }
 
     function maxSurfaceTileSize(surface, item) {
-      return surface === "board" ? maxBoardStickerSize() : maxTileSize(item);
+      return surface === "board" ? maxBoardStickerSize(item) : maxTileSize(item);
     }
 
     function clampSurfaceItemPosition(surface, item, nextX, nextY, nextSize = item.size) {
@@ -3566,9 +4027,11 @@
 
     function itemCenterInViewport(surface, item) {
       const rect = surfaceRect(surface);
+      const width = surface === "board" ? boardItemWidth(item) : item.size;
+      const height = surface === "board" ? boardItemHeight(item) : itemHeight(item);
       return {
-        x: rect.left + item.x + (item.size / 2),
-        y: rect.top + item.y + (itemHeight(item) / 2)
+        x: rect.left + item.x + (width / 2),
+        y: rect.top + item.y + (height / 2)
       };
     }
 
@@ -3576,8 +4039,8 @@
       const rect = surfaceRect(surface);
       const localX = clientX - rect.left;
       const localY = clientY - rect.top;
-      const width = item.size;
-      const height = itemHeight(item);
+      const width = surface === "board" ? boardItemWidth(item) : item.size;
+      const height = surface === "board" ? boardItemHeight(item) : itemHeight(item);
       return (
         localX >= item.x &&
         localX <= item.x + width &&
@@ -3644,14 +4107,17 @@
       clearGestureHold(session);
       session.mode = "resize";
       session.startSize = item.size;
-      session.centerLocalX = item.x + (item.size / 2);
-      session.centerLocalY = item.y + (itemHeight(item) / 2);
+      session.centerLocalX = item.x + ((session.surface === "board" ? boardItemWidth(item) : item.size) / 2);
+      session.centerLocalY = item.y + ((session.surface === "board" ? boardItemHeight(item) : itemHeight(item)) / 2);
       const center = itemCenterInViewport(session.surface, item);
       session.centerX = center.x;
       session.centerY = center.y;
       session.startDistance = pointer
         ? Math.max(18, distanceBetweenPoints(pointer, { x: session.centerX, y: session.centerY }))
-        : Math.max(18, item.size / 2);
+        : Math.max(18, Math.max(
+          session.surface === "board" ? boardItemWidth(item) : item.size,
+          session.surface === "board" ? boardItemHeight(item) : itemHeight(item)
+        ) / 2);
     }
 
     function scheduleGestureRotate(session) {
@@ -4617,11 +5083,13 @@
         minSize,
         maxSurfaceTileSize(session.surface, item)
       );
+      const nextWidth = session.surface === "board" ? boardItemWidth(item, nextSize) : nextSize;
+      const nextHeight = session.surface === "board" ? boardItemHeight(item, nextSize) : itemHeight(item, nextSize);
       const nextPosition = clampSurfaceItemPosition(
         session.surface,
         item,
-        session.centerLocalX - (nextSize / 2),
-        session.centerLocalY - (itemHeight(item, nextSize) / 2),
+        session.centerLocalX - (nextWidth / 2),
+        session.centerLocalY - (nextHeight / 2),
         nextSize
       );
       item.size = nextSize;
@@ -4792,7 +5260,20 @@
       };
     }
 
-    function boardItemOverlapsPanel(x, y, size) {
+    function boardItemWidthRatio(item) {
+      const ratio = Number(item && item.widthRatio);
+      return Number.isFinite(ratio) && ratio > 0 ? ratio : 1;
+    }
+
+    function boardItemWidth(item, nextSize = item.size) {
+      return Math.max(MIN_ICON_SIZE, Math.round(nextSize * boardItemWidthRatio(item)));
+    }
+
+    function boardItemHeight(item, nextSize = item.size) {
+      return Math.max(MIN_ICON_SIZE, Math.round(nextSize));
+    }
+
+    function boardItemOverlapsPanel(item, x, y, nextSize = item.size) {
       const panelRect = boardTopRect();
       const rect = boardRect();
       if (!panelRect || !panelRect.width || !panelRect.height || !rect.width || !rect.height) {
@@ -4808,8 +5289,8 @@
       const margin = 10;
       const itemLeft = x;
       const itemTop = y;
-      const itemRight = x + size;
-      const itemBottom = y + size;
+      const itemRight = x + boardItemWidth(item, nextSize);
+      const itemBottom = y + boardItemHeight(item, nextSize);
 
       return !(
         itemRight <= localPanel.left + margin ||
@@ -4820,7 +5301,7 @@
     }
 
     function shiftBoardPositionAbovePanel(item, position, nextSize = item.size) {
-      if (!boardItemOverlapsPanel(position.x, position.y, nextSize)) {
+      if (!boardItemOverlapsPanel(item, position.x, position.y, nextSize)) {
         return position;
       }
 
@@ -4831,31 +5312,32 @@
       }
 
       const panelTop = panelRect.top - rect.top;
-      const liftedY = Math.max(0, panelTop - nextSize - 14);
+      const liftedY = Math.max(0, panelTop - boardItemHeight(item, nextSize) - 14);
       return clampBoardItemPosition(item, position.x, liftedY, nextSize);
     }
 
     function findVisibleBoardPlacement(item, initialPosition, nextSize = item.size) {
+      const footprint = Math.max(boardItemWidth(item, nextSize), boardItemHeight(item, nextSize));
       const offsets = [
         { x: 0, y: 0 },
-        { x: 0, y: -(nextSize * 0.42) },
-        { x: nextSize * 0.32, y: -(nextSize * 0.18) },
-        { x: -(nextSize * 0.32), y: -(nextSize * 0.18) },
-        { x: nextSize * 0.42, y: 0 },
-        { x: -(nextSize * 0.42), y: 0 },
-        { x: nextSize * 0.28, y: nextSize * 0.18 },
-        { x: -(nextSize * 0.28), y: nextSize * 0.18 }
+        { x: 0, y: -(footprint * 0.42) },
+        { x: footprint * 0.32, y: -(footprint * 0.18) },
+        { x: -(footprint * 0.32), y: -(footprint * 0.18) },
+        { x: footprint * 0.42, y: 0 },
+        { x: -(footprint * 0.42), y: 0 },
+        { x: footprint * 0.28, y: footprint * 0.18 },
+        { x: -(footprint * 0.28), y: footprint * 0.18 }
       ];
-      const overlapPadding = Math.max(14, nextSize * 0.14);
+      const overlapPadding = Math.max(14, footprint * 0.14);
 
       for (const offset of offsets) {
         let candidate = clampBoardItemPosition(item, initialPosition.x + offset.x, initialPosition.y + offset.y, nextSize);
         candidate = shiftBoardPositionAbovePanel(item, candidate, nextSize);
         const overlapsExisting = state.boardItems.some((existing) => {
-          const candidateRight = candidate.x + nextSize;
-          const candidateBottom = candidate.y + nextSize;
-          const existingRight = existing.x + existing.size;
-          const existingBottom = existing.y + existing.size;
+          const candidateRight = candidate.x + boardItemWidth(item, nextSize);
+          const candidateBottom = candidate.y + boardItemHeight(item, nextSize);
+          const existingRight = existing.x + boardItemWidth(existing);
+          const existingBottom = existing.y + boardItemHeight(existing);
 
           return !(
             candidateRight <= existing.x + overlapPadding ||
@@ -4883,43 +5365,57 @@
       return clamp(Math.round(candidate), MIN_ICON_SIZE, 320);
     }
 
-    function maxBoardStickerSize() {
+    function maxBoardStickerSize(item = { widthRatio: 1 }) {
       const rect = boardRect();
       if (!rect.width || !rect.height) {
         return MAX_BOARD_ICON_SIZE;
       }
 
-      return clamp(Math.floor(Math.min(rect.width - 12, rect.height - 12, MAX_BOARD_ICON_SIZE)), MIN_ICON_SIZE, MAX_BOARD_ICON_SIZE);
+      const widthRatio = boardItemWidthRatio(item);
+      return clamp(
+        Math.floor(Math.min((rect.width - 12) / widthRatio, rect.height - 12, MAX_BOARD_ICON_SIZE)),
+        MIN_ICON_SIZE,
+        MAX_BOARD_ICON_SIZE
+      );
     }
 
     function clampBoardItemPosition(item, nextX, nextY, nextSize = item.size) {
       const rect = boardRect();
+      const width = boardItemWidth(item, nextSize);
+      const height = boardItemHeight(item, nextSize);
       return {
-        x: clamp(nextX, 0, Math.max(0, rect.width - nextSize)),
-        y: clamp(nextY, 0, Math.max(0, rect.height - nextSize))
+        x: clamp(nextX, 0, Math.max(0, rect.width - width)),
+        y: clamp(nextY, 0, Math.max(0, rect.height - height))
       };
     }
 
     function centeredBoardItemPosition(item, clientX, clientY, nextSize = item.size) {
       const point = boardPoint(clientX, clientY);
-      const initialPosition = clampBoardItemPosition(item, point.x - (nextSize / 2), point.y - (nextSize / 2), nextSize);
+      const initialPosition = clampBoardItemPosition(
+        item,
+        point.x - (boardItemWidth(item, nextSize) / 2),
+        point.y - (boardItemHeight(item, nextSize) / 2),
+        nextSize
+      );
       return findVisibleBoardPlacement(item, initialPosition, nextSize);
     }
 
-    function nextBoardPlacement(size = defaultBoardStickerSize()) {
+    function nextBoardPlacement(item = { widthRatio: 1 }, size = defaultBoardStickerSize()) {
       const rect = boardRect();
       if (!rect.width || !rect.height) {
         return { x: 12, y: 12 };
       }
 
       const gap = 12;
+      const footprintWidth = boardItemWidth(item, size);
+      const footprintHeight = boardItemHeight(item, size);
       const usableWidth = Math.max(1, rect.width - 24);
-      const itemsPerRow = Math.max(1, Math.floor(usableWidth / (size + gap)));
+      const itemsPerRow = Math.max(1, Math.floor(usableWidth / (footprintWidth + gap)));
       const index = state.boardItems.length;
-      const rawX = 12 + (index % itemsPerRow) * (size + gap);
-      const rawY = 12 + Math.floor(index / itemsPerRow) * (size + gap);
-      const initialPosition = clampBoardItemPosition({ size }, rawX, rawY, size);
-      return findVisibleBoardPlacement({ size }, initialPosition, size);
+      const rawX = 12 + (index % itemsPerRow) * (footprintWidth + gap);
+      const rawY = 12 + Math.floor(index / itemsPerRow) * (footprintHeight + gap);
+      const initialPosition = clampBoardItemPosition(item, rawX, rawY, size);
+      return findVisibleBoardPlacement(item, initialPosition, size);
     }
 
     function getBoardItem(itemId) {
@@ -4937,8 +5433,8 @@
     }
 
     function applyBoardItemStyles(element, item) {
-      element.style.width = `${item.size}px`;
-      element.style.height = `${item.size}px`;
+      element.style.width = `${boardItemWidth(item)}px`;
+      element.style.height = `${boardItemHeight(item)}px`;
       element.style.left = "0px";
       element.style.top = "0px";
       element.style.transform = `translate3d(${Math.round(item.x)}px, ${Math.round(item.y)}px, 0) rotate(${normalizeRotation(item.rotation || 0)}deg)`;
@@ -4980,6 +5476,7 @@
         src: icon.src,
         assetKind: icon.assetKind || "emoji",
         colorable: Boolean(icon.colorable),
+        widthRatio: Number(icon.widthRatio) > 0 ? Number(icon.widthRatio) : 1,
         tintColor: null,
         size: defaultBoardStickerSize(),
         x: 0,
@@ -4989,7 +5486,7 @@
       };
       const position = clientPoint
         ? centeredBoardItemPosition(item, clientPoint.clientX, clientPoint.clientY, item.size)
-        : nextBoardPlacement(item.size);
+        : nextBoardPlacement(item, item.size);
       item.x = position.x;
       item.y = position.y;
       state.boardItems.push(item);
@@ -5013,7 +5510,8 @@
 
     function normalizeBoardItems() {
       state.boardItems.forEach((item) => {
-        item.size = clamp(item.size || defaultBoardStickerSize(), MIN_ICON_SIZE, maxBoardStickerSize());
+        item.widthRatio = boardItemWidthRatio(item);
+        item.size = clamp(item.size || defaultBoardStickerSize(), MIN_ICON_SIZE, maxBoardStickerSize(item));
         item.rotation = normalizeRotation(item.rotation || 0);
         const nextPosition = clampBoardItemPosition(item, item.x || 0, item.y || 0, item.size);
         item.x = nextPosition.x;
@@ -5098,7 +5596,7 @@
     function applyActiveInkMix() {
       const normalized = Array.from(new Set((state.activeInkColors || []).map(normalizeColorKey).filter(Boolean)));
       state.activeInkColors = normalized.length ? normalized : ["#ff69b4"];
-      state.selectedColor = mixedInkColor(state.activeInkColors);
+      state.selectedColor = intensifyInkColor(mixedInkColor(state.activeInkColors), state.activeInkColors.length);
       updateInkSelectionUI();
     }
 
@@ -5472,7 +5970,7 @@
     activityCameraBtn.addEventListener("click", toggleActivityCamera);
     activitySwitchCameraBtn.addEventListener("click", switchActivityCamera);
     activityTakePhotoBtn.addEventListener("click", captureActivityPhoto);
-    activityAnimateBtn.addEventListener("click", animateSelectedActivityProduct);
+    activityAnimateBtn.addEventListener("click", cartoonizeSelectedActivityProduct);
 
     boardWrap.addEventListener("pointerdown", startDrawing);
     boardWrap.addEventListener("pointermove", continueDrawing);
