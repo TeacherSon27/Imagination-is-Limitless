@@ -16,6 +16,7 @@
       --danger: #d63f52;
       --glow: 0 0 0 2px rgba(255, 223, 122, 0.65), 0 16px 26px rgba(255, 183, 64, 0.24);
       --spell-background-fade: 0;
+      --board-background-fade: 0;
       --launcher-motion-ms: 220ms;
       --launcher-motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
       --tray-motion-ms: 260ms;
@@ -1929,10 +1930,16 @@
     }
 
     .board-wrap::before {
-      content: none;
+      content: "";
       position: absolute;
       inset: 0;
+      z-index: 1;
       pointer-events: none;
+      opacity: var(--board-background-fade);
+      transition: opacity 0.24s ease;
+      background:
+        radial-gradient(circle at 50% 28%, rgba(255, 255, 255, 0.54), transparent 34%),
+        linear-gradient(180deg, rgba(248, 246, 239, 0.98), rgba(236, 231, 220, 0.98));
     }
 
     canvas {
@@ -2318,6 +2325,15 @@
 
         <section class="board-top collapsed" id="boardTop">
           <div class="tray-launcher-stack">
+            <div class="launcher-module background-control" id="boardBackgroundControl">
+              <button class="gold-launcher background-launcher" id="boardBackgroundLauncher" type="button" aria-label="Screen Board background controls closed. Tap once to open." aria-expanded="false">
+                <span class="tray-launcher-icon">◐</span>
+              </button>
+              <div class="launcher-popup background-popup hidden" id="boardBackgroundPopup" aria-hidden="true">
+                <p class="background-popup-title">Background Fade</p>
+                <input class="background-slider" id="boardBackgroundTransparencyRange" type="range" min="0" max="100" value="0" aria-label="Screen Board background fade level">
+              </div>
+            </div>
             <button class="gold-launcher activity-launcher" id="boardActivityLauncher" type="button" aria-label="Open Activity Product for the screen board." aria-expanded="false">
               <span class="tray-launcher-icon">AP</span>
             </button>
@@ -2465,7 +2481,9 @@
       boardTrayExpanded: false,
       spellingToolsPanelVisible: false,
       backgroundPanelVisible: false,
+      boardBackgroundPanelVisible: false,
       backgroundWash: 0,
+      boardBackgroundWash: 0,
       activityProductSurface: "spell",
       activityProducts: [],
       activityPhotos: [],
@@ -2514,6 +2532,10 @@
     const toolSizePopup = document.getElementById("toolSizePopup");
     const popupSizeButtons = Array.from(toolSizePopup.querySelectorAll("[data-popup-size]"));
     const boardTop = document.querySelector(".board-top");
+    const boardBackgroundControl = document.getElementById("boardBackgroundControl");
+    const boardBackgroundLauncher = document.getElementById("boardBackgroundLauncher");
+    const boardBackgroundPopup = document.getElementById("boardBackgroundPopup");
+    const boardBackgroundTransparencyRange = document.getElementById("boardBackgroundTransparencyRange");
     const boardActivityLauncher = document.getElementById("boardActivityLauncher");
     const boardTrayLauncher = document.getElementById("boardTrayLauncher");
     const boardWrap = document.getElementById("boardWrap");
@@ -4173,6 +4195,7 @@
       state.activityProductSurface = surface === "board" ? "board" : "spell";
       setSpellingToolsPanelVisible(false);
       setBackgroundPanelVisible(false);
+      setBoardBackgroundPanelVisible(false);
       setActivityLauncherExpanded(state.activityProductSurface, true);
       setAnimatedVisibility(activityProductModal, true, "modal-open");
       activityProductModal.setAttribute("aria-hidden", "false");
@@ -4371,6 +4394,22 @@
       targetCtx.fillRect(0, 0, width, height);
       const boardBackground = await loadImageAsset("assets/screen-board-background.png");
       drawCoverImage(targetCtx, boardBackground, width, height);
+      if (state.boardBackgroundWash > 0) {
+        targetCtx.save();
+        targetCtx.globalAlpha = state.boardBackgroundWash;
+        const washGlow = targetCtx.createRadialGradient(width * 0.5, height * 0.28, 0, width * 0.5, height * 0.28, width * 0.34);
+        washGlow.addColorStop(0, "rgba(255, 255, 255, 0.54)");
+        washGlow.addColorStop(1, "rgba(255, 255, 255, 0)");
+        targetCtx.fillStyle = washGlow;
+        targetCtx.fillRect(0, 0, width, height);
+
+        const wash = targetCtx.createLinearGradient(0, 0, 0, height);
+        wash.addColorStop(0, "rgba(248, 246, 239, 0.98)");
+        wash.addColorStop(1, "rgba(236, 231, 220, 0.98)");
+        targetCtx.fillStyle = wash;
+        targetCtx.fillRect(0, 0, width, height);
+        targetCtx.restore();
+      }
     }
 
     async function drawBoardItemToExport(targetCtx, item) {
@@ -5998,6 +6037,19 @@
       );
     }
 
+    function setBoardBackgroundPanelVisible(visible) {
+      state.boardBackgroundPanelVisible = Boolean(visible);
+      setAnimatedVisibility(boardBackgroundPopup, state.boardBackgroundPanelVisible);
+      boardBackgroundPopup.setAttribute("aria-hidden", String(!state.boardBackgroundPanelVisible));
+      boardBackgroundLauncher.setAttribute("aria-expanded", String(state.boardBackgroundPanelVisible));
+      boardBackgroundLauncher.setAttribute(
+        "aria-label",
+        state.boardBackgroundPanelVisible
+          ? "Screen Board background controls open. Tap again to close."
+          : "Screen Board background controls closed. Tap once to open."
+      );
+    }
+
     function setBackgroundWash(value) {
       state.backgroundWash = clamp(value, 0, 1);
       document.documentElement.style.setProperty("--spell-background-fade", state.backgroundWash.toFixed(2));
@@ -6009,6 +6061,20 @@
           : state.backgroundWash <= 0.04
             ? "Full picture background"
             : `${Math.round(state.backgroundWash * 100)} percent faded`
+      );
+    }
+
+    function setBoardBackgroundWash(value) {
+      state.boardBackgroundWash = clamp(value, 0, 1);
+      document.documentElement.style.setProperty("--board-background-fade", state.boardBackgroundWash.toFixed(2));
+      boardBackgroundTransparencyRange.value = String(Math.round(state.boardBackgroundWash * 100));
+      boardBackgroundTransparencyRange.setAttribute(
+        "aria-valuetext",
+        state.boardBackgroundWash >= 0.96
+          ? "Dirty white background"
+          : state.boardBackgroundWash <= 0.04
+            ? "Full picture background"
+            : `${Math.round(state.boardBackgroundWash * 100)} percent faded`
       );
     }
 
@@ -6377,6 +6443,7 @@
       boardModal.setAttribute("aria-hidden", "false");
       state.boardVisible = true;
       setBoardTrayExpanded(false);
+      setBoardBackgroundPanelVisible(false);
       requestAnimationFrame(() => {
         resizeCanvas();
         normalizeBoardItems();
@@ -6389,6 +6456,7 @@
       resetControlChooserSession();
       stopDrawing();
       closeActivityProductModal();
+      setBoardBackgroundPanelVisible(false);
       state.boardVisible = false;
       state.drawing = false;
       state.lastPoint = null;
@@ -6695,6 +6763,9 @@
       if (state.backgroundPanelVisible && backgroundControl && !backgroundControl.contains(event.target)) {
         setBackgroundPanelVisible(false);
       }
+      if (state.boardBackgroundPanelVisible && boardBackgroundControl && !boardBackgroundControl.contains(event.target)) {
+        setBoardBackgroundPanelVisible(false);
+      }
       if (!paletteRow.contains(event.target) && event.target !== eraserBtn && !toolSizePopup.contains(event.target)) {
         resetControlChooserSession();
       }
@@ -6764,6 +6835,12 @@
     });
     backgroundTransparencyRange.addEventListener("input", (event) => {
       setBackgroundWash(Number(event.currentTarget.value) / 100);
+    });
+    boardBackgroundLauncher.addEventListener("click", () => {
+      setBoardBackgroundPanelVisible(!state.boardBackgroundPanelVisible);
+    });
+    boardBackgroundTransparencyRange.addEventListener("input", (event) => {
+      setBoardBackgroundWash(Number(event.currentTarget.value) / 100);
     });
     spellActivityLauncher.addEventListener("click", () => toggleActivityProductModal("spell"));
     spellTrayLauncher.addEventListener("click", () => handleTrayLauncherTap("spell", spellTrayLauncher));
@@ -6838,7 +6915,9 @@
     setSpellTrayExpanded(false);
     setBoardTrayExpanded(false);
     setBackgroundPanelVisible(false);
+    setBoardBackgroundPanelVisible(false);
     setBackgroundWash(state.backgroundWash);
+    setBoardBackgroundWash(state.boardBackgroundWash);
     setActiveColor(state.selectedColor);
     setBoardPenMode(state.boardPenMode);
     setEraserMode(state.eraserOn);
