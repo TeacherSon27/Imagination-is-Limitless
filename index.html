@@ -1438,6 +1438,60 @@
       gap: 10px;
     }
 
+    .activity-live-controls {
+      display: grid;
+      gap: 8px;
+      padding: 12px 14px;
+      border-radius: 20px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.6), rgba(255, 246, 217, 0.44));
+      border: 1px solid rgba(255, 232, 170, 0.9);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.84),
+        0 10px 18px rgba(120, 79, 0, 0.08);
+    }
+
+    .activity-live-head {
+      display: grid;
+      gap: 4px;
+    }
+
+    .activity-live-title {
+      margin: 0;
+      font-size: 0.84rem;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #6a4300;
+    }
+
+    .activity-live-note {
+      margin: 0;
+      color: rgba(32, 48, 74, 0.62);
+      font-size: 0.74rem;
+      font-weight: 800;
+      line-height: 1.4;
+    }
+
+    .activity-live-row {
+      display: grid;
+      gap: 8px;
+    }
+
+    .activity-live-input {
+      width: 100%;
+      min-width: 0;
+      padding: 12px 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 226, 150, 0.92);
+      background: rgba(255, 255, 255, 0.92);
+      color: #4b3620;
+      font-weight: 800;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.82),
+        0 8px 16px rgba(120, 79, 0, 0.06);
+    }
+
     .activity-filter-panel {
       display: grid;
       gap: 10px;
@@ -2419,6 +2473,16 @@
           <button class="ghost-btn" id="activitySwitchCameraBtn" type="button">Switch Camera</button>
           <button class="action-btn" id="activityTakePhotoBtn" type="button">Take Photo</button>
         </div>
+        <section class="activity-live-controls" aria-labelledby="activityLiveTitle">
+          <div class="activity-live-head">
+            <p class="activity-live-title" id="activityLiveTitle">Teacher Website</p>
+            <p class="activity-live-note">Enter the live website URL once, then send the selected Activity Product from the Product Repository.</p>
+          </div>
+          <div class="activity-live-row">
+            <input class="activity-live-input" id="activityLiveServerInput" type="url" placeholder="http://192.168.50.169:8787" aria-label="Teacher website URL">
+            <button class="action-btn" id="activitySendLiveBtn" type="button">Send Selected AP</button>
+          </div>
+        </section>
         <section class="activity-filter-panel" aria-labelledby="activityFilterTitle">
           <div class="activity-filter-head">
             <p class="activity-filter-title" id="activityFilterTitle">Filters</p>
@@ -2548,6 +2612,8 @@
     const activityCameraBtn = document.getElementById("activityCameraBtn");
     const activitySwitchCameraBtn = document.getElementById("activitySwitchCameraBtn");
     const activityTakePhotoBtn = document.getElementById("activityTakePhotoBtn");
+    const activityLiveServerInput = document.getElementById("activityLiveServerInput");
+    const activitySendLiveBtn = document.getElementById("activitySendLiveBtn");
     const activityFilterGrid = document.getElementById("activityFilterGrid");
     const activityPhotoInput = document.getElementById("activityPhotoInput");
     const activityStatus = document.getElementById("activityStatus");
@@ -2577,6 +2643,12 @@
     const ACTIVITY_PHOTO_REPOSITORY_LIMIT = 8;
     const ACTIVITY_PRODUCT_STORAGE_KEY = "spell-scribble-activity-products-v1";
     const ACTIVITY_PHOTO_STORAGE_KEY = "spell-scribble-activity-upload-photos-v1";
+    const LIVE_ACTIVITY_SERVER_ORIGIN_STORAGE_KEY = "spell-scribble-live-server-origin-v1";
+    const LIVE_ACTIVITY_PRODUCT_ENDPOINT = "/api/activity-products";
+    const LIVE_ACTIVITY_PLAYER_STORAGE_KEY = "spell-scribble-live-player-id-v1";
+    const LIVE_ACTIVITY_MAX_ATTEMPTS = 3;
+    const LIVE_ACTIVITY_RETRY_BASE_MS = 1800;
+    const EMBEDDED_EXPORT_ASSET_SCRIPT_PATH = "embedded-export-assets.js";
     const ACTIVITY_LEGACY_CARTOON_STYLE = "cartoon";
     const ACTIVITY_FILTER_DEFS = [
       { id: "beautify", label: "Beauty / Beautify", badge: "Beautify" },
@@ -2628,13 +2700,17 @@
     const imageAssetCache = new Map();
     const animatedVisibilityTimers = new WeakMap();
     const pendingLetterPlacementTimers = new WeakMap();
+    const liveActivityRetryTimers = new Map();
+    const liveActivitySubmissionAttempts = new Map();
+    let embeddedExportAssetsPromise = null;
     const activityBusyState = {
       capture: false,
       camera: false,
       filter: false,
       save: false,
       upload: false,
-      paste: false
+      paste: false,
+      send: false
     };
 
     function getLetterVariant(variantId = "classic") {
@@ -3436,6 +3512,250 @@
       }
     }
 
+    function normalizeLiveServerOrigin(value) {
+      const raw = String(value || "").trim();
+      if (!raw) {
+        return "";
+      }
+
+      let candidate = raw;
+      if (!/^[a-z]+:\/\//i.test(candidate)) {
+        candidate = `http://${candidate}`;
+      }
+
+      try {
+        const parsed = new URL(candidate);
+        if (!/^https?:$/i.test(parsed.protocol)) {
+          return "";
+        }
+        return parsed.origin;
+      } catch (error) {
+        return "";
+      }
+    }
+
+    function getStoredLiveServerOrigin() {
+      try {
+        return normalizeLiveServerOrigin(localStorage.getItem(LIVE_ACTIVITY_SERVER_ORIGIN_STORAGE_KEY));
+      } catch (error) {
+        return "";
+      }
+    }
+
+    function defaultLiveServerOrigin() {
+      const inputOrigin = normalizeLiveServerOrigin(activityLiveServerInput && activityLiveServerInput.value);
+      if (inputOrigin) {
+        return inputOrigin;
+      }
+
+      const storedOrigin = getStoredLiveServerOrigin();
+      if (storedOrigin) {
+        return storedOrigin;
+      }
+
+      return /^https?:$/i.test(window.location.protocol) ? window.location.origin : "";
+    }
+
+    function setLiveServerOrigin(value, { persist = true } = {}) {
+      const normalized = normalizeLiveServerOrigin(value);
+      if (activityLiveServerInput) {
+        activityLiveServerInput.value = normalized;
+      }
+
+      if (!persist) {
+        return normalized;
+      }
+
+      try {
+        if (normalized) {
+          localStorage.setItem(LIVE_ACTIVITY_SERVER_ORIGIN_STORAGE_KEY, normalized);
+        } else {
+          localStorage.removeItem(LIVE_ACTIVITY_SERVER_ORIGIN_STORAGE_KEY);
+        }
+      } catch (error) {
+        // Ignore storage failures on restricted browsers.
+      }
+
+      return normalized;
+    }
+
+    function liveActivityApiUrl(pathname = LIVE_ACTIVITY_PRODUCT_ENDPOINT) {
+      const origin = defaultLiveServerOrigin();
+      if (!origin) {
+        return "";
+      }
+      return new URL(pathname, `${origin}/`).toString();
+    }
+
+    function liveActivitySubmissionsEnabled() {
+      return Boolean(liveActivityApiUrl(LIVE_ACTIVITY_PRODUCT_ENDPOINT));
+    }
+
+    function getLiveActivityPlayerId() {
+      try {
+        const stored = localStorage.getItem(LIVE_ACTIVITY_PLAYER_STORAGE_KEY);
+        if (stored) {
+          return stored;
+        }
+        const generated = `player-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+        localStorage.setItem(LIVE_ACTIVITY_PLAYER_STORAGE_KEY, generated);
+        return generated;
+      } catch (error) {
+        return `player-${Math.random().toString(36).slice(2, 8)}`;
+      }
+    }
+
+    function liveActivityPlayerLabel(playerId) {
+      return `Player ${String(playerId || "").slice(-4).toUpperCase() || "LIVE"}`;
+    }
+
+    function clearLiveActivityRetry(productId) {
+      const timer = liveActivityRetryTimers.get(productId);
+      if (timer) {
+        clearTimeout(timer);
+        liveActivityRetryTimers.delete(productId);
+      }
+    }
+
+    function scheduleLiveActivityRetry(product, attempt) {
+      clearLiveActivityRetry(product.id);
+      if (attempt >= LIVE_ACTIVITY_MAX_ATTEMPTS) {
+        liveActivitySubmissionAttempts.delete(product.id);
+        return;
+      }
+      const delay = LIVE_ACTIVITY_RETRY_BASE_MS * (attempt + 1);
+      const timer = window.setTimeout(() => {
+        submitActivityProductLive(product, { attempt });
+      }, delay);
+      liveActivityRetryTimers.set(product.id, timer);
+    }
+
+    async function submitActivityProductLive(product, {
+      attempt = 0,
+      manual = false
+    } = {}) {
+      if (!product) {
+        if (manual) {
+          throw new Error("Save a screenshot or choose a Product Repository item first.");
+        }
+        return false;
+      }
+
+      const endpoint = liveActivityApiUrl(LIVE_ACTIVITY_PRODUCT_ENDPOINT);
+      if (!endpoint) {
+        if (manual) {
+          throw new Error("Enter the Teacher Website URL first.");
+        }
+        return false;
+      }
+
+      const currentAttempt = Math.max(attempt, liveActivitySubmissionAttempts.get(product.id) || 0);
+      liveActivitySubmissionAttempts.set(product.id, currentAttempt);
+      clearLiveActivityRetry(product.id);
+
+      const playerId = getLiveActivityPlayerId();
+      try {
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            originProductId: product.id,
+            source: product.source,
+            label: product.label,
+            createdAt: product.createdAt,
+            dataUrl: product.dataUrl,
+            filterStyle: product.filterStyle,
+            submittedBy: {
+              id: playerId,
+              label: liveActivityPlayerLabel(playerId)
+            }
+          })
+        });
+        if (!response.ok) {
+          const payload = await response.json().catch(() => ({}));
+          throw new Error(payload.error || "Teacher Website submission failed.");
+        }
+        liveActivitySubmissionAttempts.delete(product.id);
+        clearLiveActivityRetry(product.id);
+        return true;
+      } catch (error) {
+        if (manual) {
+          liveActivitySubmissionAttempts.delete(product.id);
+          clearLiveActivityRetry(product.id);
+          throw error;
+        }
+        const nextAttempt = currentAttempt + 1;
+        liveActivitySubmissionAttempts.set(product.id, nextAttempt);
+        scheduleLiveActivityRetry(product, nextAttempt);
+        return false;
+      }
+    }
+
+    async function handleSendSelectedActivityProduct() {
+      if (activityControlsBusy()) {
+        return;
+      }
+
+      const selectedProduct = state.activitySelectionMode === "product" ? currentActivityProduct() : null;
+      if (!selectedProduct) {
+        setActivityStatus("Select a saved item from the Product Repository before sending it to the Teacher Website.", "warn");
+        return;
+      }
+
+      const normalizedOrigin = setLiveServerOrigin(activityLiveServerInput ? activityLiveServerInput.value : defaultLiveServerOrigin());
+      if (!normalizedOrigin) {
+        setActivityStatus("Enter the Teacher Website URL first, for example http://192.168.50.169:8787.", "warn");
+        return;
+      }
+
+      setActivityBusy("send", true);
+      setActivityStatus(`Sending ${selectedProduct.label} to the Teacher Website...`);
+      try {
+        await submitActivityProductLive(selectedProduct, { manual: true });
+        setActivityStatus(`${selectedProduct.label} sent to the Teacher Website.`, "good");
+      } catch (error) {
+        setActivityStatus(explainLiveSendError(error), "bad");
+      } finally {
+        setActivityBusy("send", false);
+      }
+    }
+
+    function resolveEmbeddedAssetSource(src) {
+      if (!src) {
+        return src;
+      }
+      const embeddedAssets = window.__SPELL_SCRIBBLE_EMBEDDED_ASSETS;
+      if (embeddedAssets && Object.prototype.hasOwnProperty.call(embeddedAssets, src)) {
+        return embeddedAssets[src];
+      }
+      return src;
+    }
+
+    function ensureEmbeddedExportAssetsLoaded() {
+      if (window.__SPELL_SCRIBBLE_EMBEDDED_ASSETS) {
+        return Promise.resolve(window.__SPELL_SCRIBBLE_EMBEDDED_ASSETS);
+      }
+      if (window.location.protocol !== "file:") {
+        return Promise.resolve({});
+      }
+      if (embeddedExportAssetsPromise) {
+        return embeddedExportAssetsPromise;
+      }
+
+      embeddedExportAssetsPromise = new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.async = true;
+        script.src = EMBEDDED_EXPORT_ASSET_SCRIPT_PATH;
+        script.onload = () => resolve(window.__SPELL_SCRIBBLE_EMBEDDED_ASSETS || {});
+        script.onerror = () => reject(new Error("Local export assets are missing."));
+        document.head.appendChild(script);
+      });
+
+      return embeddedExportAssetsPromise;
+    }
+
     function loadActivityProducts() {
       try {
         const raw = localStorage.getItem(ACTIVITY_PRODUCT_STORAGE_KEY);
@@ -3535,6 +3855,7 @@
       const hasCameraApi = Boolean(navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === "function");
       const surfaceLabel = activitySourceLabel(state.activityProductSurface);
       const controlsLocked = activityControlsBusy();
+      const selectedProductReady = state.activitySelectionMode === "product" && Boolean(currentActivityProduct());
 
       activitySourceTag.textContent = surfaceLabel;
       activityCaptureBtn.textContent = `Save ${surfaceLabel} Screenshot`;
@@ -3545,6 +3866,7 @@
       activityCameraBtn.disabled = controlsLocked;
       activitySwitchCameraBtn.disabled = !hasCameraApi || controlsLocked;
       activityTakePhotoBtn.disabled = !activityCameraStream || controlsLocked;
+      activitySendLiveBtn.disabled = controlsLocked || !selectedProductReady;
       renderActivityFilterGrid();
     }
 
@@ -3761,6 +4083,7 @@
       state.selectedActivityProductId = normalizedEntry.id;
       state.activitySelectionMode = "product";
       renderActivityProductRepository();
+      submitActivityProductLive(normalizedEntry);
       return persistActivityProducts();
     }
 
@@ -4196,6 +4519,7 @@
       setSpellingToolsPanelVisible(false);
       setBackgroundPanelVisible(false);
       setBoardBackgroundPanelVisible(false);
+      setLiveServerOrigin(defaultLiveServerOrigin(), { persist: false });
       setActivityLauncherExpanded(state.activityProductSurface, true);
       setAnimatedVisibility(activityProductModal, true, "modal-open");
       activityProductModal.setAttribute("aria-hidden", "false");
@@ -4242,13 +4566,24 @@
     }
 
     function loadImageAsset(src) {
-      return new Promise((resolve, reject) => {
+      const needsEmbeddedAssets = (
+        window.location.protocol === "file:" &&
+        typeof src === "string" &&
+        !/^(data:|blob:|https?:)/i.test(src)
+      );
+
+      const assetReady = needsEmbeddedAssets
+        ? ensureEmbeddedExportAssetsLoaded()
+        : Promise.resolve({});
+
+      return assetReady.then(() => new Promise((resolve, reject) => {
         if (!src) {
           reject(new Error("Missing image source."));
           return;
         }
 
-        const cached = imageAssetCache.get(src);
+        const resolvedSrc = resolveEmbeddedAssetSource(src);
+        const cached = imageAssetCache.get(resolvedSrc);
         if (cached) {
           if (cached.complete && cached.naturalWidth) {
             resolve(cached);
@@ -4263,9 +4598,25 @@
         image.decoding = "async";
         image.onload = () => resolve(image);
         image.onerror = () => reject(new Error(`Unable to load ${src}`));
-        imageAssetCache.set(src, image);
-        image.src = src;
-      });
+        imageAssetCache.set(resolvedSrc, image);
+        image.src = resolvedSrc;
+      }));
+    }
+
+    function explainScreenshotError(error) {
+      const message = error && error.message ? String(error.message) : "";
+      if (/insecure|tainted|cross-origin/i.test(message)) {
+        return "Screenshot save was blocked by the browser. Enter the live server URL or keep the embedded export assets beside index.html for local use.";
+      }
+      return message || "Unable to save the screenshot.";
+    }
+
+    function explainLiveSendError(error) {
+      const message = error && error.message ? String(error.message) : "";
+      if (/load failed|failed to fetch|networkerror/i.test(message)) {
+        return "Unable to reach the Teacher Website. Check the URL and make sure the live server is open.";
+      }
+      return message || "Unable to send this Activity Product to the Teacher Website.";
     }
 
     function createExportSurface(width, height) {
@@ -4485,7 +4836,7 @@
           persisted ? "good" : "warn"
         );
       } catch (error) {
-        setActivityStatus(error.message || "Unable to save the screenshot.", "bad");
+        setActivityStatus(explainScreenshotError(error), "bad");
       } finally {
         setActivityBusy("capture", false);
       }
@@ -6876,6 +7227,17 @@
     activityCameraBtn.addEventListener("click", toggleActivityCamera);
     activitySwitchCameraBtn.addEventListener("click", switchActivityCamera);
     activityTakePhotoBtn.addEventListener("click", captureActivityPhoto);
+    activitySendLiveBtn.addEventListener("click", handleSendSelectedActivityProduct);
+    activityLiveServerInput.addEventListener("change", (event) => {
+      const normalized = setLiveServerOrigin(event.currentTarget.value);
+      if (!normalized && event.currentTarget.value.trim()) {
+        setActivityStatus("Enter a valid Teacher Website URL, for example http://192.168.50.169:8787.", "warn");
+        return;
+      }
+      if (normalized) {
+        setActivityStatus("Teacher Website URL saved for live sending.", "good");
+      }
+    });
     activityPhotoInput.addEventListener("change", handleActivityPhotoFileChange);
 
     boardWrap.addEventListener("pointerdown", startDrawing);
@@ -6911,6 +7273,7 @@
     loadActivityProducts();
     loadActivityPhotos();
     renderActivityProductRepository();
+    setLiveServerOrigin(defaultLiveServerOrigin(), { persist: false });
     setSpellingToolsPanelVisible(false);
     setSpellTrayExpanded(false);
     setBoardTrayExpanded(false);
