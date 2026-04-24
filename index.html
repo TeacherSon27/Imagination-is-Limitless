@@ -2845,6 +2845,8 @@
         tileHeightRatio: LETTER_HEIGHT_RATIO,
         previewMinWidth: 96,
         previewMinHeight: 144,
+        previewUppercasePath: (letter) => `letter-bank-previews/classic/uppercase-${String(letter).toUpperCase()}.webp`,
+        previewLowercasePath: (letter) => `letter-bank-previews/classic/lowercase-${String(letter).toLowerCase()}.webp`,
         uppercasePath: (letter) => `uppercase-transparent/alphabet-letter-${String(letter).toUpperCase()}-4k.png`,
         lowercasePath: (letter) => `lowercase-transparent/alphabet-letter-${String(letter).toLowerCase()}-4k.png`
       },
@@ -2853,6 +2855,8 @@
         tileHeightRatio: LINE_LETTER_HEIGHT_RATIO,
         previewMinWidth: 112,
         previewMinHeight: 112,
+        previewUppercasePath: (letter) => `letter-bank-previews/line/uppercase-${String(letter).toUpperCase()}.webp`,
+        previewLowercasePath: (letter) => `letter-bank-previews/line/lowercase-${String(letter).toLowerCase()}.webp`,
         uppercasePath: (letter) => `uppercase-cutout/alphabet-letter-${String(letter).toUpperCase()}-4k.png`,
         lowercasePath: (letter) => `lowercase-cutout/alphabet-letter-${String(letter).toLowerCase()}-4k.png`
       }
@@ -3491,8 +3495,68 @@
       return getLetterVariant(variant).lowercasePath(letter);
     }
 
+    function uppercasePreviewImagePath(letter, variant = "classic") {
+      const variantDef = getLetterVariant(variant);
+      if (typeof variantDef.previewUppercasePath === "function") {
+        return variantDef.previewUppercasePath(letter);
+      }
+      return variantDef.uppercasePath(letter);
+    }
+
+    function lowercasePreviewImagePath(letter, variant = "classic") {
+      const variantDef = getLetterVariant(variant);
+      if (typeof variantDef.previewLowercasePath === "function") {
+        return variantDef.previewLowercasePath(letter);
+      }
+      return variantDef.lowercasePath(letter);
+    }
+
     function imagePathForCharacter(char, variant = "classic") {
       return char === char.toUpperCase() ? uppercaseImagePath(char, variant) : lowercaseImagePath(char, variant);
+    }
+
+    function applyImageSourceWithFallback(image, primarySrc, fallbackSrc) {
+      const primary = String(primarySrc || "").trim();
+      const fallback = String(fallbackSrc || "").trim();
+      if (!primary && !fallback) {
+        return;
+      }
+      if (!primary || primary === fallback || !fallback) {
+        image.src = primary || fallback;
+        return;
+      }
+      image.addEventListener("error", () => {
+        if (image.src !== fallback) {
+          image.src = fallback;
+        }
+      }, { once: true });
+      image.src = primary;
+    }
+
+    function prepareLetterCardImage(image, primarySrc, fallbackSrc, options = {}) {
+      image.decoding = "async";
+      image.loading = options.loading || "lazy";
+      image.fetchPriority = options.fetchPriority || "low";
+      image.dataset.primarySrc = primarySrc || "";
+      image.dataset.fallbackSrc = fallbackSrc || "";
+      if (options.defer) {
+        image.dataset.pendingSrc = primarySrc || fallbackSrc || "";
+        return;
+      }
+      applyImageSourceWithFallback(image, primarySrc, fallbackSrc);
+    }
+
+    function ensureLetterCardImageLoaded(image) {
+      if (!image || image.src) {
+        return;
+      }
+      const primarySrc = image.dataset.pendingSrc || image.dataset.primarySrc || image.dataset.fallbackSrc || "";
+      const fallbackSrc = image.dataset.fallbackSrc || primarySrc;
+      if (!primarySrc && !fallbackSrc) {
+        return;
+      }
+      delete image.dataset.pendingSrc;
+      applyImageSourceWithFallback(image, primarySrc, fallbackSrc);
     }
 
     function getIconDef(iconId) {
@@ -7275,17 +7339,32 @@
       const front = document.createElement("div");
       front.className = "letter-face front";
       const frontImage = document.createElement("img");
-      frontImage.src = uppercaseImagePath(letter, variantDef.id);
       frontImage.alt = `${letter} uppercase card`;
       frontImage.draggable = false;
+      prepareLetterCardImage(
+        frontImage,
+        uppercasePreviewImagePath(letter, variantDef.id),
+        uppercaseImagePath(letter, variantDef.id),
+        {
+          loading: "lazy",
+          fetchPriority: "auto"
+        }
+      );
       front.appendChild(frontImage);
 
       const back = document.createElement("div");
       back.className = "letter-face back";
       const backImage = document.createElement("img");
-      backImage.src = lowercaseImagePath(lowercase, variantDef.id);
       backImage.alt = `${lowercase} lowercase card`;
       backImage.draggable = false;
+      prepareLetterCardImage(
+        backImage,
+        lowercasePreviewImagePath(lowercase, variantDef.id),
+        lowercaseImagePath(lowercase, variantDef.id),
+        {
+          defer: true
+        }
+      );
       back.appendChild(backImage);
 
       inner.appendChild(front);
@@ -7315,9 +7394,11 @@
       }
 
       container.innerHTML = "";
+      const fragment = document.createDocumentFragment();
       alphabet.forEach((letter) => {
-        container.appendChild(createLetterCard(letter, variant));
+        fragment.appendChild(createLetterCard(letter, variant));
       });
+      container.appendChild(fragment);
       container.scrollLeft = 0;
     }
 
@@ -7541,6 +7622,9 @@
     function toggleCardFlip(card) {
       const isFlipped = card.classList.toggle("flipped");
       card.dataset.caseMode = isFlipped ? "lower" : "upper";
+      if (isFlipped) {
+        ensureLetterCardImageLoaded(card.querySelector(".letter-face.back img"));
+      }
       const visibleChar = isFlipped ? card.dataset.lowercase : card.dataset.uppercase;
       const modeLabel = isFlipped ? "lowercase" : "capital";
       card.setAttribute(
