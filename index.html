@@ -393,6 +393,86 @@
       width: min(324px, calc(100vw - 24px));
     }
 
+    .feature-tools-popup {
+      width: min(380px, calc(100vw - 24px));
+      display: grid;
+      gap: 12px;
+    }
+
+    .feature-popup-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .feature-popup-btn {
+      width: 100%;
+      min-height: 96px;
+      padding: 12px;
+      display: grid;
+      grid-template-columns: 84px minmax(0, 1fr);
+      gap: 12px;
+      align-items: center;
+      text-align: left;
+      border-radius: 22px;
+      background:
+        linear-gradient(180deg, rgba(255, 252, 239, 0.98), rgba(255, 239, 188, 0.92));
+      border: 1px solid rgba(255, 236, 176, 0.96);
+      box-shadow:
+        0 12px 20px rgba(120, 79, 0, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.84),
+        inset 0 -1px 0 rgba(201, 156, 40, 0.16);
+    }
+
+    .feature-popup-btn:hover {
+      transform: translateY(-1px);
+      box-shadow:
+        0 16px 24px rgba(120, 79, 0, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.88),
+        inset 0 -1px 0 rgba(201, 156, 40, 0.18);
+    }
+
+    .feature-popup-thumb {
+      width: 84px;
+      height: 84px;
+      display: grid;
+      place-items: center;
+      border-radius: 20px;
+      background:
+        radial-gradient(circle at 50% 42%, rgba(255, 220, 134, 0.18), transparent 58%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 248, 227, 0.2));
+      border: 1px solid rgba(255, 236, 176, 0.74);
+      overflow: hidden;
+    }
+
+    .feature-popup-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      filter: drop-shadow(0 10px 18px rgba(74, 48, 0, 0.18));
+      pointer-events: none;
+    }
+
+    .feature-popup-copy {
+      display: grid;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .feature-popup-copy strong {
+      color: #6a4300;
+      font-size: 0.92rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .feature-popup-copy small {
+      color: rgba(32, 48, 74, 0.68);
+      font-size: 0.78rem;
+      font-weight: 800;
+      line-height: 1.35;
+    }
+
     .utility-actions {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -467,6 +547,12 @@
 
     .activity-launcher .tray-launcher-icon {
       font-size: 1rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .feature-tools-launcher .tray-launcher-icon {
+      font-size: 0.98rem;
       letter-spacing: 0.08em;
       text-transform: uppercase;
     }
@@ -1294,6 +1380,26 @@
         visibility 0s linear 0s;
     }
 
+    #featureToolsModal {
+      z-index: 25;
+      background: rgba(12, 18, 36, 0.5);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition:
+        opacity var(--launcher-motion-ms) var(--launcher-motion-ease),
+        visibility 0s linear var(--launcher-motion-ms);
+    }
+
+    #featureToolsModal.modal-open {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      transition:
+        opacity var(--launcher-motion-ms) var(--launcher-motion-ease),
+        visibility 0s linear 0s;
+    }
+
     .hidden {
       display: none !important;
     }
@@ -1322,6 +1428,531 @@
     .overlay-copy {
       margin: 10px 0 0;
       color: rgba(32, 48, 74, 0.78);
+    }
+
+    .feature-modal-card {
+      width: min(100%, 1260px);
+      max-height: min(94vh, 980px);
+      padding: 22px;
+      display: grid;
+      grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+      gap: 18px;
+      border-radius: 34px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 248, 232, 0.94));
+      box-shadow: 0 32px 58px rgba(12, 18, 35, 0.28);
+      border: 1px solid rgba(255, 255, 255, 0.84);
+      overflow: auto;
+      transform: translate3d(0, 20px, 0) scale(0.98);
+      opacity: 0.96;
+      transition:
+        transform var(--launcher-motion-ms) var(--launcher-motion-ease),
+        opacity var(--launcher-motion-ms) var(--launcher-motion-ease);
+      will-change: transform, opacity;
+    }
+
+    #featureToolsModal.modal-open .feature-modal-card {
+      transform: translate3d(0, 0, 0) scale(1);
+      opacity: 1;
+    }
+
+    .feature-modal-side,
+    .feature-stage-panel {
+      min-height: 0;
+      border-radius: 28px;
+      padding: 18px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.58), rgba(255, 250, 239, 0.36));
+      border: 1px solid rgba(255, 240, 201, 0.9);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.84),
+        inset 0 -1px 0 rgba(207, 171, 90, 0.12);
+      backdrop-filter: blur(14px) saturate(140%);
+    }
+
+    .feature-modal-side {
+      display: grid;
+      gap: 14px;
+      align-content: start;
+    }
+
+    .feature-modal-head {
+      display: grid;
+      gap: 10px;
+    }
+
+    .feature-modal-title {
+      margin: 0;
+      font-size: clamp(1.5rem, 2vw, 2rem);
+      line-height: 1;
+      letter-spacing: -0.04em;
+      color: #20304a;
+    }
+
+    .feature-modal-note,
+    .feature-tool-hint,
+    .feature-stage-note {
+      margin: 0;
+      color: rgba(32, 48, 74, 0.68);
+      font-size: 0.82rem;
+      font-weight: 800;
+      line-height: 1.45;
+    }
+
+    .feature-tool-nav {
+      display: grid;
+      gap: 10px;
+    }
+
+    .feature-nav-btn {
+      width: 100%;
+      padding: 12px;
+      display: grid;
+      grid-template-columns: 78px minmax(0, 1fr);
+      gap: 12px;
+      align-items: center;
+      text-align: left;
+      border-radius: 22px;
+      background:
+        linear-gradient(180deg, rgba(255, 252, 239, 0.98), rgba(255, 239, 188, 0.92));
+      border: 1px solid rgba(255, 236, 176, 0.96);
+      box-shadow:
+        0 10px 18px rgba(120, 79, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.84),
+        inset 0 -1px 0 rgba(201, 156, 40, 0.16);
+    }
+
+    .feature-nav-btn.active {
+      background:
+        linear-gradient(180deg, #fff2a2, #ffc62b);
+      box-shadow:
+        0 0 0 2px rgba(255, 206, 64, 0.9),
+        0 14px 24px rgba(120, 79, 0, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.88),
+        inset 0 -1px 0 rgba(176, 116, 6, 0.18);
+    }
+
+    .feature-nav-copy {
+      display: grid;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .feature-nav-copy strong {
+      color: #6a4300;
+      font-size: 0.9rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .feature-nav-copy small {
+      color: rgba(32, 48, 74, 0.66);
+      font-size: 0.76rem;
+      font-weight: 800;
+      line-height: 1.35;
+    }
+
+    .feature-stage-panel {
+      display: grid;
+      gap: 14px;
+      align-content: start;
+    }
+
+    .feature-stage-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .feature-stage-title-wrap {
+      display: grid;
+      gap: 8px;
+    }
+
+    .feature-stage-title {
+      margin: 0;
+      font-size: clamp(1.35rem, 1.8vw, 1.9rem);
+      line-height: 1;
+      letter-spacing: -0.04em;
+      color: #20304a;
+    }
+
+    .feature-close-btn {
+      min-width: 104px;
+      min-height: 48px;
+      flex: 0 0 auto;
+    }
+
+    .feature-tool-stage {
+      display: grid;
+      gap: 14px;
+      min-height: 0;
+    }
+
+    .feature-widget {
+      display: none;
+      gap: 12px;
+    }
+
+    .feature-widget.active {
+      display: grid;
+    }
+
+    .feature-device-shell {
+      position: relative;
+      width: 100%;
+      margin: 0 auto;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .feature-device-art {
+      display: block;
+      width: 100%;
+      height: auto;
+      pointer-events: none;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-user-drag: none;
+      filter: drop-shadow(0 24px 34px rgba(90, 58, 0, 0.2));
+    }
+
+    .feature-hotspot {
+      position: absolute;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 244, 211, 0.01);
+      box-shadow: none;
+      transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease,
+        background-color 0.18s ease,
+        border-color 0.18s ease;
+    }
+
+    .feature-hotspot:hover,
+    .feature-hotspot:focus-visible {
+      background: rgba(255, 252, 240, 0.08);
+      border-color: rgba(255, 226, 140, 0.34);
+      box-shadow:
+        0 0 0 2px rgba(255, 206, 64, 0.42),
+        0 12px 22px rgba(120, 79, 0, 0.14);
+      transform: translateY(-1px);
+    }
+
+    .feature-display {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 0 4%;
+      color: #19263b;
+      font-family: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.44);
+      pointer-events: none;
+      text-align: right;
+    }
+
+    .feature-widget-status,
+    .feature-widget-meta {
+      margin: 0;
+      min-height: 1.4em;
+      color: rgba(32, 48, 74, 0.72);
+      font-size: 0.88rem;
+      font-weight: 800;
+      line-height: 1.45;
+    }
+
+    .feature-calculator-shell {
+      max-width: 980px;
+    }
+
+    .feature-calculator-display {
+      left: 17.8%;
+      top: 12.8%;
+      width: 51.6%;
+      height: 15.4%;
+      font-size: clamp(1.55rem, 3vw, 3.4rem);
+      line-height: 1;
+    }
+
+    .feature-calculator-memory {
+      position: absolute;
+      left: 20%;
+      top: 15.8%;
+      min-width: 1.4em;
+      min-height: 1.4em;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.32);
+      color: rgba(32, 48, 74, 0.72);
+      font-size: clamp(0.66rem, 1.1vw, 0.86rem);
+      font-weight: 900;
+      pointer-events: none;
+    }
+
+    .feature-calc-key {
+      position: absolute;
+      border-radius: 18px;
+    }
+
+    .feature-calc-key.top-row {
+      top: 40.2%;
+      height: 8.9%;
+    }
+
+    .feature-calc-key.row-two {
+      top: 52.2%;
+      height: 9.1%;
+    }
+
+    .feature-calc-key.row-three {
+      top: 64.2%;
+      height: 9.1%;
+    }
+
+    .feature-calc-key.row-four {
+      top: 76.2%;
+      height: 9.1%;
+    }
+
+    .feature-calc-key.row-five {
+      top: 88.1%;
+      height: 9%;
+    }
+
+    .calc-col-1 { left: 18.8%; width: 8.8%; }
+    .calc-col-2 { left: 29.2%; width: 8.8%; }
+    .calc-col-3 { left: 39.6%; width: 8.8%; }
+    .calc-col-4 { left: 50.1%; width: 8.8%; }
+    .calc-col-5 { left: 60.6%; width: 8.8%; }
+    .calc-col-6 { left: 71.1%; width: 8.8%; }
+
+    .feature-calc-key.equals-tall {
+      left: 50.1%;
+      top: 76.2%;
+      width: 8.8%;
+      height: 20.9%;
+      border-radius: 18px;
+    }
+
+    .feature-calc-key.add-tall {
+      left: 60.6%;
+      top: 64.2%;
+      width: 8.8%;
+      height: 20.8%;
+      border-radius: 18px;
+    }
+
+    .feature-timer-shell {
+      max-width: 1020px;
+    }
+
+    .feature-timer-display {
+      left: 25%;
+      top: 17.4%;
+      width: 45%;
+      height: 22%;
+      font-size: clamp(2rem, 5vw, 5.3rem);
+      line-height: 1;
+      letter-spacing: 0.04em;
+      justify-content: center;
+      padding: 0;
+    }
+
+    .feature-timer-lock-indicator {
+      position: absolute;
+      left: 66.6%;
+      top: 27.4%;
+      min-width: 2.2em;
+      min-height: 2.2em;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.2);
+      color: rgba(32, 48, 74, 0.72);
+      font-size: clamp(0.84rem, 1.3vw, 1.12rem);
+      font-weight: 900;
+      pointer-events: none;
+    }
+
+    .feature-timer-btn-min {
+      left: 20.4%;
+      top: 57%;
+      width: 15.8%;
+      height: 23%;
+    }
+
+    .feature-timer-btn-sec {
+      left: 64%;
+      top: 57%;
+      width: 15.8%;
+      height: 23%;
+    }
+
+    .feature-timer-btn-toggle {
+      left: 39%;
+      top: 57%;
+      width: 22%;
+      height: 30%;
+      border-radius: 999px;
+    }
+
+    .feature-timer-btn-reset {
+      left: 18.3%;
+      top: 83.2%;
+      width: 18.7%;
+      height: 9.8%;
+      border-radius: 999px;
+    }
+
+    .feature-timer-btn-lock {
+      left: 60.2%;
+      top: 83.2%;
+      width: 21.8%;
+      height: 9.8%;
+      border-radius: 999px;
+    }
+
+    .feature-timer-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .feature-meta-chip {
+      padding: 10px 14px;
+      border-radius: 16px;
+      background:
+        linear-gradient(180deg, rgba(255, 252, 239, 0.98), rgba(255, 239, 188, 0.92));
+      border: 1px solid rgba(255, 236, 176, 0.96);
+      color: #6a4300;
+      font-size: 0.78rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      box-shadow:
+        0 8px 14px rgba(120, 79, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.84),
+        inset 0 -1px 0 rgba(201, 156, 40, 0.16);
+    }
+
+    .feature-die-shell {
+      max-width: 760px;
+      cursor: pointer;
+    }
+
+    .feature-die-shell.rolling {
+      animation: die-roll-spin 780ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .feature-die-pip-layer {
+      position: absolute;
+      left: 24%;
+      top: 9%;
+      width: 52%;
+      height: 27%;
+      pointer-events: none;
+    }
+
+    .feature-die-pip {
+      position: absolute;
+      width: 11%;
+      aspect-ratio: 1 / 1;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 38% 32%, rgba(255, 255, 255, 0.92), rgba(255, 223, 111, 0.94) 36%, rgba(232, 165, 18, 0.98) 78%, rgba(152, 87, 0, 0.94));
+      box-shadow:
+        0 0 0 2px rgba(255, 239, 185, 0.78),
+        0 10px 18px rgba(90, 58, 0, 0.18);
+      opacity: 0;
+      transform: scale(0.82);
+      transition: opacity 0.16s ease, transform 0.16s ease;
+    }
+
+    .feature-die-pip.visible {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .feature-die-pip.pip-1 { left: 44.5%; top: 40%; }
+    .feature-die-pip.pip-2 { left: 18%; top: 12%; }
+    .feature-die-pip.pip-3 { left: 71%; top: 67%; }
+    .feature-die-pip.pip-4 { left: 71%; top: 12%; }
+    .feature-die-pip.pip-5 { left: 18%; top: 67%; }
+    .feature-die-pip.pip-6 { left: 44.5%; top: 12%; }
+    .feature-die-pip.pip-7 { left: 44.5%; top: 67%; }
+
+    .feature-die-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .feature-die-result {
+      margin: 0;
+      min-height: 1.4em;
+      color: #6a4300;
+      font-size: 1.02rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .feature-die-history {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .feature-die-history-chip {
+      min-width: 42px;
+      min-height: 42px;
+      padding: 0 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      background:
+        linear-gradient(180deg, rgba(255, 252, 239, 0.98), rgba(255, 239, 188, 0.92));
+      border: 1px solid rgba(255, 236, 176, 0.96);
+      color: #6a4300;
+      font-size: 0.92rem;
+      font-weight: 900;
+      box-shadow:
+        0 8px 14px rgba(120, 79, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.84),
+        inset 0 -1px 0 rgba(201, 156, 40, 0.16);
+    }
+
+    @keyframes die-roll-spin {
+      0% {
+        transform: rotate(0deg) scale(0.94);
+        filter: drop-shadow(0 18px 26px rgba(90, 58, 0, 0.18));
+      }
+      38% {
+        transform: rotate(-18deg) scale(1.02);
+      }
+      68% {
+        transform: rotate(22deg) scale(0.98);
+      }
+      100% {
+        transform: rotate(0deg) scale(1);
+        filter: drop-shadow(0 24px 34px rgba(90, 58, 0, 0.2));
+      }
     }
 
     .activity-modal-card {
@@ -2253,6 +2884,13 @@
       }
     }
 
+    @media (max-width: 1080px) {
+      .feature-modal-card {
+        grid-template-columns: 1fr;
+        max-height: calc(100vh - 18px);
+      }
+    }
+
     @media (max-width: 760px) {
       .app {
         padding: 10px;
@@ -2319,10 +2957,33 @@
         padding: 16px;
       }
 
+      .feature-modal-card {
+        grid-template-columns: 1fr;
+        max-height: calc(100vh - 18px);
+        padding: 16px;
+      }
+
       .activity-side,
       .activity-repository-panel {
         padding: 16px;
         border-radius: 24px;
+      }
+
+      .feature-modal-side,
+      .feature-stage-panel {
+        padding: 16px;
+        border-radius: 24px;
+      }
+
+      .feature-nav-btn,
+      .feature-popup-btn {
+        grid-template-columns: 64px minmax(0, 1fr);
+        min-height: 84px;
+      }
+
+      .feature-popup-thumb {
+        width: 64px;
+        height: 64px;
       }
 
       .activity-repository-grid {
@@ -2415,6 +3076,14 @@
                   <input class="background-slider" id="backgroundTransparencyRange" type="range" min="0" max="100" value="0" aria-label="Background fade level">
                 </div>
               </div>
+              <div class="launcher-module" id="spellFeatureControl">
+                <button class="gold-launcher feature-tools-launcher" id="spellFeatureLauncher" type="button" aria-label="Open the calculator, timer, and die tools for the spelling board." aria-expanded="false">
+                  <span class="tray-launcher-icon">FX</span>
+                </button>
+                <div class="launcher-popup feature-tools-popup hidden" id="spellFeaturePopup" aria-hidden="true">
+                  <div class="feature-popup-grid" id="spellFeaturePopupGrid"></div>
+                </div>
+              </div>
               <button class="gold-launcher activity-launcher" id="spellActivityLauncher" type="button" aria-label="Open Activity Product for the spelling board." aria-expanded="false">
                 <span class="tray-launcher-icon">AP</span>
               </button>
@@ -2493,6 +3162,14 @@
               <div class="launcher-popup background-popup hidden" id="boardBackgroundPopup" aria-hidden="true">
                 <p class="background-popup-title">Background Fade</p>
                 <input class="background-slider" id="boardBackgroundTransparencyRange" type="range" min="0" max="100" value="0" aria-label="Screen Board background fade level">
+              </div>
+            </div>
+            <div class="launcher-module" id="boardFeatureControl">
+              <button class="gold-launcher feature-tools-launcher" id="boardFeatureLauncher" type="button" aria-label="Open the calculator, timer, and die tools for the screen board." aria-expanded="false">
+                <span class="tray-launcher-icon">FX</span>
+              </button>
+              <div class="launcher-popup feature-tools-popup hidden" id="boardFeaturePopup" aria-hidden="true">
+                <div class="feature-popup-grid" id="boardFeaturePopupGrid"></div>
               </div>
             </div>
             <button class="gold-launcher activity-launcher" id="boardActivityLauncher" type="button" aria-label="Open Activity Product for the screen board." aria-expanded="false">
@@ -2660,6 +3337,101 @@
     </div>
   </div>
 
+  <div class="modal-backdrop hidden" id="featureToolsModal" aria-hidden="true">
+    <div class="feature-modal-card" role="dialog" aria-modal="true" aria-labelledby="featureToolsTitle">
+      <section class="feature-modal-side">
+        <div class="feature-modal-head">
+          <h2 class="feature-modal-title" id="featureToolsTitle">Tools</h2>
+          <p class="feature-modal-note" id="featureToolsSurfaceNote">Open the calculator, timer, and die from either board and use them instantly.</p>
+        </div>
+        <div class="feature-tool-nav" id="featureToolNav"></div>
+        <p class="feature-tool-hint">Tap a launcher button once to open its options, tap once again to close, then choose the tool you want to use.</p>
+      </section>
+      <section class="feature-stage-panel">
+        <div class="feature-stage-head">
+          <div class="feature-stage-title-wrap">
+            <h3 class="feature-stage-title" id="featureStageTitle">Calculator</h3>
+            <p class="feature-stage-note" id="featureStageNote">Use the memory row, fast operators, and full keypad just like a real classroom calculator.</p>
+          </div>
+          <button class="close-btn feature-close-btn" id="closeFeatureToolsBtn" type="button">Close</button>
+        </div>
+        <div class="feature-tool-stage">
+          <div class="feature-widget active" id="featureCalculatorWidget" data-feature-widget="calculator">
+            <div class="feature-device-shell feature-calculator-shell">
+              <img class="feature-device-art" src="feature-widget-assets/calculator-cutout.webp" alt="Golden galaxy calculator">
+              <div class="feature-display feature-calculator-display" id="featureCalculatorDisplay">0</div>
+              <div class="feature-calculator-memory" id="featureCalculatorMemoryBadge"></div>
+              <button class="feature-hotspot feature-calc-key top-row calc-col-1" type="button" data-calc-key="mrc" aria-label="Memory recall and clear"></button>
+              <button class="feature-hotspot feature-calc-key top-row calc-col-2" type="button" data-calc-key="m-" aria-label="Subtract from memory"></button>
+              <button class="feature-hotspot feature-calc-key top-row calc-col-3" type="button" data-calc-key="m+" aria-label="Add to memory"></button>
+              <button class="feature-hotspot feature-calc-key top-row calc-col-4" type="button" data-calc-key="%" aria-label="Percent"></button>
+              <button class="feature-hotspot feature-calc-key top-row calc-col-5" type="button" data-calc-key="sqrt" aria-label="Square root"></button>
+              <button class="feature-hotspot feature-calc-key top-row calc-col-6" type="button" data-calc-key="/" aria-label="Divide"></button>
+              <button class="feature-hotspot feature-calc-key row-two calc-col-1" type="button" data-calc-key="7" aria-label="Seven"></button>
+              <button class="feature-hotspot feature-calc-key row-two calc-col-2" type="button" data-calc-key="8" aria-label="Eight"></button>
+              <button class="feature-hotspot feature-calc-key row-two calc-col-3" type="button" data-calc-key="9" aria-label="Nine"></button>
+              <button class="feature-hotspot feature-calc-key row-two calc-col-4" type="button" data-calc-key="*" aria-label="Multiply"></button>
+              <button class="feature-hotspot feature-calc-key row-two calc-col-5" type="button" data-calc-key="-" aria-label="Minus"></button>
+              <button class="feature-hotspot feature-calc-key row-three calc-col-1" type="button" data-calc-key="4" aria-label="Four"></button>
+              <button class="feature-hotspot feature-calc-key row-three calc-col-2" type="button" data-calc-key="5" aria-label="Five"></button>
+              <button class="feature-hotspot feature-calc-key row-three calc-col-3" type="button" data-calc-key="6" aria-label="Six"></button>
+              <button class="feature-hotspot feature-calc-key row-three calc-col-4" type="button" data-calc-key="-" aria-label="Minus"></button>
+              <button class="feature-hotspot feature-calc-key add-tall" type="button" data-calc-key="+" aria-label="Plus"></button>
+              <button class="feature-hotspot feature-calc-key row-four calc-col-1" type="button" data-calc-key="1" aria-label="One"></button>
+              <button class="feature-hotspot feature-calc-key row-four calc-col-2" type="button" data-calc-key="2" aria-label="Two"></button>
+              <button class="feature-hotspot feature-calc-key row-four calc-col-3" type="button" data-calc-key="3" aria-label="Three"></button>
+              <button class="feature-hotspot feature-calc-key equals-tall" type="button" data-calc-key="=" aria-label="Equals"></button>
+              <button class="feature-hotspot feature-calc-key row-five calc-col-1" type="button" data-calc-key="ce" aria-label="Clear entry"></button>
+              <button class="feature-hotspot feature-calc-key row-five calc-col-2" type="button" data-calc-key="0" aria-label="Zero"></button>
+              <button class="feature-hotspot feature-calc-key row-five calc-col-3" type="button" data-calc-key="." aria-label="Decimal point"></button>
+              <button class="feature-hotspot feature-calc-key row-five calc-col-5" type="button" data-calc-key="=" aria-label="Equals"></button>
+            </div>
+            <p class="feature-widget-status" id="featureCalculatorStatus">Calculator ready.</p>
+          </div>
+
+          <div class="feature-widget" id="featureTimerWidget" data-feature-widget="timer">
+            <div class="feature-device-shell feature-timer-shell">
+              <img class="feature-device-art" src="feature-widget-assets/timer-cutout.webp" alt="Golden galaxy timer">
+              <div class="feature-display feature-timer-display" id="featureTimerDisplay">25:00</div>
+              <div class="feature-timer-lock-indicator" id="featureTimerLockIndicator">Open</div>
+              <button class="feature-hotspot feature-timer-btn-min" id="featureTimerMinuteBtn" type="button" aria-label="Add one minute"></button>
+              <button class="feature-hotspot feature-timer-btn-sec" id="featureTimerSecondBtn" type="button" aria-label="Add one second"></button>
+              <button class="feature-hotspot feature-timer-btn-toggle" id="featureTimerToggleBtn" type="button" aria-label="Start or pause timer"></button>
+              <button class="feature-hotspot feature-timer-btn-reset" id="featureTimerResetBtn" type="button" aria-label="Reset timer"></button>
+              <button class="feature-hotspot feature-timer-btn-lock" id="featureTimerLockBtn" type="button" aria-label="Lock timer editing"></button>
+            </div>
+            <div class="feature-timer-meta">
+              <span class="feature-meta-chip" id="featureTimerStateChip">Ready</span>
+              <span class="feature-meta-chip" id="featureTimerPresetChip">Preset 25:00</span>
+            </div>
+            <p class="feature-widget-status" id="featureTimerStatus">Tap the star to start or pause the countdown.</p>
+          </div>
+
+          <div class="feature-widget" id="featureDieWidget" data-feature-widget="die">
+            <div class="feature-device-shell feature-die-shell" id="featureDieShell" role="button" tabindex="0" aria-label="Roll the die">
+              <img class="feature-device-art" src="feature-widget-assets/die-cutout.webp" alt="Golden galaxy die">
+              <div class="feature-die-pip-layer" id="featureDiePipLayer" aria-hidden="true">
+                <span class="feature-die-pip pip-1"></span>
+                <span class="feature-die-pip pip-2"></span>
+                <span class="feature-die-pip pip-3"></span>
+                <span class="feature-die-pip pip-4"></span>
+                <span class="feature-die-pip pip-5"></span>
+                <span class="feature-die-pip pip-6"></span>
+                <span class="feature-die-pip pip-7"></span>
+              </div>
+            </div>
+            <div class="feature-die-controls">
+              <button class="action-btn" id="featureDieRollBtn" type="button">Roll Die</button>
+              <p class="feature-die-result" id="featureDieResult">Result: 5</p>
+            </div>
+            <div class="feature-die-history" id="featureDieHistory"></div>
+            <p class="feature-widget-status" id="featureDieStatus">Tap the die or roll button to generate a new number.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
   <script>
     const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
@@ -2686,10 +3458,14 @@
       spellTrayExpanded: false,
       boardTrayExpanded: false,
       spellingToolsPanelVisible: false,
+      spellFeaturePanelVisible: false,
+      boardFeaturePanelVisible: false,
       backgroundPanelVisible: false,
       boardBackgroundPanelVisible: false,
       backgroundWash: 0,
       boardBackgroundWash: 0,
+      featureToolSurface: "spell",
+      selectedFeatureTool: "calculator",
       activityProductSurface: "spell",
       activityProducts: [],
       activityPhotos: [],
@@ -2709,6 +3485,10 @@
     const backgroundLauncher = document.getElementById("backgroundLauncher");
     const backgroundPopup = document.getElementById("backgroundPopup");
     const backgroundTransparencyRange = document.getElementById("backgroundTransparencyRange");
+    const spellFeatureControl = document.getElementById("spellFeatureControl");
+    const spellFeatureLauncher = document.getElementById("spellFeatureLauncher");
+    const spellFeaturePopup = document.getElementById("spellFeaturePopup");
+    const spellFeaturePopupGrid = document.getElementById("spellFeaturePopupGrid");
     const spellActivityLauncher = document.getElementById("spellActivityLauncher");
     const spellTrayLauncher = document.getElementById("spellTrayLauncher");
     const letterBank = document.getElementById("letterBank");
@@ -2742,6 +3522,10 @@
     const boardBackgroundLauncher = document.getElementById("boardBackgroundLauncher");
     const boardBackgroundPopup = document.getElementById("boardBackgroundPopup");
     const boardBackgroundTransparencyRange = document.getElementById("boardBackgroundTransparencyRange");
+    const boardFeatureControl = document.getElementById("boardFeatureControl");
+    const boardFeatureLauncher = document.getElementById("boardFeatureLauncher");
+    const boardFeaturePopup = document.getElementById("boardFeaturePopup");
+    const boardFeaturePopupGrid = document.getElementById("boardFeaturePopupGrid");
     const boardActivityLauncher = document.getElementById("boardActivityLauncher");
     const boardTrayLauncher = document.getElementById("boardTrayLauncher");
     const boardWrap = document.getElementById("boardWrap");
@@ -2779,6 +3563,33 @@
     const activityPreviewVideo = document.getElementById("activityPreviewVideo");
     const activityPreviewAudio = document.getElementById("activityPreviewAudio");
     const activityCamera = document.getElementById("activityCamera");
+    const featureToolsModal = document.getElementById("featureToolsModal");
+    const featureToolsSurfaceNote = document.getElementById("featureToolsSurfaceNote");
+    const featureToolNav = document.getElementById("featureToolNav");
+    const featureStageTitle = document.getElementById("featureStageTitle");
+    const featureStageNote = document.getElementById("featureStageNote");
+    const closeFeatureToolsBtn = document.getElementById("closeFeatureToolsBtn");
+    const featureWidgets = Array.from(document.querySelectorAll("[data-feature-widget]"));
+    const featureCalculatorDisplay = document.getElementById("featureCalculatorDisplay");
+    const featureCalculatorMemoryBadge = document.getElementById("featureCalculatorMemoryBadge");
+    const featureCalculatorStatus = document.getElementById("featureCalculatorStatus");
+    const calculatorHotspotButtons = Array.from(document.querySelectorAll("[data-calc-key]"));
+    const featureTimerDisplay = document.getElementById("featureTimerDisplay");
+    const featureTimerLockIndicator = document.getElementById("featureTimerLockIndicator");
+    const featureTimerMinuteBtn = document.getElementById("featureTimerMinuteBtn");
+    const featureTimerSecondBtn = document.getElementById("featureTimerSecondBtn");
+    const featureTimerToggleBtn = document.getElementById("featureTimerToggleBtn");
+    const featureTimerResetBtn = document.getElementById("featureTimerResetBtn");
+    const featureTimerLockBtn = document.getElementById("featureTimerLockBtn");
+    const featureTimerStateChip = document.getElementById("featureTimerStateChip");
+    const featureTimerPresetChip = document.getElementById("featureTimerPresetChip");
+    const featureTimerStatus = document.getElementById("featureTimerStatus");
+    const featureDieShell = document.getElementById("featureDieShell");
+    const featureDieRollBtn = document.getElementById("featureDieRollBtn");
+    const featureDieResult = document.getElementById("featureDieResult");
+    const featureDieHistory = document.getElementById("featureDieHistory");
+    const featureDieStatus = document.getElementById("featureDieStatus");
+    const featureDiePips = Array.from(document.querySelectorAll("#featureDiePipLayer .feature-die-pip"));
     const canvas = document.getElementById("drawCanvas");
     const ctx = canvas.getContext("2d");
     const LETTER_HEIGHT_RATIO = 1.5;
@@ -2836,6 +3647,43 @@
     const ACTIVITY_AUDIO_FOLDER_CODE = "143";
     const ACTIVITY_VIDEO_FOLDER_NAME = "WATCH ME";
     const ACTIVITY_VIDEO_FOLDER_CODE = "1433";
+    const FEATURE_TOOL_DEFS = [
+      {
+        id: "calculator",
+        label: "Calculator",
+        popupNote: "Memory keys, operators, and number pad work like a real calculator.",
+        stageNote: "Use the memory row, fast operators, and full keypad just like a real classroom calculator.",
+        thumbSrc: "feature-widget-assets/calculator-thumb.webp"
+      },
+      {
+        id: "timer",
+        label: "Timer",
+        popupNote: "Set minutes and seconds, then start, pause, reset, or lock the countdown.",
+        stageNote: "Build a countdown with minute and second buttons, then start, pause, reset, or lock it.",
+        thumbSrc: "feature-widget-assets/timer-thumb.webp"
+      },
+      {
+        id: "die",
+        label: "Die",
+        popupNote: "Roll a bright animated classroom die and keep a short result history.",
+        stageNote: "Tap the die or use the roll button for a random result with live history.",
+        thumbSrc: "feature-widget-assets/die-thumb.webp"
+      }
+    ];
+    const FEATURE_TOOL_MAP = Object.freeze(
+      FEATURE_TOOL_DEFS.reduce((map, tool) => {
+        map[tool.id] = tool;
+        return map;
+      }, {})
+    );
+    const DIE_FACE_PIPS = Object.freeze({
+      1: [1],
+      2: [2, 3],
+      3: [2, 1, 3],
+      4: [2, 4, 5, 3],
+      5: [2, 4, 1, 5, 3],
+      6: [2, 6, 4, 5, 7, 3]
+    });
     const PEN_STROKE_WIDTHS = {
       small: 4,
       medium: 8,
@@ -2889,6 +3737,29 @@
     let liveActivityFlushTimer = null;
     let liveActivityFlushInFlight = false;
     let embeddedExportAssetsPromise = null;
+    const calculatorState = {
+      display: "0",
+      storedValue: null,
+      operator: null,
+      waitingForNextEntry: false,
+      memory: 0,
+      error: false,
+      lastMemoryAction: null
+    };
+    const featureTimerState = {
+      presetMs: 25 * 60 * 1000,
+      remainingMs: 25 * 60 * 1000,
+      running: false,
+      locked: false,
+      endAt: 0,
+      intervalId: null
+    };
+    const featureDieState = {
+      value: 5,
+      history: [5],
+      rolling: false,
+      animationTimer: null
+    };
     const activityBusyState = {
       capture: false,
       camera: false,
@@ -3601,6 +4472,635 @@
         return "Camera";
       }
       return "Spelling";
+    }
+
+    function featureSurfaceLabel(surface) {
+      return surface === "board" ? "Screen Board" : "Spelling Board";
+    }
+
+    function featureToolDef(toolId = "calculator") {
+      return FEATURE_TOOL_MAP[toolId] || FEATURE_TOOL_MAP.calculator;
+    }
+
+    function setFeatureWidgetStatus(toolId, message) {
+      if (toolId === "calculator" && featureCalculatorStatus) {
+        featureCalculatorStatus.textContent = message;
+      } else if (toolId === "timer" && featureTimerStatus) {
+        featureTimerStatus.textContent = message;
+      } else if (toolId === "die" && featureDieStatus) {
+        featureDieStatus.textContent = message;
+      }
+    }
+
+    function buildFeatureChoiceButton(tool, surface, mode = "popup") {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = mode === "nav" ? "feature-nav-btn" : "feature-popup-btn";
+      button.dataset.featureTool = tool.id;
+      button.dataset.featureSurface = surface;
+      button.setAttribute(
+        "aria-label",
+        `${tool.label} for the ${featureSurfaceLabel(surface)}.`
+      );
+
+      const thumb = document.createElement("span");
+      thumb.className = "feature-popup-thumb";
+      const image = document.createElement("img");
+      image.src = tool.thumbSrc;
+      image.alt = tool.label;
+      image.draggable = false;
+      thumb.appendChild(image);
+
+      const copy = document.createElement("span");
+      copy.className = mode === "nav" ? "feature-nav-copy" : "feature-popup-copy";
+      const title = document.createElement("strong");
+      title.textContent = tool.label;
+      const note = document.createElement("small");
+      note.textContent = tool.popupNote;
+      copy.appendChild(title);
+      copy.appendChild(note);
+
+      button.appendChild(thumb);
+      button.appendChild(copy);
+      return button;
+    }
+
+    function renderFeaturePopupChoices(container, surface) {
+      if (!container) {
+        return;
+      }
+
+      container.innerHTML = "";
+      FEATURE_TOOL_DEFS.forEach((tool) => {
+        container.appendChild(buildFeatureChoiceButton(tool, surface, "popup"));
+      });
+    }
+
+    function renderFeatureNav() {
+      if (!featureToolNav) {
+        return;
+      }
+
+      featureToolNav.innerHTML = "";
+      FEATURE_TOOL_DEFS.forEach((tool) => {
+        const button = buildFeatureChoiceButton(tool, state.featureToolSurface, "nav");
+        button.dataset.featureNav = tool.id;
+        featureToolNav.appendChild(button);
+      });
+    }
+
+    function setSpellFeaturePanelVisible(visible) {
+      state.spellFeaturePanelVisible = Boolean(visible);
+      setAnimatedVisibility(spellFeaturePopup, state.spellFeaturePanelVisible);
+      spellFeaturePopup.setAttribute("aria-hidden", String(!state.spellFeaturePanelVisible));
+      spellFeatureLauncher.setAttribute("aria-expanded", String(state.spellFeaturePanelVisible));
+      spellFeatureLauncher.setAttribute(
+        "aria-label",
+        state.spellFeaturePanelVisible
+          ? "Feature tools open for the spelling board. Tap again to close."
+          : "Open the calculator, timer, and die tools for the spelling board."
+      );
+    }
+
+    function setBoardFeaturePanelVisible(visible) {
+      state.boardFeaturePanelVisible = Boolean(visible);
+      setAnimatedVisibility(boardFeaturePopup, state.boardFeaturePanelVisible);
+      boardFeaturePopup.setAttribute("aria-hidden", String(!state.boardFeaturePanelVisible));
+      boardFeatureLauncher.setAttribute("aria-expanded", String(state.boardFeaturePanelVisible));
+      boardFeatureLauncher.setAttribute(
+        "aria-label",
+        state.boardFeaturePanelVisible
+          ? "Feature tools open for the Screen Board. Tap again to close."
+          : "Open the calculator, timer, and die tools for the screen board."
+      );
+    }
+
+    function closeFeaturePanels() {
+      setSpellFeaturePanelVisible(false);
+      setBoardFeaturePanelVisible(false);
+    }
+
+    function closeFeatureTimerLoop() {
+      if (featureTimerState.intervalId) {
+        clearInterval(featureTimerState.intervalId);
+        featureTimerState.intervalId = null;
+      }
+    }
+
+    function formatFeatureTimerTime(ms) {
+      const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+      return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+    }
+
+    function updateFeatureTimerUI(message = "") {
+      if (featureTimerDisplay) {
+        featureTimerDisplay.textContent = formatFeatureTimerTime(featureTimerState.remainingMs);
+      }
+      if (featureTimerLockIndicator) {
+        featureTimerLockIndicator.textContent = featureTimerState.locked ? "Locked" : "Open";
+      }
+      if (featureTimerPresetChip) {
+        featureTimerPresetChip.textContent = `Preset ${formatFeatureTimerTime(featureTimerState.presetMs)}`;
+      }
+      if (featureTimerStateChip) {
+        const stateLabel = featureTimerState.running
+          ? "Running"
+          : featureTimerState.remainingMs === featureTimerState.presetMs
+            ? "Ready"
+            : "Paused";
+        featureTimerStateChip.textContent = featureTimerState.locked ? `${stateLabel} • Locked` : stateLabel;
+      }
+      if (featureTimerToggleBtn) {
+        featureTimerToggleBtn.setAttribute(
+          "aria-label",
+          featureTimerState.running ? "Pause timer" : "Start timer"
+        );
+      }
+      if (message) {
+        featureTimerStatus.textContent = message;
+      }
+    }
+
+    function playFeatureTimerBell() {
+      const AudioCtor = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtor) {
+        return;
+      }
+
+      try {
+        const context = new AudioCtor();
+        const now = context.currentTime;
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+        oscillator.type = "triangle";
+        oscillator.frequency.setValueAtTime(784, now);
+        oscillator.frequency.exponentialRampToValueAtTime(1046, now + 0.28);
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.exponentialRampToValueAtTime(0.15, now + 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.56);
+        oscillator.connect(gain);
+        gain.connect(context.destination);
+        oscillator.start(now);
+        oscillator.stop(now + 0.58);
+        oscillator.addEventListener("ended", () => context.close().catch(() => {}), { once: true });
+      } catch (error) {
+        // Ignore audio failures on browsers that block synthesized sound.
+      }
+    }
+
+    function syncFeatureTimerTick() {
+      if (!featureTimerState.running) {
+        return;
+      }
+
+      featureTimerState.remainingMs = Math.max(0, featureTimerState.endAt - Date.now());
+      updateFeatureTimerUI();
+      if (featureTimerState.remainingMs > 0) {
+        return;
+      }
+
+      featureTimerState.running = false;
+      closeFeatureTimerLoop();
+      updateFeatureTimerUI("Time is up.");
+      playFeatureTimerBell();
+    }
+
+    function adjustFeatureTimer(deltaMs) {
+      if (featureTimerState.locked) {
+        updateFeatureTimerUI("Unlock the timer before changing the countdown.");
+        return;
+      }
+
+      const maxMs = ((99 * 60) + 59) * 1000;
+      const nextMs = clamp(featureTimerState.remainingMs + deltaMs, 0, maxMs);
+      featureTimerState.remainingMs = nextMs;
+      featureTimerState.presetMs = nextMs;
+      if (featureTimerState.running) {
+        featureTimerState.endAt = Date.now() + featureTimerState.remainingMs;
+      }
+      updateFeatureTimerUI(`${deltaMs >= 0 ? "Added" : "Reduced"} time to ${formatFeatureTimerTime(nextMs)}.`);
+    }
+
+    function toggleFeatureTimerRunning() {
+      if (featureTimerState.running) {
+        syncFeatureTimerTick();
+        featureTimerState.running = false;
+        closeFeatureTimerLoop();
+        updateFeatureTimerUI("Timer paused.");
+        return;
+      }
+
+      if (featureTimerState.remainingMs <= 0) {
+        updateFeatureTimerUI("Add time first, then start the timer.");
+        return;
+      }
+
+      featureTimerState.running = true;
+      featureTimerState.endAt = Date.now() + featureTimerState.remainingMs;
+      closeFeatureTimerLoop();
+      featureTimerState.intervalId = window.setInterval(syncFeatureTimerTick, 120);
+      updateFeatureTimerUI("Timer running.");
+    }
+
+    function resetFeatureTimer() {
+      featureTimerState.running = false;
+      closeFeatureTimerLoop();
+      featureTimerState.remainingMs = featureTimerState.presetMs;
+      updateFeatureTimerUI("Timer reset to the saved preset.");
+    }
+
+    function toggleFeatureTimerLock() {
+      featureTimerState.locked = !featureTimerState.locked;
+      updateFeatureTimerUI(
+        featureTimerState.locked
+          ? "Timer locked. Minute and second buttons are disabled."
+          : "Timer unlocked."
+      );
+    }
+
+    function formatCalculatorNumber(value) {
+      if (!Number.isFinite(value)) {
+        return "Error";
+      }
+      const absolute = Math.abs(value);
+      if (absolute !== 0 && (absolute >= 1e12 || absolute < 1e-9)) {
+        return value.toExponential(6).replace(/\.?0+e/, "e").replace("e+", "e");
+      }
+      return Number.parseFloat(value.toFixed(10)).toString();
+    }
+
+    function calculatorValue() {
+      return Number(calculatorState.display);
+    }
+
+    function updateCalculatorUI(message = "") {
+      featureCalculatorDisplay.textContent = calculatorState.display;
+      featureCalculatorMemoryBadge.textContent = Math.abs(calculatorState.memory) > 1e-12 ? "M" : "";
+      featureCalculatorMemoryBadge.style.opacity = Math.abs(calculatorState.memory) > 1e-12 ? "1" : "0";
+      if (message) {
+        featureCalculatorStatus.textContent = message;
+        return;
+      }
+
+      if (calculatorState.error) {
+        featureCalculatorStatus.textContent = "Calculator error. Press CE to clear.";
+        return;
+      }
+      if (calculatorState.operator) {
+        featureCalculatorStatus.textContent = `${calculatorState.operator} ready. Enter the next value or press equals.`;
+        return;
+      }
+      featureCalculatorStatus.textContent = "Calculator ready.";
+    }
+
+    function resetCalculatorState(clearMemory = false) {
+      calculatorState.display = "0";
+      calculatorState.storedValue = null;
+      calculatorState.operator = null;
+      calculatorState.waitingForNextEntry = false;
+      calculatorState.error = false;
+      calculatorState.lastMemoryAction = null;
+      if (clearMemory) {
+        calculatorState.memory = 0;
+      }
+      updateCalculatorUI("Calculator cleared.");
+    }
+
+    function setCalculatorError(message) {
+      calculatorState.display = "Error";
+      calculatorState.storedValue = null;
+      calculatorState.operator = null;
+      calculatorState.waitingForNextEntry = false;
+      calculatorState.error = true;
+      calculatorState.lastMemoryAction = null;
+      updateCalculatorUI(message);
+    }
+
+    function computeCalculatorOperation(left, right, operator) {
+      if (operator === "+") {
+        return left + right;
+      }
+      if (operator === "-") {
+        return left - right;
+      }
+      if (operator === "*") {
+        return left * right;
+      }
+      if (operator === "/") {
+        if (Math.abs(right) < 1e-12) {
+          return null;
+        }
+        return left / right;
+      }
+      return right;
+    }
+
+    function pushCalculatorDigit(digit) {
+      if (calculatorState.error) {
+        resetCalculatorState();
+      }
+
+      if (calculatorState.waitingForNextEntry) {
+        calculatorState.display = digit;
+        calculatorState.waitingForNextEntry = false;
+      } else if (calculatorState.display === "0") {
+        calculatorState.display = digit;
+      } else {
+        calculatorState.display += digit;
+      }
+      calculatorState.lastMemoryAction = null;
+      updateCalculatorUI();
+    }
+
+    function pushCalculatorDecimal() {
+      if (calculatorState.error) {
+        resetCalculatorState();
+      }
+
+      if (calculatorState.waitingForNextEntry) {
+        calculatorState.display = "0.";
+        calculatorState.waitingForNextEntry = false;
+      } else if (!calculatorState.display.includes(".")) {
+        calculatorState.display += ".";
+      }
+      calculatorState.lastMemoryAction = null;
+      updateCalculatorUI();
+    }
+
+    function applyCalculatorOperator(nextOperator) {
+      if (calculatorState.error) {
+        resetCalculatorState();
+      }
+
+      const currentValue = calculatorValue();
+      if (calculatorState.storedValue === null) {
+        calculatorState.storedValue = currentValue;
+      } else if (calculatorState.operator && !calculatorState.waitingForNextEntry) {
+        const result = computeCalculatorOperation(calculatorState.storedValue, currentValue, calculatorState.operator);
+        if (result === null) {
+          setCalculatorError("Cannot divide by zero.");
+          return;
+        }
+        calculatorState.storedValue = result;
+        calculatorState.display = formatCalculatorNumber(result);
+      }
+
+      calculatorState.operator = nextOperator;
+      calculatorState.waitingForNextEntry = true;
+      calculatorState.lastMemoryAction = null;
+      updateCalculatorUI(`${nextOperator} selected.`);
+    }
+
+    function resolveCalculatorEquals() {
+      if (calculatorState.error) {
+        resetCalculatorState();
+        return;
+      }
+      if (calculatorState.operator === null || calculatorState.storedValue === null) {
+        updateCalculatorUI("No pending equation.");
+        return;
+      }
+
+      const result = computeCalculatorOperation(calculatorState.storedValue, calculatorValue(), calculatorState.operator);
+      if (result === null) {
+        setCalculatorError("Cannot divide by zero.");
+        return;
+      }
+
+      calculatorState.display = formatCalculatorNumber(result);
+      calculatorState.storedValue = null;
+      calculatorState.operator = null;
+      calculatorState.waitingForNextEntry = true;
+      calculatorState.lastMemoryAction = null;
+      updateCalculatorUI("Answer ready.");
+    }
+
+    function handleCalculatorPercent() {
+      if (calculatorState.error) {
+        resetCalculatorState();
+      }
+      const currentValue = calculatorValue();
+      const percentValue = calculatorState.storedValue !== null && calculatorState.operator
+        ? (calculatorState.storedValue * currentValue) / 100
+        : currentValue / 100;
+      calculatorState.display = formatCalculatorNumber(percentValue);
+      calculatorState.waitingForNextEntry = false;
+      calculatorState.lastMemoryAction = null;
+      updateCalculatorUI("Percent applied.");
+    }
+
+    function handleCalculatorSquareRoot() {
+      if (calculatorState.error) {
+        resetCalculatorState();
+      }
+      const currentValue = calculatorValue();
+      if (currentValue < 0) {
+        setCalculatorError("Square root needs a positive number.");
+        return;
+      }
+      calculatorState.display = formatCalculatorNumber(Math.sqrt(currentValue));
+      calculatorState.waitingForNextEntry = true;
+      calculatorState.lastMemoryAction = null;
+      updateCalculatorUI("Square root ready.");
+    }
+
+    function handleCalculatorMemory(key) {
+      const currentValue = calculatorState.error ? 0 : calculatorValue();
+      if (key === "m+") {
+        calculatorState.memory += currentValue;
+        calculatorState.lastMemoryAction = "write";
+        updateCalculatorUI("Added to memory.");
+        return;
+      }
+      if (key === "m-") {
+        calculatorState.memory -= currentValue;
+        calculatorState.lastMemoryAction = "write";
+        updateCalculatorUI("Subtracted from memory.");
+        return;
+      }
+
+      const formattedMemory = formatCalculatorNumber(calculatorState.memory);
+      if (calculatorState.lastMemoryAction === "recall" && formattedMemory === calculatorState.display) {
+        calculatorState.memory = 0;
+        calculatorState.display = "0";
+        calculatorState.lastMemoryAction = "clear";
+        updateCalculatorUI("Memory cleared.");
+        return;
+      }
+
+      calculatorState.display = formattedMemory;
+      calculatorState.waitingForNextEntry = true;
+      calculatorState.error = false;
+      calculatorState.lastMemoryAction = "recall";
+      updateCalculatorUI("Memory recalled.");
+    }
+
+    function handleCalculatorBackspace() {
+      if (calculatorState.error) {
+        resetCalculatorState();
+        return;
+      }
+      if (calculatorState.waitingForNextEntry) {
+        calculatorState.display = "0";
+        calculatorState.waitingForNextEntry = false;
+        updateCalculatorUI("Entry cleared.");
+        return;
+      }
+      calculatorState.display = calculatorState.display.length > 1
+        ? calculatorState.display.slice(0, -1)
+        : "0";
+      if (calculatorState.display === "-" || calculatorState.display === "") {
+        calculatorState.display = "0";
+      }
+      updateCalculatorUI();
+    }
+
+    function handleCalculatorKey(key) {
+      if (/^\d$/.test(key)) {
+        pushCalculatorDigit(key);
+        return;
+      }
+      if (key === ".") {
+        pushCalculatorDecimal();
+        return;
+      }
+      if (key === "ce") {
+        resetCalculatorState();
+        return;
+      }
+      if (key === "%") {
+        handleCalculatorPercent();
+        return;
+      }
+      if (key === "sqrt") {
+        handleCalculatorSquareRoot();
+        return;
+      }
+      if (key === "m+" || key === "m-" || key === "mrc") {
+        handleCalculatorMemory(key);
+        return;
+      }
+      if (key === "+" || key === "-" || key === "*" || key === "/") {
+        applyCalculatorOperator(key);
+        return;
+      }
+      if (key === "=") {
+        resolveCalculatorEquals();
+      }
+    }
+
+    function updateFeatureDieUI(message = "") {
+      const visiblePips = new Set(DIE_FACE_PIPS[featureDieState.value] || DIE_FACE_PIPS[1]);
+      featureDiePips.forEach((pip, index) => {
+        pip.classList.toggle("visible", visiblePips.has(index + 1));
+      });
+      featureDieResult.textContent = `Result: ${featureDieState.value}`;
+      featureDieHistory.innerHTML = "";
+      featureDieState.history.forEach((value) => {
+        const chip = document.createElement("span");
+        chip.className = "feature-die-history-chip";
+        chip.textContent = value;
+        featureDieHistory.appendChild(chip);
+      });
+      featureDieShell.setAttribute("aria-label", `Roll the die. Current result ${featureDieState.value}.`);
+      if (message) {
+        featureDieStatus.textContent = message;
+      }
+    }
+
+    function rollFeatureDie() {
+      if (featureDieState.rolling) {
+        return;
+      }
+
+      featureDieState.rolling = true;
+      featureDieShell.classList.add("rolling");
+      if (featureDieState.animationTimer) {
+        clearTimeout(featureDieState.animationTimer);
+        featureDieState.animationTimer = null;
+      }
+
+      let frame = 0;
+      const totalFrames = 8;
+      const animate = () => {
+        featureDieState.value = 1 + Math.floor(Math.random() * 6);
+        updateFeatureDieUI(frame < totalFrames ? "Rolling..." : `Rolled ${featureDieState.value}.`);
+        if (frame >= totalFrames) {
+          featureDieState.history = [featureDieState.value, ...featureDieState.history].slice(0, 6);
+          featureDieState.rolling = false;
+          featureDieShell.classList.remove("rolling");
+          updateFeatureDieUI(`Rolled ${featureDieState.value}.`);
+          return;
+        }
+        frame += 1;
+        featureDieState.animationTimer = window.setTimeout(animate, frame < 5 ? 82 : 112);
+      };
+
+      animate();
+    }
+
+    function updateFeatureStageCopy() {
+      const tool = featureToolDef(state.selectedFeatureTool);
+      if (featureStageTitle) {
+        featureStageTitle.textContent = tool.label;
+      }
+      if (featureStageNote) {
+        featureStageNote.textContent = tool.stageNote;
+      }
+      if (featureToolsSurfaceNote) {
+        featureToolsSurfaceNote.textContent = `Opened from the ${featureSurfaceLabel(state.featureToolSurface)}. Use the gold launcher at any time to switch between the calculator, timer, and die.`;
+      }
+    }
+
+    function selectFeatureTool(toolId) {
+      const tool = featureToolDef(toolId);
+      state.selectedFeatureTool = tool.id;
+      featureWidgets.forEach((widget) => {
+        widget.classList.toggle("active", widget.dataset.featureWidget === tool.id);
+      });
+      Array.from(featureToolNav.querySelectorAll("[data-feature-nav]")).forEach((button) => {
+        const isActive = button.dataset.featureNav === tool.id;
+        button.classList.toggle("active", isActive);
+        button.setAttribute("aria-pressed", String(isActive));
+      });
+      updateFeatureStageCopy();
+      if (tool.id === "calculator") {
+        updateCalculatorUI();
+      } else if (tool.id === "timer") {
+        updateFeatureTimerUI();
+      } else if (tool.id === "die") {
+        updateFeatureDieUI();
+      }
+    }
+
+    function openFeatureToolsModal(surface = "spell", toolId = "calculator") {
+      state.featureToolSurface = surface === "board" ? "board" : "spell";
+      setSpellingToolsPanelVisible(false);
+      setBackgroundPanelVisible(false);
+      setBoardBackgroundPanelVisible(false);
+      closeFeaturePanels();
+      if (activityProductModal.classList.contains("modal-open")) {
+        closeActivityProductModal();
+      }
+      renderFeatureNav();
+      Array.from(featureToolNav.querySelectorAll("[data-feature-nav]")).forEach((button) => {
+        button.addEventListener("click", () => selectFeatureTool(button.dataset.featureNav));
+      });
+      selectFeatureTool(toolId);
+      setAnimatedVisibility(featureToolsModal, true, "modal-open");
+      featureToolsModal.setAttribute("aria-hidden", "false");
+      requestAnimationFrame(() => closeFeatureToolsBtn.focus());
+    }
+
+    function closeFeatureToolsModal() {
+      setAnimatedVisibility(featureToolsModal, false, "modal-open");
+      featureToolsModal.setAttribute("aria-hidden", "true");
+    }
+
+    function openFeatureToolFromChoice(toolId, surface) {
+      openFeatureToolsModal(surface, toolId);
     }
 
     function createActivityProductId() {
@@ -6302,6 +7802,8 @@
       setSpellingToolsPanelVisible(false);
       setBackgroundPanelVisible(false);
       setBoardBackgroundPanelVisible(false);
+      closeFeaturePanels();
+      closeFeatureToolsModal();
       setLiveServerOrigin(defaultLiveServerOrigin(), { persist: false });
       syncActivityCameraCaptureInput();
       if (activityVideoCaptureInput) {
@@ -7592,6 +9094,9 @@
     function setSpellTrayExpanded(expanded) {
       state.spellTrayExpanded = Boolean(expanded);
       spellTray.classList.toggle("collapsed", !state.spellTrayExpanded);
+      if (!state.spellTrayExpanded) {
+        setSpellFeaturePanelVisible(false);
+      }
       spellTrayLauncher.setAttribute("aria-expanded", String(state.spellTrayExpanded));
       spellTrayLauncher.setAttribute(
         "aria-label",
@@ -7604,6 +9109,9 @@
     function setBoardTrayExpanded(expanded) {
       state.boardTrayExpanded = Boolean(expanded);
       boardTop.classList.toggle("collapsed", !state.boardTrayExpanded);
+      if (!state.boardTrayExpanded) {
+        setBoardFeaturePanelVisible(false);
+      }
       boardTrayLauncher.setAttribute("aria-expanded", String(state.boardTrayExpanded));
       boardTrayLauncher.setAttribute(
         "aria-label",
@@ -7623,8 +9131,14 @@
       const isExpanded = kind === "spell" ? state.spellTrayExpanded : state.boardTrayExpanded;
       if (kind === "spell") {
         setSpellTrayExpanded(!isExpanded);
+        if (isExpanded) {
+          setSpellFeaturePanelVisible(false);
+        }
       } else {
         setBoardTrayExpanded(!isExpanded);
+        if (isExpanded) {
+          setBoardFeaturePanelVisible(false);
+        }
       }
     }
 
@@ -8618,6 +10132,8 @@
     function openCodeModal() {
       setSpellingToolsPanelVisible(false);
       setBackgroundPanelVisible(false);
+      closeFeaturePanels();
+      closeFeatureToolsModal();
       codeModal.classList.remove("hidden");
       codeModal.setAttribute("aria-hidden", "false");
       boardCodeInput.value = "";
@@ -8636,6 +10152,7 @@
       state.boardVisible = true;
       setBoardTrayExpanded(false);
       setBoardBackgroundPanelVisible(false);
+      setBoardFeaturePanelVisible(false);
       requestAnimationFrame(() => {
         resizeCanvas();
         normalizeBoardItems();
@@ -8648,6 +10165,8 @@
       resetControlChooserSession();
       stopDrawing();
       closeActivityProductModal();
+      closeFeatureToolsModal();
+      setBoardFeaturePanelVisible(false);
       setBoardBackgroundPanelVisible(false);
       state.boardVisible = false;
       state.drawing = false;
@@ -8865,6 +10384,84 @@
       coverScreen.setAttribute("aria-hidden", "true");
     }
 
+    function handleFeatureKeyboardShortcuts(event) {
+      if (!featureToolsModal.classList.contains("modal-open")) {
+        return false;
+      }
+
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeFeatureToolsModal();
+        return true;
+      }
+
+      if (state.selectedFeatureTool === "calculator") {
+        if (/^\d$/.test(event.key)) {
+          event.preventDefault();
+          handleCalculatorKey(event.key);
+          return true;
+        }
+        if ([".", "+", "-", "*", "/", "%"].includes(event.key)) {
+          event.preventDefault();
+          handleCalculatorKey(event.key);
+          return true;
+        }
+        if (event.key === "Enter" || event.key === "=") {
+          event.preventDefault();
+          handleCalculatorKey("=");
+          return true;
+        }
+        if (event.key === "Backspace") {
+          event.preventDefault();
+          handleCalculatorBackspace();
+          return true;
+        }
+        if (event.key.toLowerCase() === "c") {
+          event.preventDefault();
+          handleCalculatorKey("ce");
+          return true;
+        }
+        return false;
+      }
+
+      if (state.selectedFeatureTool === "timer") {
+        if (event.key === " " || event.key === "Spacebar") {
+          event.preventDefault();
+          toggleFeatureTimerRunning();
+          return true;
+        }
+        if (event.key.toLowerCase() === "m") {
+          event.preventDefault();
+          adjustFeatureTimer(60 * 1000);
+          return true;
+        }
+        if (event.key.toLowerCase() === "s") {
+          event.preventDefault();
+          adjustFeatureTimer(1000);
+          return true;
+        }
+        if (event.key.toLowerCase() === "r") {
+          event.preventDefault();
+          resetFeatureTimer();
+          return true;
+        }
+        if (event.key.toLowerCase() === "l") {
+          event.preventDefault();
+          toggleFeatureTimerLock();
+          return true;
+        }
+        return false;
+      }
+
+      if (state.selectedFeatureTool === "die" && (event.key === " " || event.key === "Spacebar" || event.key === "Enter")) {
+        event.preventDefault();
+        rollFeatureDie();
+        return true;
+      }
+
+      return false;
+    }
+
     function handleKeyboardShortcuts(event) {
       const activeTag = document.activeElement ? document.activeElement.tagName : "";
       const editingField = activeTag === "INPUT" || activeTag === "TEXTAREA";
@@ -8874,6 +10471,10 @@
           event.preventDefault();
           closeCoverScreen();
         }
+        return;
+      }
+
+      if (handleFeatureKeyboardShortcuts(event)) {
         return;
       }
 
@@ -8952,8 +10553,14 @@
       if (state.spellingToolsPanelVisible && spellingToolsControl && !spellingToolsControl.contains(event.target)) {
         setSpellingToolsPanelVisible(false);
       }
+      if (state.spellFeaturePanelVisible && spellFeatureControl && !spellFeatureControl.contains(event.target)) {
+        setSpellFeaturePanelVisible(false);
+      }
       if (state.backgroundPanelVisible && backgroundControl && !backgroundControl.contains(event.target)) {
         setBackgroundPanelVisible(false);
+      }
+      if (state.boardFeaturePanelVisible && boardFeatureControl && !boardFeatureControl.contains(event.target)) {
+        setBoardFeaturePanelVisible(false);
       }
       if (state.boardBackgroundPanelVisible && boardBackgroundControl && !boardBackgroundControl.contains(event.target)) {
         setBoardBackgroundPanelVisible(false);
@@ -8991,6 +10598,25 @@
       }
     });
 
+    featureToolsModal.addEventListener("click", (event) => {
+      if (event.target === featureToolsModal) {
+        closeFeatureToolsModal();
+      }
+    });
+
+    [spellFeaturePopupGrid, boardFeaturePopupGrid].forEach((grid) => {
+      if (!grid) {
+        return;
+      }
+      grid.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-feature-tool]");
+        if (!button) {
+          return;
+        }
+        openFeatureToolFromChoice(button.dataset.featureTool, button.dataset.featureSurface);
+      });
+    });
+
     swatches.forEach((swatch) => {
       const baseLabel = swatch.getAttribute("aria-label") || "Pencil color";
       swatch.setAttribute("aria-label", `${baseLabel}. Click once to choose or mix, click twice for size.`);
@@ -9017,19 +10643,32 @@
 
     closeBoardBtn.addEventListener("click", closeBoardModal);
     closeActivityProductBtn.addEventListener("click", closeActivityProductModal);
+    closeFeatureToolsBtn.addEventListener("click", closeFeatureToolsModal);
     spellingToolsLauncher.addEventListener("click", () => {
+      closeFeaturePanels();
       setBackgroundPanelVisible(false);
       setSpellingToolsPanelVisible(!state.spellingToolsPanelVisible);
     });
     backgroundLauncher.addEventListener("click", () => {
+      closeFeaturePanels();
       setSpellingToolsPanelVisible(false);
       setBackgroundPanelVisible(!state.backgroundPanelVisible);
+    });
+    spellFeatureLauncher.addEventListener("click", () => {
+      setSpellingToolsPanelVisible(false);
+      setBackgroundPanelVisible(false);
+      setSpellFeaturePanelVisible(!state.spellFeaturePanelVisible);
     });
     backgroundTransparencyRange.addEventListener("input", (event) => {
       setBackgroundWash(Number(event.currentTarget.value) / 100);
     });
     boardBackgroundLauncher.addEventListener("click", () => {
+      setBoardFeaturePanelVisible(false);
       setBoardBackgroundPanelVisible(!state.boardBackgroundPanelVisible);
+    });
+    boardFeatureLauncher.addEventListener("click", () => {
+      setBoardBackgroundPanelVisible(false);
+      setBoardFeaturePanelVisible(!state.boardFeaturePanelVisible);
     });
     boardBackgroundTransparencyRange.addEventListener("input", (event) => {
       setBoardBackgroundWash(Number(event.currentTarget.value) / 100);
@@ -9092,6 +10731,22 @@
         setActivityStatus("Google Drive settings saved on this device.", "good");
       });
     });
+    calculatorHotspotButtons.forEach((button) => {
+      button.addEventListener("click", () => handleCalculatorKey(button.dataset.calcKey));
+    });
+    featureTimerMinuteBtn.addEventListener("click", () => adjustFeatureTimer(60 * 1000));
+    featureTimerSecondBtn.addEventListener("click", () => adjustFeatureTimer(1000));
+    featureTimerToggleBtn.addEventListener("click", toggleFeatureTimerRunning);
+    featureTimerResetBtn.addEventListener("click", resetFeatureTimer);
+    featureTimerLockBtn.addEventListener("click", toggleFeatureTimerLock);
+    featureDieRollBtn.addEventListener("click", rollFeatureDie);
+    featureDieShell.addEventListener("click", rollFeatureDie);
+    featureDieShell.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
+        event.preventDefault();
+        rollFeatureDie();
+      }
+    });
     activityPhotoInput.addEventListener("change", handleActivityPhotoFileChange);
     activityCameraCaptureInput.addEventListener("change", handleActivityCameraCaptureChange);
     activityAudioCaptureInput.addEventListener("change", handleActivityAudioCaptureChange);
@@ -9129,6 +10784,9 @@
       }
     });
 
+    renderFeaturePopupChoices(spellFeaturePopupGrid, "spell");
+    renderFeaturePopupChoices(boardFeaturePopupGrid, "board");
+    renderFeatureNav();
     renderLetterBank(letterBank, "classic");
     renderLetterBank(lineLetterBank, "line");
     renderIconBank(iconBank, "spell");
@@ -9151,6 +10809,8 @@
     setSpellingToolsPanelVisible(false);
     setSpellTrayExpanded(false);
     setBoardTrayExpanded(false);
+    setSpellFeaturePanelVisible(false);
+    setBoardFeaturePanelVisible(false);
     setBackgroundPanelVisible(false);
     setBoardBackgroundPanelVisible(false);
     setBackgroundWash(state.backgroundWash);
@@ -9160,6 +10820,10 @@
     setEraserMode(state.eraserOn);
     setToolSize("pen", state.penSize);
     setToolSize("eraser", state.eraserSize);
+    updateCalculatorUI();
+    updateFeatureTimerUI();
+    updateFeatureDieUI();
+    selectFeatureTool(state.selectedFeatureTool);
     updateFullscreenLabel();
     flushPendingLiveActivityProducts();
     requestAnimationFrame(() => {
