@@ -233,7 +233,7 @@
         inset 0 1px 0 rgba(255, 255, 255, 0.34),
         inset 0 -1px 0 rgba(255, 255, 255, 0.06);
       backdrop-filter: blur(28px) saturate(160%);
-      width: min(calc(100vw - 28px), 980px);
+      width: min(calc(100vw - 28px), 1140px);
       margin: 0;
       position: fixed;
       left: max(12px, calc(env(safe-area-inset-left, 0px) + 12px));
@@ -498,8 +498,7 @@
         inset 0 -1px 0 rgba(164, 103, 0, 0.22);
     }
 
-    .background-popup-title,
-    .letter-line-header {
+    .background-popup-title {
       margin: 0;
       font-size: 0.73rem;
       font-weight: 900;
@@ -716,11 +715,11 @@
 
     .board-toolbar-row {
       display: flex;
-      justify-content: center;
-      align-items: center;
+      justify-content: flex-start;
+      align-items: flex-start;
       gap: 12px;
-      flex-wrap: nowrap;
-      overflow-x: auto;
+      flex-wrap: wrap;
+      overflow-x: visible;
       padding-bottom: 2px;
     }
 
@@ -728,8 +727,20 @@
     .board-toolbar-row .tool-actions {
       margin: 0;
       align-items: center;
-      justify-content: center;
-      flex-wrap: nowrap;
+      justify-content: flex-start;
+      flex-wrap: wrap;
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .board-toolbar-row .palette-row {
+      flex: 1 1 100%;
+      gap: 8px;
+    }
+
+    .board-toolbar-row .tool-actions {
+      flex: 1 1 100%;
+      gap: 10px;
     }
 
     .board-control-btn {
@@ -990,12 +1001,12 @@
 
     .letter-bank-stack {
       display: grid;
-      gap: 10px;
+      gap: 8px;
     }
 
     .letter-line-panel {
       display: grid;
-      gap: 6px;
+      gap: 4px;
       min-width: 0;
     }
 
@@ -1999,7 +2010,7 @@
       bottom: max(18px, calc(env(safe-area-inset-bottom, 0px) + 12px));
       transform: none;
       z-index: 4;
-      width: min(calc(100vw - 28px), 980px);
+      width: min(calc(100vw - 28px), 1140px);
       border-radius: 22px;
       padding: 10px 10px 10px 84px;
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.1));
@@ -2154,7 +2165,7 @@
         grid-template-rows: auto auto;
         align-content: start;
         justify-self: center;
-        width: min(calc(100vw - 24px), 960px);
+        width: min(calc(100vw - 24px), 1100px);
         gap: 6px;
         padding: 8px 10px 8px 78px;
       }
@@ -2222,7 +2233,7 @@
 
       .board-top {
         bottom: max(16px, calc(env(safe-area-inset-bottom, 0px) + 10px));
-        width: min(calc(100vw - 24px), 960px);
+        width: min(calc(100vw - 24px), 1100px);
         padding: 8px 10px 8px 78px;
       }
 
@@ -2414,11 +2425,9 @@
             <div class="tray-panel-body">
               <div class="letter-bank-stack">
                 <section class="letter-line-panel">
-                  <p class="letter-line-header">Original Letters</p>
                   <div class="letter-bank" id="letterBank"></div>
                 </section>
                 <section class="letter-line-panel">
-                  <p class="letter-line-header">Line Panel</p>
                   <div class="letter-bank line-bank" id="lineLetterBank"></div>
                 </section>
               </div>
