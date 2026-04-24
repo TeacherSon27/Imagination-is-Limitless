@@ -1622,10 +1622,26 @@
 
     .feature-hotspot {
       position: absolute;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      border: 0;
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid rgba(255, 244, 211, 0.01);
-      box-shadow: none;
+      background: transparent;
+      color: #6a4300;
+      font-size: clamp(0.92rem, 1.4vw, 1.32rem);
+      font-weight: 900;
+      letter-spacing: 0.02em;
+      line-height: 1;
+      cursor: pointer;
+      z-index: 4;
+      outline: none;
+      -webkit-appearance: none;
+      appearance: none;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
       transition:
         transform 0.18s ease,
         box-shadow 0.18s ease,
@@ -1633,14 +1649,57 @@
         border-color 0.18s ease;
     }
 
+    .feature-hotspot::before {
+      content: "";
+      position: absolute;
+      inset: 2px;
+      border-radius: inherit;
+      background:
+        linear-gradient(180deg, rgba(255, 251, 233, 0.18), rgba(255, 214, 92, 0.08));
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.24),
+        inset 0 -1px 0 rgba(150, 94, 0, 0.12),
+        0 6px 10px rgba(120, 79, 0, 0.08);
+      opacity: 0.18;
+      transition:
+        transform 0.12s ease,
+        opacity 0.12s ease,
+        box-shadow 0.12s ease,
+        filter 0.12s ease;
+      pointer-events: none;
+    }
+
     .feature-hotspot:hover,
     .feature-hotspot:focus-visible {
-      background: rgba(255, 252, 240, 0.08);
-      border-color: rgba(255, 226, 140, 0.34);
+      background: transparent;
       box-shadow:
-        0 0 0 2px rgba(255, 206, 64, 0.42),
-        0 12px 22px rgba(120, 79, 0, 0.14);
-      transform: translateY(-1px);
+        0 0 0 2px rgba(255, 206, 64, 0.36);
+    }
+
+    .feature-hotspot:hover::before,
+    .feature-hotspot:focus-visible::before {
+      opacity: 0.44;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.58),
+        inset 0 -2px 0 rgba(173, 114, 8, 0.18),
+        0 10px 16px rgba(120, 79, 0, 0.12);
+      filter: saturate(1.08);
+    }
+
+    .feature-hotspot:active,
+    .feature-hotspot.is-pressed {
+      transform: translateY(2px);
+    }
+
+    .feature-hotspot:active::before,
+    .feature-hotspot.is-pressed::before {
+      opacity: 0.56;
+      transform: translateY(1px) scale(0.985);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.42),
+        inset 0 -1px 0 rgba(150, 94, 0, 0.12),
+        0 2px 4px rgba(120, 79, 0, 0.08);
+      filter: brightness(0.96) saturate(1.05);
     }
 
     .feature-display {
@@ -1657,6 +1716,7 @@
       text-shadow: 0 1px 0 rgba(255, 255, 255, 0.44);
       pointer-events: none;
       text-align: right;
+      z-index: 2;
     }
 
     .feature-widget-status,
@@ -1674,18 +1734,18 @@
     }
 
     .feature-calculator-display {
-      left: 17.8%;
-      top: 12.8%;
-      width: 51.6%;
-      height: 15.4%;
+      left: 20.3%;
+      top: 15.2%;
+      width: 50.2%;
+      height: 14.8%;
       font-size: clamp(1.55rem, 3vw, 3.4rem);
       line-height: 1;
     }
 
     .feature-calculator-memory {
       position: absolute;
-      left: 20%;
-      top: 15.8%;
+      left: 22.2%;
+      top: 18.4%;
       min-width: 1.4em;
       min-height: 1.4em;
       display: inline-flex;
@@ -1697,6 +1757,7 @@
       font-size: clamp(0.66rem, 1.1vw, 0.86rem);
       font-weight: 900;
       pointer-events: none;
+      z-index: 3;
     }
 
     .feature-calc-key {
@@ -1757,11 +1818,11 @@
     }
 
     .feature-timer-display {
-      left: 25%;
-      top: 17.4%;
-      width: 45%;
-      height: 22%;
-      font-size: clamp(2rem, 5vw, 5.3rem);
+      left: 25.3%;
+      top: 23.2%;
+      width: 47.2%;
+      height: 15.8%;
+      font-size: clamp(2rem, 4.8vw, 5.1rem);
       line-height: 1;
       letter-spacing: 0.04em;
       justify-content: center;
@@ -1770,8 +1831,8 @@
 
     .feature-timer-lock-indicator {
       position: absolute;
-      left: 66.6%;
-      top: 27.4%;
+      left: 67.1%;
+      top: 31%;
       min-width: 2.2em;
       min-height: 2.2em;
       display: inline-flex;
@@ -1783,43 +1844,58 @@
       font-size: clamp(0.84rem, 1.3vw, 1.12rem);
       font-weight: 900;
       pointer-events: none;
+      z-index: 3;
     }
 
     .feature-timer-btn-min {
-      left: 20.4%;
-      top: 57%;
+      left: 20.7%;
+      top: 56.8%;
       width: 15.8%;
-      height: 23%;
+      height: 22.2%;
     }
 
     .feature-timer-btn-sec {
-      left: 64%;
-      top: 57%;
+      left: 63.7%;
+      top: 56.8%;
       width: 15.8%;
-      height: 23%;
+      height: 22.2%;
     }
 
     .feature-timer-btn-toggle {
-      left: 39%;
-      top: 57%;
-      width: 22%;
-      height: 30%;
+      left: 38.7%;
+      top: 56.8%;
+      width: 22.8%;
+      height: 30.2%;
       border-radius: 999px;
     }
 
     .feature-timer-btn-reset {
-      left: 18.3%;
-      top: 83.2%;
-      width: 18.7%;
-      height: 9.8%;
+      left: 19.2%;
+      top: 82.8%;
+      width: 19%;
+      height: 10%;
       border-radius: 999px;
     }
 
+    .feature-timer-sign {
+      width: 4.9%;
+      height: 7.6%;
+      min-width: 30px;
+      min-height: 30px;
+      border-radius: 999px;
+      font-size: clamp(0.92rem, 1.6vw, 1.34rem);
+    }
+
+    .feature-timer-sign.min-minus { left: 15%; top: 63.8%; }
+    .feature-timer-sign.min-plus { left: 37.1%; top: 63.8%; }
+    .feature-timer-sign.sec-minus { left: 58%; top: 63.8%; }
+    .feature-timer-sign.sec-plus { left: 80.1%; top: 63.8%; }
+
     .feature-timer-btn-lock {
-      left: 60.2%;
-      top: 83.2%;
-      width: 21.8%;
-      height: 9.8%;
+      left: 59.5%;
+      top: 82.8%;
+      width: 22.3%;
+      height: 10%;
       border-radius: 999px;
     }
 
@@ -1859,10 +1935,10 @@
 
     .feature-die-pip-layer {
       position: absolute;
-      left: 24%;
-      top: 9%;
-      width: 52%;
-      height: 27%;
+      left: 17.8%;
+      top: 7.8%;
+      width: 64.4%;
+      height: 35.6%;
       pointer-events: none;
     }
 
@@ -1886,12 +1962,12 @@
       transform: scale(1);
     }
 
-    .feature-die-pip.pip-1 { left: 44.5%; top: 40%; }
-    .feature-die-pip.pip-2 { left: 18%; top: 12%; }
-    .feature-die-pip.pip-3 { left: 71%; top: 67%; }
-    .feature-die-pip.pip-4 { left: 71%; top: 12%; }
-    .feature-die-pip.pip-5 { left: 18%; top: 67%; }
-    .feature-die-pip.pip-6 { left: 44.5%; top: 12%; }
+    .feature-die-pip.pip-1 { left: 44.5%; top: 40.5%; }
+    .feature-die-pip.pip-2 { left: 14%; top: 14%; }
+    .feature-die-pip.pip-3 { left: 75%; top: 67%; }
+    .feature-die-pip.pip-4 { left: 75%; top: 14%; }
+    .feature-die-pip.pip-5 { left: 14%; top: 67%; }
+    .feature-die-pip.pip-6 { left: 44.5%; top: 14%; }
     .feature-die-pip.pip-7 { left: 44.5%; top: 67%; }
 
     .feature-die-controls {
@@ -3380,7 +3456,7 @@
               <button class="feature-hotspot feature-calc-key row-four calc-col-1" type="button" data-calc-key="1" aria-label="One"></button>
               <button class="feature-hotspot feature-calc-key row-four calc-col-2" type="button" data-calc-key="2" aria-label="Two"></button>
               <button class="feature-hotspot feature-calc-key row-four calc-col-3" type="button" data-calc-key="3" aria-label="Three"></button>
-              <button class="feature-hotspot feature-calc-key equals-tall" type="button" data-calc-key="=" aria-label="Equals"></button>
+              <button class="feature-hotspot feature-calc-key equals-tall" type="button" data-calc-key="+" aria-label="Plus"></button>
               <button class="feature-hotspot feature-calc-key row-five calc-col-1" type="button" data-calc-key="ce" aria-label="Clear entry"></button>
               <button class="feature-hotspot feature-calc-key row-five calc-col-2" type="button" data-calc-key="0" aria-label="Zero"></button>
               <button class="feature-hotspot feature-calc-key row-five calc-col-3" type="button" data-calc-key="." aria-label="Decimal point"></button>
@@ -3395,7 +3471,11 @@
               <div class="feature-display feature-timer-display" id="featureTimerDisplay">25:00</div>
               <div class="feature-timer-lock-indicator" id="featureTimerLockIndicator">Open</div>
               <button class="feature-hotspot feature-timer-btn-min" id="featureTimerMinuteBtn" type="button" aria-label="Add one minute"></button>
+              <button class="feature-hotspot feature-timer-sign min-minus" id="featureTimerMinuteMinusBtn" type="button" aria-label="Subtract one minute">−</button>
+              <button class="feature-hotspot feature-timer-sign min-plus" id="featureTimerMinutePlusBtn" type="button" aria-label="Add one minute">+</button>
               <button class="feature-hotspot feature-timer-btn-sec" id="featureTimerSecondBtn" type="button" aria-label="Add one second"></button>
+              <button class="feature-hotspot feature-timer-sign sec-minus" id="featureTimerSecondMinusBtn" type="button" aria-label="Subtract one second">−</button>
+              <button class="feature-hotspot feature-timer-sign sec-plus" id="featureTimerSecondPlusBtn" type="button" aria-label="Add one second">+</button>
               <button class="feature-hotspot feature-timer-btn-toggle" id="featureTimerToggleBtn" type="button" aria-label="Start or pause timer"></button>
               <button class="feature-hotspot feature-timer-btn-reset" id="featureTimerResetBtn" type="button" aria-label="Reset timer"></button>
               <button class="feature-hotspot feature-timer-btn-lock" id="featureTimerLockBtn" type="button" aria-label="Lock timer editing"></button>
@@ -3577,7 +3657,11 @@
     const featureTimerDisplay = document.getElementById("featureTimerDisplay");
     const featureTimerLockIndicator = document.getElementById("featureTimerLockIndicator");
     const featureTimerMinuteBtn = document.getElementById("featureTimerMinuteBtn");
+    const featureTimerMinuteMinusBtn = document.getElementById("featureTimerMinuteMinusBtn");
+    const featureTimerMinutePlusBtn = document.getElementById("featureTimerMinutePlusBtn");
     const featureTimerSecondBtn = document.getElementById("featureTimerSecondBtn");
+    const featureTimerSecondMinusBtn = document.getElementById("featureTimerSecondMinusBtn");
+    const featureTimerSecondPlusBtn = document.getElementById("featureTimerSecondPlusBtn");
     const featureTimerToggleBtn = document.getElementById("featureTimerToggleBtn");
     const featureTimerResetBtn = document.getElementById("featureTimerResetBtn");
     const featureTimerLockBtn = document.getElementById("featureTimerLockBtn");
@@ -5101,6 +5185,20 @@
 
     function openFeatureToolFromChoice(toolId, surface) {
       openFeatureToolsModal(surface, toolId);
+    }
+
+    function attachFeatureButtonPressFeedback(button) {
+      if (!button) {
+        return;
+      }
+
+      const release = () => button.classList.remove("is-pressed");
+      button.addEventListener("pointerdown", () => button.classList.add("is-pressed"));
+      button.addEventListener("pointerup", release);
+      button.addEventListener("pointercancel", release);
+      button.addEventListener("pointerleave", release);
+      button.addEventListener("blur", release);
+      button.addEventListener("keyup", release);
     }
 
     function createActivityProductId() {
@@ -10430,14 +10528,24 @@
           toggleFeatureTimerRunning();
           return true;
         }
-        if (event.key.toLowerCase() === "m") {
+        if (event.key === "m") {
           event.preventDefault();
           adjustFeatureTimer(60 * 1000);
           return true;
         }
-        if (event.key.toLowerCase() === "s") {
+        if (event.key === "M") {
+          event.preventDefault();
+          adjustFeatureTimer(-60 * 1000);
+          return true;
+        }
+        if (event.key === "s") {
           event.preventDefault();
           adjustFeatureTimer(1000);
+          return true;
+        }
+        if (event.key === "S") {
+          event.preventDefault();
+          adjustFeatureTimer(-1000);
           return true;
         }
         if (event.key.toLowerCase() === "r") {
@@ -10734,8 +10842,12 @@
     calculatorHotspotButtons.forEach((button) => {
       button.addEventListener("click", () => handleCalculatorKey(button.dataset.calcKey));
     });
+    featureTimerMinuteMinusBtn.addEventListener("click", () => adjustFeatureTimer(-60 * 1000));
     featureTimerMinuteBtn.addEventListener("click", () => adjustFeatureTimer(60 * 1000));
+    featureTimerMinutePlusBtn.addEventListener("click", () => adjustFeatureTimer(60 * 1000));
+    featureTimerSecondMinusBtn.addEventListener("click", () => adjustFeatureTimer(-1000));
     featureTimerSecondBtn.addEventListener("click", () => adjustFeatureTimer(1000));
+    featureTimerSecondPlusBtn.addEventListener("click", () => adjustFeatureTimer(1000));
     featureTimerToggleBtn.addEventListener("click", toggleFeatureTimerRunning);
     featureTimerResetBtn.addEventListener("click", resetFeatureTimer);
     featureTimerLockBtn.addEventListener("click", toggleFeatureTimerLock);
@@ -10747,6 +10859,18 @@
         rollFeatureDie();
       }
     });
+    [
+      ...calculatorHotspotButtons,
+      featureTimerMinuteMinusBtn,
+      featureTimerMinuteBtn,
+      featureTimerMinutePlusBtn,
+      featureTimerSecondMinusBtn,
+      featureTimerSecondBtn,
+      featureTimerSecondPlusBtn,
+      featureTimerToggleBtn,
+      featureTimerResetBtn,
+      featureTimerLockBtn
+    ].forEach(attachFeatureButtonPressFeedback);
     activityPhotoInput.addEventListener("change", handleActivityPhotoFileChange);
     activityCameraCaptureInput.addEventListener("change", handleActivityCameraCaptureChange);
     activityAudioCaptureInput.addEventListener("change", handleActivityAudioCaptureChange);
