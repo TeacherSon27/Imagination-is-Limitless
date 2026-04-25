@@ -1603,120 +1603,106 @@
       position: relative;
       width: 100%;
       margin: 0 auto;
+      padding: clamp(18px, 2.4vw, 28px);
+      overflow: hidden;
+      border-radius: clamp(28px, 4vw, 40px);
+      border: 2px solid rgba(255, 224, 125, 0.92);
+      background:
+        radial-gradient(circle at 18% 22%, rgba(255, 212, 98, 0.22), transparent 18%),
+        radial-gradient(circle at 78% 12%, rgba(116, 224, 255, 0.2), transparent 16%),
+        radial-gradient(circle at 78% 76%, rgba(255, 167, 209, 0.2), transparent 18%),
+        radial-gradient(circle at 32% 78%, rgba(255, 245, 184, 0.16), transparent 14%),
+        linear-gradient(140deg, rgba(17, 18, 54, 0.98), rgba(34, 16, 66, 0.96) 48%, rgba(13, 23, 58, 0.98));
+      box-shadow:
+        0 28px 48px rgba(8, 10, 32, 0.38),
+        inset 0 0 0 1px rgba(255, 249, 224, 0.24),
+        inset 0 1px 0 rgba(255, 255, 255, 0.34);
       user-select: none;
       -webkit-user-select: none;
       -webkit-touch-callout: none;
       -webkit-tap-highlight-color: transparent;
     }
 
-    .feature-device-art {
-      display: block;
-      width: 100%;
-      height: auto;
-      pointer-events: none;
-      user-select: none;
-      -webkit-user-select: none;
-      -webkit-user-drag: none;
-      filter: drop-shadow(0 24px 34px rgba(90, 58, 0, 0.2));
-    }
-
-    .feature-hotspot {
-      position: absolute;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0;
-      border: 0;
-      border-radius: 999px;
-      background: transparent;
-      color: #6a4300;
-      font-size: clamp(0.92rem, 1.4vw, 1.32rem);
-      font-weight: 900;
-      letter-spacing: 0.02em;
-      line-height: 1;
-      cursor: pointer;
-      z-index: 4;
-      outline: none;
-      -webkit-appearance: none;
-      appearance: none;
-      touch-action: manipulation;
-      user-select: none;
-      -webkit-user-select: none;
-      transition:
-        transform 0.18s ease,
-        box-shadow 0.18s ease,
-        background-color 0.18s ease,
-        border-color 0.18s ease;
-    }
-
-    .feature-hotspot::before {
+    .feature-device-shell::before,
+    .feature-device-shell::after {
       content: "";
       position: absolute;
-      inset: 2px;
-      border-radius: inherit;
-      background:
-        linear-gradient(180deg, rgba(255, 251, 233, 0.18), rgba(255, 214, 92, 0.08));
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.24),
-        inset 0 -1px 0 rgba(150, 94, 0, 0.12),
-        0 6px 10px rgba(120, 79, 0, 0.08);
-      opacity: 0.18;
-      transition:
-        transform 0.12s ease,
-        opacity 0.12s ease,
-        box-shadow 0.12s ease,
-        filter 0.12s ease;
       pointer-events: none;
     }
 
-    .feature-hotspot:hover,
-    .feature-hotspot:focus-visible {
-      background: transparent;
-      box-shadow:
-        0 0 0 2px rgba(255, 206, 64, 0.36);
+    .feature-device-shell::before {
+      inset: 10px;
+      border-radius: inherit;
+      border: 1px solid rgba(255, 225, 134, 0.5);
+      background:
+        radial-gradient(circle at 20% 18%, rgba(255, 255, 255, 0.18) 0 2px, transparent 3px),
+        radial-gradient(circle at 36% 42%, rgba(255, 255, 255, 0.16) 0 1px, transparent 2px),
+        radial-gradient(circle at 62% 26%, rgba(255, 241, 189, 0.2) 0 2px, transparent 3px),
+        radial-gradient(circle at 82% 58%, rgba(255, 255, 255, 0.16) 0 1px, transparent 2px),
+        radial-gradient(circle at 70% 78%, rgba(255, 241, 189, 0.16) 0 2px, transparent 3px);
+      opacity: 0.92;
     }
 
-    .feature-hotspot:hover::before,
-    .feature-hotspot:focus-visible::before {
-      opacity: 0.44;
+    .feature-device-shell::after {
+      width: clamp(70px, 11vw, 120px);
+      aspect-ratio: 1 / 1;
+      top: -8px;
+      right: -6px;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 38% 35%, rgba(255, 255, 255, 0.9), rgba(255, 223, 120, 0.92) 25%, rgba(92, 42, 164, 0.94) 52%, rgba(15, 14, 52, 0.98) 88%);
       box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.58),
-        inset 0 -2px 0 rgba(173, 114, 8, 0.18),
-        0 10px 16px rgba(120, 79, 0, 0.12);
-      filter: saturate(1.08);
+        0 0 0 6px rgba(225, 166, 42, 0.34),
+        0 18px 28px rgba(9, 12, 36, 0.28);
+      opacity: 0.9;
     }
 
-    .feature-hotspot:active,
-    .feature-hotspot.is-pressed {
-      transform: translateY(2px);
+    .feature-device-shell > * {
+      position: relative;
+      z-index: 1;
     }
 
-    .feature-hotspot:active::before,
-    .feature-hotspot.is-pressed::before {
-      opacity: 0.56;
-      transform: translateY(1px) scale(0.985);
+    .feature-device-art {
+      display: none;
+    }
+
+    .feature-display-panel {
+      position: relative;
+      padding: 20px 24px;
+      border-radius: 28px;
+      border: 2px solid rgba(207, 148, 34, 0.9);
+      background:
+        linear-gradient(180deg, rgba(255, 253, 232, 0.98), rgba(247, 239, 194, 0.96));
       box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.42),
-        inset 0 -1px 0 rgba(150, 94, 0, 0.12),
-        0 2px 4px rgba(120, 79, 0, 0.08);
-      filter: brightness(0.96) saturate(1.05);
+        inset 0 2px 0 rgba(255, 255, 255, 0.78),
+        inset 0 -4px 0 rgba(199, 165, 88, 0.28),
+        0 10px 22px rgba(7, 9, 28, 0.18);
+    }
+
+    .feature-display-panel::after {
+      content: "";
+      position: absolute;
+      inset: 8px;
+      border-radius: 22px;
+      border: 1px solid rgba(133, 101, 28, 0.18);
+      pointer-events: none;
     }
 
     .feature-display {
-      position: absolute;
+      position: static;
       display: flex;
       align-items: center;
       justify-content: flex-end;
-      padding: 0 4%;
+      min-height: 1.1em;
+      padding: 0;
       color: #19263b;
       font-family: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
       font-variant-numeric: tabular-nums;
-      font-weight: 700;
+      font-weight: 800;
       letter-spacing: 0.02em;
-      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.44);
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.56);
       pointer-events: none;
       text-align: right;
-      z-index: 2;
     }
 
     .feature-widget-status,
@@ -1729,174 +1715,318 @@
       line-height: 1.45;
     }
 
+    .feature-control-btn {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 0 16px;
+      border: 1px solid rgba(214, 153, 33, 0.96);
+      border-radius: 22px;
+      background:
+        linear-gradient(180deg, rgba(255, 235, 144, 0.98), rgba(240, 182, 42, 0.98));
+      color: #5a3300;
+      font-size: clamp(1rem, 1.8vw, 1.38rem);
+      font-weight: 900;
+      letter-spacing: 0.03em;
+      line-height: 1;
+      cursor: pointer;
+      box-shadow:
+        0 10px 18px rgba(8, 10, 32, 0.22),
+        inset 0 2px 0 rgba(255, 253, 232, 0.8),
+        inset 0 -4px 0 rgba(169, 108, 11, 0.26);
+      outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+      transition:
+        transform 0.14s ease,
+        box-shadow 0.14s ease,
+        filter 0.14s ease,
+        opacity 0.14s ease;
+    }
+
+    .feature-control-btn::before {
+      content: "";
+      position: absolute;
+      inset: 4px;
+      border-radius: inherit;
+      background: linear-gradient(180deg, rgba(255, 253, 236, 0.38), rgba(255, 218, 103, 0.08));
+      opacity: 0.8;
+      pointer-events: none;
+    }
+
+    .feature-control-btn > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .feature-control-btn:hover,
+    .feature-control-btn:focus-visible {
+      box-shadow:
+        0 0 0 2px rgba(255, 218, 103, 0.42),
+        0 14px 22px rgba(8, 10, 32, 0.2),
+        inset 0 2px 0 rgba(255, 253, 232, 0.84),
+        inset 0 -4px 0 rgba(169, 108, 11, 0.22);
+      filter: saturate(1.05) brightness(1.01);
+    }
+
+    .feature-control-btn.active {
+      background:
+        linear-gradient(180deg, rgba(255, 231, 146, 1), rgba(228, 136, 16, 0.98));
+    }
+
+    .feature-control-btn:active,
+    .feature-control-btn.is-pressed {
+      transform: translateY(3px);
+      box-shadow:
+        0 4px 10px rgba(8, 10, 32, 0.22),
+        inset 0 2px 0 rgba(255, 248, 215, 0.72),
+        inset 0 -2px 0 rgba(142, 88, 7, 0.24);
+      filter: brightness(0.98);
+    }
+
+    .feature-control-btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      filter: grayscale(0.15);
+    }
+
+    .feature-control-btn.utility {
+      background:
+        linear-gradient(180deg, rgba(255, 247, 208, 0.98), rgba(246, 214, 119, 0.96));
+    }
+
+    .feature-control-btn.operator {
+      background:
+        linear-gradient(180deg, rgba(255, 226, 138, 0.98), rgba(236, 160, 28, 0.98));
+    }
+
+    .feature-control-btn.primary {
+      background:
+        linear-gradient(180deg, rgba(255, 240, 162, 0.99), rgba(243, 186, 54, 0.99));
+    }
+
     .feature-calculator-shell {
-      max-width: 980px;
+      max-width: 940px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .feature-calculator-display-panel {
+      min-height: clamp(106px, 15vw, 144px);
+      display: flex;
+      align-items: flex-end;
+      justify-content: flex-end;
     }
 
     .feature-calculator-display {
-      left: 20.3%;
-      top: 15.2%;
-      width: 50.2%;
-      height: 14.8%;
-      font-size: clamp(1.55rem, 3vw, 3.4rem);
-      line-height: 1;
+      width: 100%;
+      font-size: clamp(2rem, 5vw, 3.8rem);
     }
 
     .feature-calculator-memory {
       position: absolute;
-      left: 22.2%;
-      top: 18.4%;
-      min-width: 1.4em;
-      min-height: 1.4em;
+      top: 16px;
+      left: 18px;
+      min-width: 2em;
+      min-height: 2em;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.32);
-      color: rgba(32, 48, 74, 0.72);
-      font-size: clamp(0.66rem, 1.1vw, 0.86rem);
+      background: rgba(255, 255, 255, 0.48);
+      color: rgba(32, 48, 74, 0.78);
+      font-size: clamp(0.72rem, 1.2vw, 0.9rem);
       font-weight: 900;
       pointer-events: none;
-      z-index: 3;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.64);
+    }
+
+    .feature-calc-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 12px;
+      align-items: stretch;
     }
 
     .feature-calc-key {
-      position: absolute;
-      border-radius: 18px;
+      min-height: clamp(58px, 8vw, 78px);
+      border-radius: 22px;
+      font-size: clamp(1.04rem, 2.1vw, 1.8rem);
+      text-transform: uppercase;
     }
 
-    .feature-calc-key.top-row {
-      top: 40.2%;
-      height: 8.9%;
+    .feature-calc-key.small-label {
+      font-size: clamp(0.82rem, 1.4vw, 1.06rem);
+      letter-spacing: 0.08em;
     }
 
-    .feature-calc-key.row-two {
-      top: 52.2%;
-      height: 9.1%;
+    .feature-calc-key.zero {
+      grid-column: span 2;
     }
 
-    .feature-calc-key.row-three {
-      top: 64.2%;
-      height: 9.1%;
-    }
-
-    .feature-calc-key.row-four {
-      top: 76.2%;
-      height: 9.1%;
-    }
-
-    .feature-calc-key.row-five {
-      top: 88.1%;
-      height: 9%;
-    }
-
-    .calc-col-1 { left: 18.8%; width: 8.8%; }
-    .calc-col-2 { left: 29.2%; width: 8.8%; }
-    .calc-col-3 { left: 39.6%; width: 8.8%; }
-    .calc-col-4 { left: 50.1%; width: 8.8%; }
-    .calc-col-5 { left: 60.6%; width: 8.8%; }
-    .calc-col-6 { left: 71.1%; width: 8.8%; }
-
-    .feature-calc-key.equals-tall {
-      left: 50.1%;
-      top: 76.2%;
-      width: 8.8%;
-      height: 20.9%;
-      border-radius: 18px;
-    }
-
-    .feature-calc-key.add-tall {
-      left: 60.6%;
-      top: 64.2%;
-      width: 8.8%;
-      height: 20.8%;
-      border-radius: 18px;
+    .feature-calc-key.plus,
+    .feature-calc-key.equals {
+      grid-row: span 2;
     }
 
     .feature-timer-shell {
-      max-width: 1020px;
+      max-width: 940px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .feature-timer-display-panel {
+      min-height: clamp(146px, 18vw, 194px);
+      padding-top: 18px;
+      display: grid;
+      align-content: center;
+      gap: 10px;
+    }
+
+    .feature-timer-labels {
+      display: flex;
+      justify-content: center;
+      gap: clamp(72px, 18vw, 160px);
+      color: #243451;
+      font-size: clamp(1rem, 1.8vw, 1.4rem);
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
     }
 
     .feature-timer-display {
-      left: 25.3%;
-      top: 23.2%;
-      width: 47.2%;
-      height: 15.8%;
-      font-size: clamp(2rem, 4.8vw, 5.1rem);
-      line-height: 1;
-      letter-spacing: 0.04em;
       justify-content: center;
-      padding: 0;
+      text-align: center;
+      font-size: clamp(2.4rem, 6.2vw, 5.1rem);
+      letter-spacing: 0.04em;
     }
 
     .feature-timer-lock-indicator {
       position: absolute;
-      left: 67.1%;
-      top: 31%;
-      min-width: 2.2em;
-      min-height: 2.2em;
+      top: 16px;
+      right: 18px;
+      min-width: 72px;
+      min-height: 38px;
+      padding: 0 12px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.2);
-      color: rgba(32, 48, 74, 0.72);
-      font-size: clamp(0.84rem, 1.3vw, 1.12rem);
+      background: rgba(27, 41, 64, 0.08);
+      color: rgba(32, 48, 74, 0.84);
+      font-size: clamp(0.78rem, 1.2vw, 0.96rem);
       font-weight: 900;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
       pointer-events: none;
-      z-index: 3;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
     }
 
-    .feature-timer-btn-min {
-      left: 20.7%;
-      top: 56.8%;
-      width: 15.8%;
-      height: 22.2%;
+    .feature-timer-board {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+      gap: 18px;
+      align-items: center;
     }
 
+    .feature-timer-cluster {
+      display: grid;
+      gap: 10px;
+      justify-items: center;
+    }
+
+    .feature-timer-cluster-title {
+      color: rgba(255, 241, 198, 0.98);
+      font-size: clamp(0.92rem, 1.5vw, 1.1rem);
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      text-shadow: 0 2px 8px rgba(10, 12, 36, 0.34);
+    }
+
+    .feature-timer-adjust-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .feature-timer-sign,
+    .feature-timer-btn-min,
     .feature-timer-btn-sec {
-      left: 63.7%;
-      top: 56.8%;
-      width: 15.8%;
-      height: 22.2%;
-    }
-
-    .feature-timer-btn-toggle {
-      left: 38.7%;
-      top: 56.8%;
-      width: 22.8%;
-      height: 30.2%;
-      border-radius: 999px;
-    }
-
-    .feature-timer-btn-reset {
-      left: 19.2%;
-      top: 82.8%;
-      width: 19%;
-      height: 10%;
-      border-radius: 999px;
+      min-width: 0;
+      min-height: 0;
     }
 
     .feature-timer-sign {
-      width: 4.9%;
-      height: 7.6%;
-      min-width: 30px;
-      min-height: 30px;
-      border-radius: 999px;
-      font-size: clamp(0.92rem, 1.6vw, 1.34rem);
+      width: clamp(42px, 7vw, 56px);
+      height: clamp(42px, 7vw, 56px);
+      border-radius: 50%;
+      padding: 0;
+      font-size: clamp(1.2rem, 2vw, 1.6rem);
     }
 
-    .feature-timer-sign.min-minus { left: 15%; top: 63.8%; }
-    .feature-timer-sign.min-plus { left: 37.1%; top: 63.8%; }
-    .feature-timer-sign.sec-minus { left: 58%; top: 63.8%; }
-    .feature-timer-sign.sec-plus { left: 80.1%; top: 63.8%; }
+    .feature-timer-btn-min,
+    .feature-timer-btn-sec {
+      width: clamp(92px, 15vw, 124px);
+      aspect-ratio: 1 / 1;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      font-size: clamp(1rem, 2vw, 1.45rem);
+    }
 
+    .feature-timer-btn-min span,
+    .feature-timer-btn-sec span {
+      position: relative;
+      z-index: 1;
+    }
+
+    .feature-timer-btn-toggle {
+      width: clamp(126px, 21vw, 170px);
+      aspect-ratio: 1 / 1;
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 8px;
+      padding: 0;
+    }
+
+    .feature-timer-toggle-star {
+      font-size: clamp(2rem, 4vw, 2.8rem);
+      line-height: 1;
+    }
+
+    .feature-timer-toggle-label {
+      font-size: clamp(0.82rem, 1.3vw, 1rem);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .feature-timer-footer {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: space-between;
+    }
+
+    .feature-timer-btn-reset,
     .feature-timer-btn-lock {
-      left: 59.5%;
-      top: 82.8%;
-      width: 22.3%;
-      height: 10%;
+      min-height: 56px;
+      padding: 0 20px;
       border-radius: 999px;
+      font-size: clamp(0.92rem, 1.5vw, 1.08rem);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .feature-timer-btn-lock.locked {
+      background:
+        linear-gradient(180deg, rgba(255, 219, 135, 0.99), rgba(222, 144, 24, 0.98));
     }
 
     .feature-timer-meta {
@@ -1925,26 +2055,48 @@
     }
 
     .feature-die-shell {
-      max-width: 760px;
+      max-width: 430px;
+      display: grid;
+      justify-items: center;
+      gap: 18px;
       cursor: pointer;
     }
 
-    .feature-die-shell.rolling {
+    .feature-die-shell.rolling .feature-die-face {
       animation: die-roll-spin 780ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .feature-die-face {
+      position: relative;
+      width: min(100%, 320px);
+      aspect-ratio: 1 / 1;
+      border-radius: 28px;
+      background:
+        radial-gradient(circle at 20% 18%, rgba(255, 239, 164, 0.2), transparent 16%),
+        radial-gradient(circle at 80% 24%, rgba(131, 213, 255, 0.18), transparent 18%),
+        linear-gradient(145deg, rgba(20, 20, 60, 0.96), rgba(48, 20, 82, 0.94) 48%, rgba(16, 28, 64, 0.96));
+      border: 2px solid rgba(255, 225, 134, 0.92);
+      box-shadow:
+        0 20px 34px rgba(8, 10, 32, 0.28),
+        inset 0 0 0 1px rgba(255, 246, 212, 0.22);
+      transform: rotate(-10deg);
+      transition: transform 0.18s ease;
+    }
+
+    .feature-die-shell:hover .feature-die-face,
+    .feature-die-shell:focus-within .feature-die-face {
+      transform: rotate(-8deg) scale(1.01);
     }
 
     .feature-die-pip-layer {
       position: absolute;
-      left: 17.8%;
-      top: 7.8%;
-      width: 64.4%;
-      height: 35.6%;
+      inset: 14%;
       pointer-events: none;
     }
 
     .feature-die-pip {
       position: absolute;
-      width: 11%;
+      width: 14%;
       aspect-ratio: 1 / 1;
       border-radius: 50%;
       background:
@@ -1962,13 +2114,13 @@
       transform: scale(1);
     }
 
-    .feature-die-pip.pip-1 { left: 44.5%; top: 40.5%; }
-    .feature-die-pip.pip-2 { left: 14%; top: 14%; }
-    .feature-die-pip.pip-3 { left: 75%; top: 67%; }
-    .feature-die-pip.pip-4 { left: 75%; top: 14%; }
-    .feature-die-pip.pip-5 { left: 14%; top: 67%; }
-    .feature-die-pip.pip-6 { left: 44.5%; top: 14%; }
-    .feature-die-pip.pip-7 { left: 44.5%; top: 67%; }
+    .feature-die-pip.pip-1 { left: 43%; top: 43%; }
+    .feature-die-pip.pip-2 { left: 8%; top: 8%; }
+    .feature-die-pip.pip-3 { left: 78%; top: 78%; }
+    .feature-die-pip.pip-4 { left: 78%; top: 8%; }
+    .feature-die-pip.pip-5 { left: 8%; top: 78%; }
+    .feature-die-pip.pip-6 { left: 43%; top: 8%; }
+    .feature-die-pip.pip-7 { left: 43%; top: 78%; }
 
     .feature-die-controls {
       display: flex;
@@ -3051,6 +3203,31 @@
         border-radius: 24px;
       }
 
+      .feature-device-shell {
+        padding: 16px;
+      }
+
+      .feature-calc-grid {
+        gap: 10px;
+      }
+
+      .feature-calc-key {
+        min-height: 52px;
+      }
+
+      .feature-timer-board {
+        grid-template-columns: 1fr;
+      }
+
+      .feature-timer-btn-toggle {
+        margin: 0 auto;
+      }
+
+      .feature-timer-footer,
+      .feature-die-controls {
+        justify-content: center;
+      }
+
       .feature-nav-btn,
       .feature-popup-btn {
         grid-template-columns: 64px minmax(0, 1fr);
@@ -3434,51 +3611,78 @@
         <div class="feature-tool-stage">
           <div class="feature-widget active" id="featureCalculatorWidget" data-feature-widget="calculator">
             <div class="feature-device-shell feature-calculator-shell">
-              <img class="feature-device-art" src="feature-widget-assets/calculator-cutout.webp" alt="Golden galaxy calculator">
-              <div class="feature-display feature-calculator-display" id="featureCalculatorDisplay">0</div>
-              <div class="feature-calculator-memory" id="featureCalculatorMemoryBadge"></div>
-              <button class="feature-hotspot feature-calc-key top-row calc-col-1" type="button" data-calc-key="mrc" aria-label="Memory recall and clear"></button>
-              <button class="feature-hotspot feature-calc-key top-row calc-col-2" type="button" data-calc-key="m-" aria-label="Subtract from memory"></button>
-              <button class="feature-hotspot feature-calc-key top-row calc-col-3" type="button" data-calc-key="m+" aria-label="Add to memory"></button>
-              <button class="feature-hotspot feature-calc-key top-row calc-col-4" type="button" data-calc-key="%" aria-label="Percent"></button>
-              <button class="feature-hotspot feature-calc-key top-row calc-col-5" type="button" data-calc-key="sqrt" aria-label="Square root"></button>
-              <button class="feature-hotspot feature-calc-key top-row calc-col-6" type="button" data-calc-key="/" aria-label="Divide"></button>
-              <button class="feature-hotspot feature-calc-key row-two calc-col-1" type="button" data-calc-key="7" aria-label="Seven"></button>
-              <button class="feature-hotspot feature-calc-key row-two calc-col-2" type="button" data-calc-key="8" aria-label="Eight"></button>
-              <button class="feature-hotspot feature-calc-key row-two calc-col-3" type="button" data-calc-key="9" aria-label="Nine"></button>
-              <button class="feature-hotspot feature-calc-key row-two calc-col-4" type="button" data-calc-key="*" aria-label="Multiply"></button>
-              <button class="feature-hotspot feature-calc-key row-two calc-col-5" type="button" data-calc-key="-" aria-label="Minus"></button>
-              <button class="feature-hotspot feature-calc-key row-three calc-col-1" type="button" data-calc-key="4" aria-label="Four"></button>
-              <button class="feature-hotspot feature-calc-key row-three calc-col-2" type="button" data-calc-key="5" aria-label="Five"></button>
-              <button class="feature-hotspot feature-calc-key row-three calc-col-3" type="button" data-calc-key="6" aria-label="Six"></button>
-              <button class="feature-hotspot feature-calc-key row-three calc-col-4" type="button" data-calc-key="-" aria-label="Minus"></button>
-              <button class="feature-hotspot feature-calc-key add-tall" type="button" data-calc-key="+" aria-label="Plus"></button>
-              <button class="feature-hotspot feature-calc-key row-four calc-col-1" type="button" data-calc-key="1" aria-label="One"></button>
-              <button class="feature-hotspot feature-calc-key row-four calc-col-2" type="button" data-calc-key="2" aria-label="Two"></button>
-              <button class="feature-hotspot feature-calc-key row-four calc-col-3" type="button" data-calc-key="3" aria-label="Three"></button>
-              <button class="feature-hotspot feature-calc-key equals-tall" type="button" data-calc-key="+" aria-label="Plus"></button>
-              <button class="feature-hotspot feature-calc-key row-five calc-col-1" type="button" data-calc-key="ce" aria-label="Clear entry"></button>
-              <button class="feature-hotspot feature-calc-key row-five calc-col-2" type="button" data-calc-key="0" aria-label="Zero"></button>
-              <button class="feature-hotspot feature-calc-key row-five calc-col-3" type="button" data-calc-key="." aria-label="Decimal point"></button>
-              <button class="feature-hotspot feature-calc-key row-five calc-col-5" type="button" data-calc-key="=" aria-label="Equals"></button>
+              <div class="feature-display-panel feature-calculator-display-panel">
+                <div class="feature-calculator-memory" id="featureCalculatorMemoryBadge"></div>
+                <div class="feature-display feature-calculator-display" id="featureCalculatorDisplay">0</div>
+              </div>
+              <div class="feature-calc-grid">
+                <button class="feature-control-btn feature-calc-key utility small-label" type="button" data-calc-key="mrc" aria-label="Memory recall and clear">MRC</button>
+                <button class="feature-control-btn feature-calc-key utility small-label" type="button" data-calc-key="m-" aria-label="Subtract from memory">M-</button>
+                <button class="feature-control-btn feature-calc-key utility small-label" type="button" data-calc-key="m+" aria-label="Add to memory">M+</button>
+                <button class="feature-control-btn feature-calc-key utility" type="button" data-calc-key="%" aria-label="Percent">%</button>
+                <button class="feature-control-btn feature-calc-key utility" type="button" data-calc-key="sqrt" aria-label="Square root">√</button>
+
+                <button class="feature-control-btn feature-calc-key" type="button" data-calc-key="7" aria-label="Seven">7</button>
+                <button class="feature-control-btn feature-calc-key" type="button" data-calc-key="8" aria-label="Eight">8</button>
+                <button class="feature-control-btn feature-calc-key" type="button" data-calc-key="9" aria-label="Nine">9</button>
+                <button class="feature-control-btn feature-calc-key operator" type="button" data-calc-key="/" aria-label="Divide">÷</button>
+                <button class="feature-control-btn feature-calc-key utility" type="button" data-calc-key="ce" aria-label="Clear entry">CE</button>
+
+                <button class="feature-control-btn feature-calc-key" type="button" data-calc-key="4" aria-label="Four">4</button>
+                <button class="feature-control-btn feature-calc-key" type="button" data-calc-key="5" aria-label="Five">5</button>
+                <button class="feature-control-btn feature-calc-key" type="button" data-calc-key="6" aria-label="Six">6</button>
+                <button class="feature-control-btn feature-calc-key operator" type="button" data-calc-key="*" aria-label="Multiply">×</button>
+                <button class="feature-control-btn feature-calc-key operator" type="button" data-calc-key="-" aria-label="Minus">−</button>
+
+                <button class="feature-control-btn feature-calc-key" type="button" data-calc-key="1" aria-label="One">1</button>
+                <button class="feature-control-btn feature-calc-key" type="button" data-calc-key="2" aria-label="Two">2</button>
+                <button class="feature-control-btn feature-calc-key" type="button" data-calc-key="3" aria-label="Three">3</button>
+                <button class="feature-control-btn feature-calc-key operator plus" type="button" data-calc-key="+" aria-label="Plus">+</button>
+                <button class="feature-control-btn feature-calc-key primary equals" type="button" data-calc-key="=" aria-label="Equals">=</button>
+
+                <button class="feature-control-btn feature-calc-key zero" type="button" data-calc-key="0" aria-label="Zero">0</button>
+                <button class="feature-control-btn feature-calc-key" type="button" data-calc-key="." aria-label="Decimal point">.</button>
+              </div>
             </div>
             <p class="feature-widget-status" id="featureCalculatorStatus">Calculator ready.</p>
           </div>
 
           <div class="feature-widget" id="featureTimerWidget" data-feature-widget="timer">
             <div class="feature-device-shell feature-timer-shell">
-              <img class="feature-device-art" src="feature-widget-assets/timer-cutout.webp" alt="Golden galaxy timer">
-              <div class="feature-display feature-timer-display" id="featureTimerDisplay">25:00</div>
-              <div class="feature-timer-lock-indicator" id="featureTimerLockIndicator">Open</div>
-              <button class="feature-hotspot feature-timer-btn-min" id="featureTimerMinuteBtn" type="button" aria-label="Add one minute"></button>
-              <button class="feature-hotspot feature-timer-sign min-minus" id="featureTimerMinuteMinusBtn" type="button" aria-label="Subtract one minute">−</button>
-              <button class="feature-hotspot feature-timer-sign min-plus" id="featureTimerMinutePlusBtn" type="button" aria-label="Add one minute">+</button>
-              <button class="feature-hotspot feature-timer-btn-sec" id="featureTimerSecondBtn" type="button" aria-label="Add one second"></button>
-              <button class="feature-hotspot feature-timer-sign sec-minus" id="featureTimerSecondMinusBtn" type="button" aria-label="Subtract one second">−</button>
-              <button class="feature-hotspot feature-timer-sign sec-plus" id="featureTimerSecondPlusBtn" type="button" aria-label="Add one second">+</button>
-              <button class="feature-hotspot feature-timer-btn-toggle" id="featureTimerToggleBtn" type="button" aria-label="Start or pause timer"></button>
-              <button class="feature-hotspot feature-timer-btn-reset" id="featureTimerResetBtn" type="button" aria-label="Reset timer"></button>
-              <button class="feature-hotspot feature-timer-btn-lock" id="featureTimerLockBtn" type="button" aria-label="Lock timer editing"></button>
+              <div class="feature-display-panel feature-timer-display-panel">
+                <div class="feature-timer-lock-indicator" id="featureTimerLockIndicator">Open</div>
+                <div class="feature-timer-labels">
+                  <span>MIN</span>
+                  <span>SEC</span>
+                </div>
+                <div class="feature-display feature-timer-display" id="featureTimerDisplay">25:00</div>
+              </div>
+              <div class="feature-timer-board">
+                <div class="feature-timer-cluster">
+                  <div class="feature-timer-cluster-title">Minutes</div>
+                  <div class="feature-timer-adjust-row">
+                    <button class="feature-control-btn feature-timer-sign utility" id="featureTimerMinuteMinusBtn" type="button" aria-label="Subtract one minute">−</button>
+                    <button class="feature-control-btn feature-timer-btn-min" id="featureTimerMinuteBtn" type="button" aria-label="Add one minute"><span>MIN</span></button>
+                    <button class="feature-control-btn feature-timer-sign utility" id="featureTimerMinutePlusBtn" type="button" aria-label="Add one minute">+</button>
+                  </div>
+                </div>
+                <button class="feature-control-btn feature-timer-btn-toggle primary" id="featureTimerToggleBtn" type="button" aria-label="Start or pause timer">
+                  <span class="feature-timer-toggle-star">★</span>
+                  <span class="feature-timer-toggle-label" id="featureTimerToggleLabel">Start</span>
+                </button>
+                <div class="feature-timer-cluster">
+                  <div class="feature-timer-cluster-title">Seconds</div>
+                  <div class="feature-timer-adjust-row">
+                    <button class="feature-control-btn feature-timer-sign utility" id="featureTimerSecondMinusBtn" type="button" aria-label="Subtract one second">−</button>
+                    <button class="feature-control-btn feature-timer-btn-sec" id="featureTimerSecondBtn" type="button" aria-label="Add one second"><span>SEC</span></button>
+                    <button class="feature-control-btn feature-timer-sign utility" id="featureTimerSecondPlusBtn" type="button" aria-label="Add one second">+</button>
+                  </div>
+                </div>
+              </div>
+              <div class="feature-timer-footer">
+                <button class="feature-control-btn feature-timer-btn-reset utility" id="featureTimerResetBtn" type="button" aria-label="Reset timer">Reset</button>
+                <button class="feature-control-btn feature-timer-btn-lock utility" id="featureTimerLockBtn" type="button" aria-label="Lock timer editing">Lock</button>
+              </div>
             </div>
             <div class="feature-timer-meta">
               <span class="feature-meta-chip" id="featureTimerStateChip">Ready</span>
@@ -3489,15 +3693,16 @@
 
           <div class="feature-widget" id="featureDieWidget" data-feature-widget="die">
             <div class="feature-device-shell feature-die-shell" id="featureDieShell" role="button" tabindex="0" aria-label="Roll the die">
-              <img class="feature-device-art" src="feature-widget-assets/die-cutout.webp" alt="Golden galaxy die">
-              <div class="feature-die-pip-layer" id="featureDiePipLayer" aria-hidden="true">
-                <span class="feature-die-pip pip-1"></span>
-                <span class="feature-die-pip pip-2"></span>
-                <span class="feature-die-pip pip-3"></span>
-                <span class="feature-die-pip pip-4"></span>
-                <span class="feature-die-pip pip-5"></span>
-                <span class="feature-die-pip pip-6"></span>
-                <span class="feature-die-pip pip-7"></span>
+              <div class="feature-die-face">
+                <div class="feature-die-pip-layer" id="featureDiePipLayer" aria-hidden="true">
+                  <span class="feature-die-pip pip-1"></span>
+                  <span class="feature-die-pip pip-2"></span>
+                  <span class="feature-die-pip pip-3"></span>
+                  <span class="feature-die-pip pip-4"></span>
+                  <span class="feature-die-pip pip-5"></span>
+                  <span class="feature-die-pip pip-6"></span>
+                  <span class="feature-die-pip pip-7"></span>
+                </div>
               </div>
             </div>
             <div class="feature-die-controls">
@@ -3663,6 +3868,7 @@
     const featureTimerSecondMinusBtn = document.getElementById("featureTimerSecondMinusBtn");
     const featureTimerSecondPlusBtn = document.getElementById("featureTimerSecondPlusBtn");
     const featureTimerToggleBtn = document.getElementById("featureTimerToggleBtn");
+    const featureTimerToggleLabel = document.getElementById("featureTimerToggleLabel");
     const featureTimerResetBtn = document.getElementById("featureTimerResetBtn");
     const featureTimerLockBtn = document.getElementById("featureTimerLockBtn");
     const featureTimerStateChip = document.getElementById("featureTimerStateChip");
@@ -4685,6 +4891,19 @@
       if (featureTimerLockIndicator) {
         featureTimerLockIndicator.textContent = featureTimerState.locked ? "Locked" : "Open";
       }
+      const timerAdjustButtons = [
+        featureTimerMinuteMinusBtn,
+        featureTimerMinuteBtn,
+        featureTimerMinutePlusBtn,
+        featureTimerSecondMinusBtn,
+        featureTimerSecondBtn,
+        featureTimerSecondPlusBtn
+      ];
+      timerAdjustButtons.forEach((button) => {
+        if (button) {
+          button.disabled = featureTimerState.locked;
+        }
+      });
       if (featureTimerPresetChip) {
         featureTimerPresetChip.textContent = `Preset ${formatFeatureTimerTime(featureTimerState.presetMs)}`;
       }
@@ -4697,10 +4916,18 @@
         featureTimerStateChip.textContent = featureTimerState.locked ? `${stateLabel} • Locked` : stateLabel;
       }
       if (featureTimerToggleBtn) {
+        featureTimerToggleBtn.classList.toggle("active", featureTimerState.running);
         featureTimerToggleBtn.setAttribute(
           "aria-label",
           featureTimerState.running ? "Pause timer" : "Start timer"
         );
+      }
+      if (featureTimerToggleLabel) {
+        featureTimerToggleLabel.textContent = featureTimerState.running ? "Pause" : "Start";
+      }
+      if (featureTimerLockBtn) {
+        featureTimerLockBtn.textContent = featureTimerState.locked ? "Unlock" : "Lock";
+        featureTimerLockBtn.classList.toggle("locked", featureTimerState.locked);
       }
       if (message) {
         featureTimerStatus.textContent = message;
