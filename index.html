@@ -839,9 +839,23 @@
       gap: clamp(5px, 1.8cqw, 12px);
     }
 
+    .feature-surface-widget.feature-surface-calculator .feature-device-shell,
+    .feature-surface-widget.feature-surface-timer .feature-device-shell {
+      align-content: space-between;
+    }
+
+    .feature-surface-widget.feature-surface-calculator .feature-display-panel {
+      min-height: clamp(48px, 26cqh, 116px);
+    }
+
     .feature-surface-widget .feature-calc-key {
-      min-height: clamp(26px, 12cqh, 78px);
+      min-height: clamp(24px, 10cqh, 72px);
       border-radius: clamp(12px, 4cqw, 22px);
+    }
+
+    .feature-surface-widget.feature-surface-timer .feature-display-panel {
+      min-height: clamp(60px, 30cqh, 132px);
+      gap: clamp(4px, 1.8cqh, 10px);
     }
 
     .feature-surface-widget .feature-timer-display {
@@ -860,6 +874,11 @@
 
     .feature-surface-widget .feature-timer-board {
       gap: clamp(10px, 3.2cqw, 18px);
+    }
+
+    .feature-surface-widget.feature-surface-timer .feature-timer-board {
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+      align-items: center;
     }
 
     .feature-surface-widget .feature-timer-adjust-row {
@@ -4216,12 +4235,12 @@
     ];
     const FEATURE_SURFACE_DIMENSIONS = Object.freeze({
       calculator: {
-        stageHeightRatio: 1.12,
-        boardWidthRatio: 0.9
+        stageHeightRatio: 0.66,
+        boardWidthRatio: 1.72
       },
       timer: {
-        stageHeightRatio: 1.28,
-        boardWidthRatio: 0.8
+        stageHeightRatio: 0.76,
+        boardWidthRatio: 1.58
       },
       die: {
         stageHeightRatio: 1,
