@@ -806,6 +806,8 @@
       height: 100%;
       container-type: size;
       display: grid;
+      position: relative;
+      isolation: isolate;
     }
 
     .feature-surface-widget .feature-device-shell {
@@ -814,6 +816,44 @@
       max-width: none;
       padding: clamp(10px, 4cqw, 24px);
       border-radius: clamp(18px, 6cqw, 34px);
+    }
+
+    .feature-surface-widget.feature-surface-calculator::before,
+    .feature-surface-widget.feature-surface-timer::before {
+      content: "";
+      position: absolute;
+      inset: -13px;
+      z-index: 0;
+      border-radius: clamp(31px, 8cqw, 47px);
+      padding: 13px;
+      pointer-events: none;
+      background:
+        linear-gradient(135deg, #8a5600 0%, #d99b10 12%, #fff0a3 24%, #c27900 38%, #ffda45 55%, #fff8be 68%, #b77300 82%, #6f3f00 100%);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 219, 0.86),
+        inset 0 -2px 0 rgba(94, 51, 0, 0.38);
+      -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+      mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+      mask-composite: exclude;
+    }
+
+    .feature-surface-widget.feature-surface-calculator .feature-calculator-shell,
+    .feature-surface-widget.feature-surface-timer .feature-timer-shell {
+      padding: 0;
+      border-radius: clamp(22px, 6.2cqw, 40px);
+      overflow: hidden;
+      border: 0;
+      box-shadow: 0 12px 24px rgba(8, 10, 32, 0.22);
+    }
+
+    .feature-surface-widget.feature-surface-calculator .feature-device-art,
+    .feature-surface-widget.feature-surface-timer .feature-device-art {
+      display: none;
     }
 
     .feature-surface-widget .feature-display-panel {
@@ -831,6 +871,11 @@
       font-size: clamp(1.05rem, 8cqw, 3rem);
     }
 
+    .feature-surface-widget .feature-calculator-expression {
+      font-size: clamp(0.5rem, 3.1cqw, 0.94rem);
+      letter-spacing: 0.04em;
+    }
+
     .feature-surface-widget .feature-calculator-memory {
       font-size: clamp(0.52rem, 2.8cqw, 0.82rem);
     }
@@ -844,8 +889,17 @@
       align-content: space-between;
     }
 
+    .feature-surface-widget.feature-surface-calculator .feature-calculator-overlay {
+      inset: 5.4% 4.4% 6.2%;
+      gap: clamp(8px, 2.8cqh, 18px);
+    }
+
     .feature-surface-widget.feature-surface-calculator .feature-display-panel {
-      min-height: clamp(48px, 26cqh, 116px);
+      width: 72%;
+      min-height: clamp(48px, 24cqh, 108px);
+      justify-self: center;
+      padding: clamp(8px, 2.4cqw, 18px);
+      border-radius: clamp(14px, 4.6cqw, 26px);
     }
 
     .feature-surface-widget .feature-calc-key {
@@ -853,9 +907,23 @@
       border-radius: clamp(12px, 4cqw, 22px);
     }
 
+    .feature-surface-widget.feature-surface-calculator .feature-calc-grid {
+      width: 84%;
+      justify-self: center;
+    }
+
+    .feature-surface-widget.feature-surface-timer .feature-timer-overlay {
+      inset: 5.6% 1.4% 6.3%;
+      gap: clamp(8px, 2.6cqh, 16px);
+    }
+
     .feature-surface-widget.feature-surface-timer .feature-display-panel {
+      width: 56%;
       min-height: clamp(60px, 30cqh, 132px);
       gap: clamp(4px, 1.8cqh, 10px);
+      justify-self: center;
+      padding: clamp(8px, 2.4cqw, 16px);
+      border-radius: clamp(14px, 4.8cqw, 26px);
     }
 
     .feature-surface-widget .feature-timer-display {
@@ -877,12 +945,14 @@
     }
 
     .feature-surface-widget.feature-surface-timer .feature-timer-board {
+      width: 100%;
       grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
       align-items: center;
+      justify-self: center;
     }
 
     .feature-surface-widget .feature-timer-adjust-row {
-      gap: clamp(6px, 2cqw, 10px);
+      gap: clamp(4px, 1.4cqw, 8px);
     }
 
     .feature-surface-widget .feature-timer-sign {
@@ -893,16 +963,16 @@
 
     .feature-surface-widget .feature-timer-btn-min,
     .feature-surface-widget .feature-timer-btn-sec {
-      width: clamp(48px, 18cqw, 124px);
-      font-size: clamp(0.62rem, 4.2cqw, 1.2rem);
+      width: clamp(42px, 14cqw, 104px);
+      font-size: clamp(0.56rem, 3.7cqw, 1.02rem);
     }
 
     .feature-surface-widget .feature-timer-btn-toggle {
-      width: clamp(76px, 24cqw, 168px);
+      width: clamp(42px, 14cqw, 104px);
     }
 
     .feature-surface-widget .feature-timer-toggle-star {
-      font-size: clamp(1rem, 7cqw, 2.6rem);
+      font-size: clamp(0.8rem, 4.6cqw, 1.7rem);
     }
 
     .feature-surface-widget .feature-timer-btn-reset,
@@ -912,29 +982,23 @@
       font-size: clamp(0.56rem, 3cqw, 0.96rem);
     }
 
+    .feature-surface-widget.feature-surface-timer .feature-timer-footer {
+      width: 68%;
+      justify-self: center;
+    }
+
+    .feature-surface-widget .feature-die-shell {
+      --die-size: min(
+        calc((100cqw - 8px) / 1.72),
+        calc((100cqh - 8px) / 1.72)
+      );
+      gap: 0;
+      max-width: none;
+    }
+
     .feature-surface-widget .feature-die-face {
-      width: min(100%, clamp(100px, 62cqw, 320px));
-      border-radius: clamp(18px, 6cqw, 28px);
-    }
-
-    .feature-surface-widget .feature-die-controls {
-      gap: clamp(6px, 2cqw, 12px);
-    }
-
-    .feature-surface-widget .feature-die-result {
-      font-size: clamp(0.62rem, 3.8cqw, 1rem);
-    }
-
-    .feature-surface-widget .feature-die-history {
-      gap: clamp(4px, 1.6cqw, 8px);
-      justify-content: center;
-    }
-
-    .feature-surface-widget .feature-die-history-chip {
-      min-width: clamp(20px, 9cqw, 42px);
-      min-height: clamp(20px, 9cqw, 42px);
-      padding: 0 clamp(6px, 2cqw, 12px);
-      font-size: clamp(0.56rem, 3cqw, 0.88rem);
+      width: 100%;
+      height: 100%;
     }
 
     .builder-actions,
@@ -1015,11 +1079,11 @@
     .size-popup {
       position: absolute;
       z-index: 8;
-      display: flex;
-      align-items: center;
+      display: grid;
       gap: 10px;
-      padding: 12px 14px;
-      border-radius: 22px;
+      min-width: 336px;
+      padding: 14px 16px;
+      border-radius: 26px;
       background: linear-gradient(180deg, rgba(255, 252, 235, 0.98), rgba(255, 241, 206, 0.95));
       border: 1px solid rgba(255, 238, 171, 0.96);
       box-shadow:
@@ -1029,26 +1093,146 @@
       backdrop-filter: blur(14px) saturate(145%);
     }
 
+    .size-popup-section {
+      display: grid;
+      gap: 8px;
+    }
+
+    .size-popup-heading {
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #8c5808;
+      padding-left: 4px;
+    }
+
+    .size-popup-row {
+      display: flex;
+      align-items: stretch;
+      gap: 10px;
+      flex-wrap: nowrap;
+    }
+
+    .size-popup.eraser-popup .size-popup-styles {
+      display: none;
+    }
+
+    .size-popup.eraser-popup {
+      min-width: auto;
+    }
+
+    .stroke-style-btn,
     .size-popup-btn {
-      width: 46px;
-      height: 46px;
       padding: 0;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.44);
       border: 1px solid rgba(255, 224, 141, 0.84);
+      background: rgba(255, 255, 255, 0.44);
       box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.72),
         0 8px 16px rgba(73, 49, 0, 0.12);
     }
 
+    .stroke-style-btn {
+      width: 60px;
+      min-height: 68px;
+      border-radius: 18px;
+      flex-direction: column;
+      gap: 7px;
+      padding-block: 9px 8px;
+    }
+
+    .size-popup-btn {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      flex: 0 0 46px;
+    }
+
+    .stroke-style-btn.active,
     .size-popup-btn.active {
       box-shadow:
         0 0 0 3px rgba(255, 208, 53, 0.95),
         inset 0 1px 0 rgba(255, 255, 255, 0.78),
         0 8px 16px rgba(73, 49, 0, 0.16);
+    }
+
+    .stroke-style-label {
+      font-size: 0.56rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #7d4e03;
+      line-height: 1;
+    }
+
+    .stroke-style-sample {
+      position: relative;
+      display: block;
+      width: 32px;
+      height: 20px;
+    }
+
+    .stroke-style-sample::before,
+    .stroke-style-sample::after {
+      content: "";
+      position: absolute;
+      inset: 50% auto auto 50%;
+      transform: translate(-50%, -50%);
+      background: #101010;
+    }
+
+    .stroke-style-sample.brush::before {
+      width: 28px;
+      height: 9px;
+      border-radius: 999px;
+      box-shadow: 0 0 0 3px rgba(16, 16, 16, 0.12);
+    }
+
+    .stroke-style-sample.pencil::before {
+      width: 26px;
+      height: 4px;
+      border-radius: 999px;
+      opacity: 0.8;
+      box-shadow:
+        0 -2px 0 rgba(16, 16, 16, 0.32),
+        0 2px 0 rgba(16, 16, 16, 0.22);
+    }
+
+    .stroke-style-sample.charcoal::before {
+      width: 31px;
+      height: 11px;
+      border-radius: 999px;
+      opacity: 0.68;
+      filter: blur(0.5px);
+      box-shadow:
+        -4px 1px 0 rgba(16, 16, 16, 0.16),
+        4px -1px 0 rgba(16, 16, 16, 0.16);
+    }
+
+    .stroke-style-sample.calligraphy::before {
+      width: 28px;
+      height: 9px;
+      border-radius: 4px;
+      transform: translate(-50%, -50%) rotate(-19deg);
+    }
+
+    .stroke-style-sample.calligraphy::after {
+      width: 17px;
+      height: 4px;
+      border-radius: 3px;
+      opacity: 0.5;
+      transform: translate(-50%, -50%) rotate(-19deg) translateY(5px);
+    }
+
+    .stroke-style-sample.airbrush::before {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 50% 50%, rgba(16, 16, 16, 0.72) 0 24%, rgba(16, 16, 16, 0.2) 48%, rgba(16, 16, 16, 0) 76%);
     }
 
     .size-popup-dot {
@@ -1058,14 +1242,19 @@
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
     }
 
+    .size-popup-dot.tiny {
+      width: 7px;
+      height: 7px;
+    }
+
     .size-popup-dot.small {
-      width: 10px;
-      height: 10px;
+      width: 11px;
+      height: 11px;
     }
 
     .size-popup-dot.medium {
-      width: 15px;
-      height: 15px;
+      width: 16px;
+      height: 16px;
     }
 
     .size-popup-dot.large {
@@ -1074,8 +1263,8 @@
     }
 
     .size-popup-dot.xlarge {
-      width: 28px;
-      height: 28px;
+      width: 29px;
+      height: 29px;
     }
 
     .board-sticker-row .icon-bank.compact {
@@ -1913,6 +2102,22 @@
       display: none;
     }
 
+    .feature-calculator-art,
+    .feature-timer-art {
+      display: block;
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      object-position: center center;
+      pointer-events: none;
+      z-index: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-user-drag: none;
+    }
+
     .feature-display-panel {
       position: relative;
       padding: 20px 24px;
@@ -2055,16 +2260,69 @@
     }
 
     .feature-calculator-shell {
+      position: relative;
+      aspect-ratio: 1438 / 934;
       max-width: 940px;
+      display: block;
+      gap: 0;
+      padding: 0;
+      box-sizing: border-box;
+      border: 0;
+      background: transparent;
+      box-shadow: 0 28px 48px rgba(8, 10, 32, 0.38);
+      border-radius: clamp(34px, 4.8vw, 54px);
+      overflow: hidden;
+    }
+
+    .feature-calculator-shell::before {
+      content: none;
+    }
+
+    .feature-calculator-shell::after {
+      content: none;
+    }
+
+    .feature-calculator-overlay {
+      position: absolute;
+      inset: 5.6% 4.3% 6.4%;
       display: grid;
-      gap: 18px;
+      grid-template-rows: auto 1fr;
+      gap: clamp(12px, 2vw, 20px);
+      z-index: 1;
     }
 
     .feature-calculator-display-panel {
+      width: 72%;
       min-height: clamp(106px, 15vw, 144px);
-      display: flex;
-      align-items: flex-end;
-      justify-content: flex-end;
+      display: grid;
+      align-content: end;
+      gap: 6px;
+      justify-self: center;
+      padding: clamp(18px, 2.4vw, 24px) clamp(22px, 3vw, 32px);
+      background:
+        linear-gradient(180deg, rgba(255, 253, 232, 0.94), rgba(247, 239, 194, 0.9));
+      box-shadow:
+        inset 0 2px 0 rgba(255, 255, 255, 0.78),
+        inset 0 -4px 0 rgba(199, 165, 88, 0.28),
+        0 10px 22px rgba(7, 9, 28, 0.12);
+    }
+
+    .feature-calculator-expression {
+      width: 100%;
+      min-height: 1.2em;
+      color: rgba(28, 44, 70, 0.72);
+      font-family: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-variant-numeric: tabular-nums;
+      font-size: clamp(0.88rem, 1.6vw, 1.12rem);
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-align: right;
+      pointer-events: none;
+      opacity: 0.92;
     }
 
     .feature-calculator-display {
@@ -2091,10 +2349,13 @@
     }
 
     .feature-calc-grid {
+      width: 84%;
       display: grid;
       grid-template-columns: repeat(5, minmax(0, 1fr));
       gap: 12px;
       align-items: stretch;
+      justify-self: center;
+      align-self: end;
     }
 
     .feature-calc-key {
@@ -2119,17 +2380,51 @@
     }
 
     .feature-timer-shell {
+      position: relative;
+      aspect-ratio: 1438 / 934;
       max-width: 940px;
+      display: block;
+      gap: 0;
+      padding: 0;
+      box-sizing: border-box;
+      border: 0;
+      background: transparent;
+      box-shadow: 0 28px 48px rgba(8, 10, 32, 0.38);
+      border-radius: clamp(34px, 4.8vw, 54px);
+      overflow: hidden;
+    }
+
+    .feature-timer-shell::before {
+      content: none;
+    }
+
+    .feature-timer-shell::after {
+      content: none;
+    }
+
+    .feature-timer-overlay {
+      position: absolute;
+      inset: 5.8% 3.2% 6.6%;
       display: grid;
-      gap: 18px;
+      grid-template-rows: auto 1fr auto;
+      gap: clamp(12px, 2vw, 20px);
+      z-index: 1;
     }
 
     .feature-timer-display-panel {
+      width: 54%;
       min-height: clamp(146px, 18vw, 194px);
-      padding-top: 18px;
+      justify-self: center;
+      padding: clamp(16px, 2.2vw, 22px) clamp(22px, 3vw, 32px);
       display: grid;
       align-content: center;
       gap: 10px;
+      background:
+        linear-gradient(180deg, rgba(255, 253, 232, 0.94), rgba(247, 239, 194, 0.9));
+      box-shadow:
+        inset 0 2px 0 rgba(255, 255, 255, 0.78),
+        inset 0 -4px 0 rgba(199, 165, 88, 0.28),
+        0 10px 22px rgba(7, 9, 28, 0.12);
     }
 
     .feature-timer-labels {
@@ -2151,37 +2446,31 @@
     }
 
     .feature-timer-lock-indicator {
-      position: absolute;
-      top: 16px;
-      right: 18px;
-      min-width: 72px;
-      min-height: 38px;
-      padding: 0 12px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 999px;
-      background: rgba(27, 41, 64, 0.08);
-      color: rgba(32, 48, 74, 0.84);
-      font-size: clamp(0.78rem, 1.2vw, 0.96rem);
-      font-weight: 900;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      pointer-events: none;
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+      display: none;
     }
 
     .feature-timer-board {
+      width: 100%;
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-      gap: 18px;
+      gap: 8px;
       align-items: center;
+      justify-self: center;
+      align-self: end;
     }
 
     .feature-timer-cluster {
       display: grid;
       gap: 10px;
       justify-items: center;
+    }
+
+    .feature-timer-board > .feature-timer-cluster:first-child {
+      justify-self: start;
+    }
+
+    .feature-timer-board > .feature-timer-cluster:last-child {
+      justify-self: end;
     }
 
     .feature-timer-cluster-title {
@@ -2197,7 +2486,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
+      gap: 6px;
     }
 
     .feature-timer-sign,
@@ -2217,13 +2506,13 @@
 
     .feature-timer-btn-min,
     .feature-timer-btn-sec {
-      width: clamp(92px, 15vw, 124px);
+      width: clamp(82px, 13vw, 108px);
       aspect-ratio: 1 / 1;
       border-radius: 50%;
       display: grid;
       place-items: center;
       padding: 0;
-      font-size: clamp(1rem, 2vw, 1.45rem);
+      font-size: clamp(0.9rem, 1.75vw, 1.28rem);
     }
 
     .feature-timer-btn-min span,
@@ -2233,32 +2522,34 @@
     }
 
     .feature-timer-btn-toggle {
-      width: clamp(126px, 21vw, 170px);
+      width: clamp(82px, 13vw, 108px);
       aspect-ratio: 1 / 1;
       border-radius: 50%;
       display: flex;
       flex-direction: column;
       justify-content: center;
-      gap: 8px;
+      gap: 4px;
       padding: 0;
     }
 
     .feature-timer-toggle-star {
-      font-size: clamp(2rem, 4vw, 2.8rem);
+      font-size: clamp(1.2rem, 2.4vw, 1.8rem);
       line-height: 1;
     }
 
     .feature-timer-toggle-label {
-      font-size: clamp(0.82rem, 1.3vw, 1rem);
+      font-size: clamp(0.72rem, 1.05vw, 0.9rem);
       letter-spacing: 0.12em;
       text-transform: uppercase;
     }
 
     .feature-timer-footer {
+      width: 66%;
       display: flex;
       flex-wrap: wrap;
       gap: 12px;
       justify-content: space-between;
+      justify-self: center;
     }
 
     .feature-timer-btn-reset,
@@ -2302,37 +2593,147 @@
     }
 
     .feature-die-shell {
-      max-width: 430px;
+      --die-size: min(22vw, 22vh, 340px);
+      max-width: 620px;
       display: grid;
       justify-items: center;
-      gap: 18px;
+      gap: 0;
       cursor: pointer;
-    }
-
-    .feature-die-shell.rolling .feature-die-face {
-      animation: die-roll-spin 780ms cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     .feature-die-face {
       position: relative;
-      width: min(100%, 320px);
-      aspect-ratio: 1 / 1;
-      border-radius: 28px;
-      background:
-        radial-gradient(circle at 20% 18%, rgba(255, 239, 164, 0.2), transparent 16%),
-        radial-gradient(circle at 80% 24%, rgba(131, 213, 255, 0.18), transparent 18%),
-        linear-gradient(145deg, rgba(20, 20, 60, 0.96), rgba(48, 20, 82, 0.94) 48%, rgba(16, 28, 64, 0.96));
-      border: 2px solid rgba(255, 225, 134, 0.92);
-      box-shadow:
-        0 20px 34px rgba(8, 10, 32, 0.28),
-        inset 0 0 0 1px rgba(255, 246, 212, 0.22);
-      transform: rotate(-10deg);
+      width: min(100%, calc(var(--die-size) * 1.72));
+      height: calc(var(--die-size) * 1.72);
+      padding: 0;
+      border: 0;
+      background: transparent;
+      box-shadow: none;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      perspective: 1700px;
       transition: transform 0.18s ease;
     }
 
     .feature-die-shell:hover .feature-die-face,
     .feature-die-shell:focus-within .feature-die-face {
-      transform: rotate(-8deg) scale(1.01);
+      transform: scale(1.012);
+    }
+
+    .feature-die-shell.rolling .feature-die-face {
+      cursor: wait;
+    }
+
+    .feature-die-scene {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: grid;
+      place-items: center;
+      transform-style: preserve-3d;
+    }
+
+    .feature-die-scene::before {
+      content: "";
+      position: absolute;
+      width: calc(var(--die-size) * 1.06);
+      height: calc(var(--die-size) * 0.26);
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(22, 16, 44, 0.42) 0%, rgba(22, 16, 44, 0.12) 58%, transparent 76%);
+      filter: blur(14px);
+      transform: translateY(calc(var(--die-size) * 0.74)) scale(1.08);
+      pointer-events: none;
+    }
+
+    .feature-die-cube {
+      position: absolute;
+      width: var(--die-size);
+      height: var(--die-size);
+      transform-style: preserve-3d;
+      will-change: transform;
+      transform: rotateX(-32deg) rotateY(38deg);
+    }
+
+    .feature-die-face-panel {
+      position: absolute;
+      inset: 0;
+      display: block;
+      border-radius: clamp(22px, 5vw, 32px);
+      overflow: hidden;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      background:
+        radial-gradient(circle at 20% 18%, rgba(255, 239, 164, 0.22), transparent 16%),
+        radial-gradient(circle at 80% 24%, rgba(131, 213, 255, 0.18), transparent 18%),
+        linear-gradient(145deg, rgba(20, 20, 60, 0.98), rgba(48, 20, 82, 0.96) 48%, rgba(16, 28, 64, 0.98));
+      border: 2px solid rgba(255, 225, 134, 0.92);
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 246, 212, 0.22),
+        0 18px 26px rgba(8, 10, 32, 0.16);
+      transition:
+        filter 0.26s ease,
+        background 0.26s ease,
+        border-color 0.26s ease,
+        box-shadow 0.26s ease;
+    }
+
+    .feature-die-face-panel::before {
+      content: "";
+      position: absolute;
+      inset: 10px;
+      border-radius: inherit;
+      border: 1px solid rgba(255, 233, 168, 0.42);
+      background:
+        radial-gradient(circle at 22% 24%, rgba(255, 255, 255, 0.16) 0 2px, transparent 3px),
+        radial-gradient(circle at 72% 16%, rgba(255, 238, 174, 0.22) 0 2px, transparent 3px),
+        radial-gradient(circle at 68% 74%, rgba(140, 220, 255, 0.16) 0 2px, transparent 3px);
+      pointer-events: none;
+    }
+
+    .feature-die-face-panel.result-face {
+      background:
+        radial-gradient(circle at 22% 18%, rgba(255, 253, 211, 0.56), transparent 22%),
+        radial-gradient(circle at 78% 20%, rgba(255, 234, 149, 0.34), transparent 24%),
+        radial-gradient(circle at 50% 78%, rgba(255, 207, 76, 0.2), transparent 28%),
+        linear-gradient(145deg, rgba(255, 232, 108, 0.98), rgba(244, 189, 36, 0.98) 46%, rgba(214, 141, 9, 0.98));
+      border-color: rgba(255, 248, 206, 0.98);
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 236, 0.52),
+        inset 0 0 22px rgba(255, 232, 126, 0.28),
+        0 0 0 2px rgba(255, 212, 79, 0.42),
+        0 0 30px rgba(255, 215, 92, 0.34),
+        0 18px 26px rgba(8, 10, 32, 0.18);
+      filter: brightness(1.08) saturate(1.18);
+    }
+
+    .feature-die-face-panel.result-face::before {
+      border-color: rgba(168, 98, 0, 0.18);
+      background:
+        radial-gradient(circle at 22% 24%, rgba(255, 255, 255, 0.38) 0 2px, transparent 3px),
+        radial-gradient(circle at 72% 16%, rgba(255, 243, 196, 0.32) 0 2px, transparent 3px),
+        radial-gradient(circle at 68% 74%, rgba(255, 213, 99, 0.24) 0 2px, transparent 3px);
+    }
+
+    .feature-die-face-panel.face-front { transform: translateZ(calc(var(--die-size) / 2)); }
+    .feature-die-face-panel.face-back { transform: rotateY(180deg) translateZ(calc(var(--die-size) / 2)); }
+    .feature-die-face-panel.face-right { transform: rotateY(90deg) translateZ(calc(var(--die-size) / 2)); }
+    .feature-die-face-panel.face-left { transform: rotateY(-90deg) translateZ(calc(var(--die-size) / 2)); }
+    .feature-die-face-panel.face-top { transform: rotateX(90deg) translateZ(calc(var(--die-size) / 2)); }
+    .feature-die-face-panel.face-bottom { transform: rotateX(-90deg) translateZ(calc(var(--die-size) / 2)); }
+
+    .feature-die-face-panel.face-top {
+      filter: brightness(1.14) saturate(1.05);
+    }
+
+    .feature-die-face-panel.face-right,
+    .feature-die-face-panel.face-left {
+      filter: brightness(0.9) saturate(0.96);
+    }
+
+    .feature-die-face-panel.face-back,
+    .feature-die-face-panel.face-bottom {
+      filter: brightness(0.76) saturate(0.9);
     }
 
     .feature-die-pip-layer {
@@ -2353,12 +2754,21 @@
         0 10px 18px rgba(90, 58, 0, 0.18);
       opacity: 0;
       transform: scale(0.82);
-      transition: opacity 0.16s ease, transform 0.16s ease;
+      transition: opacity 0.18s ease, transform 0.18s ease;
     }
 
     .feature-die-pip.visible {
       opacity: 1;
       transform: scale(1);
+    }
+
+    .feature-die-face-panel.result-face .feature-die-pip.visible {
+      background:
+        radial-gradient(circle at 38% 32%, rgba(255, 255, 255, 0.98), rgba(255, 245, 180, 0.98) 32%, rgba(255, 212, 61, 0.98) 72%, rgba(216, 129, 0, 0.96));
+      box-shadow:
+        0 0 0 2px rgba(255, 249, 214, 0.92),
+        0 0 20px rgba(255, 214, 95, 0.48),
+        0 10px 18px rgba(90, 58, 0, 0.22);
     }
 
     .feature-die-pip.pip-1 { left: 43%; top: 43%; }
@@ -2411,23 +2821,6 @@
         0 8px 14px rgba(120, 79, 0, 0.1),
         inset 0 1px 0 rgba(255, 255, 255, 0.84),
         inset 0 -1px 0 rgba(201, 156, 40, 0.16);
-    }
-
-    @keyframes die-roll-spin {
-      0% {
-        transform: rotate(0deg) scale(0.94);
-        filter: drop-shadow(0 18px 26px rgba(90, 58, 0, 0.18));
-      }
-      38% {
-        transform: rotate(-18deg) scale(1.02);
-      }
-      68% {
-        transform: rotate(22deg) scale(0.98);
-      }
-      100% {
-        transform: rotate(0deg) scale(1);
-        filter: drop-shadow(0 24px 34px rgba(90, 58, 0, 0.2));
-      }
     }
 
     .activity-modal-card {
@@ -3732,19 +4125,52 @@
               </div>
             </div>
 
-            <div class="size-popup hidden" id="toolSizePopup" role="group" aria-label="Tool size options" aria-hidden="true">
-              <button class="size-popup-btn" type="button" data-popup-size="small" aria-label="Small tool size">
-                <span class="size-popup-dot small"></span>
-              </button>
-              <button class="size-popup-btn" type="button" data-popup-size="medium" aria-label="Medium tool size">
-                <span class="size-popup-dot medium"></span>
-              </button>
-              <button class="size-popup-btn" type="button" data-popup-size="large" aria-label="Large tool size">
-                <span class="size-popup-dot large"></span>
-              </button>
-              <button class="size-popup-btn" type="button" data-popup-size="xlarge" aria-label="Extra large tool size">
-                <span class="size-popup-dot xlarge"></span>
-              </button>
+            <div class="size-popup hidden" id="toolSizePopup" role="group" aria-label="Pen style and size options" aria-hidden="true">
+              <div class="size-popup-section size-popup-styles">
+                <span class="size-popup-heading">Stroke</span>
+                <div class="size-popup-row">
+                  <button class="stroke-style-btn" type="button" data-popup-style="brush" aria-label="Brush-like pen">
+                    <span class="stroke-style-sample brush" aria-hidden="true"></span>
+                    <span class="stroke-style-label">Brush</span>
+                  </button>
+                  <button class="stroke-style-btn" type="button" data-popup-style="pencil" aria-label="Pencil-like pen">
+                    <span class="stroke-style-sample pencil" aria-hidden="true"></span>
+                    <span class="stroke-style-label">Pencil</span>
+                  </button>
+                  <button class="stroke-style-btn" type="button" data-popup-style="charcoal" aria-label="Charcoal-like pen">
+                    <span class="stroke-style-sample charcoal" aria-hidden="true"></span>
+                    <span class="stroke-style-label">Charcoal</span>
+                  </button>
+                  <button class="stroke-style-btn" type="button" data-popup-style="calligraphy" aria-label="Calligraphy-like pen">
+                    <span class="stroke-style-sample calligraphy" aria-hidden="true"></span>
+                    <span class="stroke-style-label">Script</span>
+                  </button>
+                  <button class="stroke-style-btn" type="button" data-popup-style="airbrush" aria-label="Airbrush-like pen">
+                    <span class="stroke-style-sample airbrush" aria-hidden="true"></span>
+                    <span class="stroke-style-label">Air</span>
+                  </button>
+                </div>
+              </div>
+              <div class="size-popup-section">
+                <span class="size-popup-heading">Size</span>
+                <div class="size-popup-row">
+                  <button class="size-popup-btn" type="button" data-popup-size="tiny" aria-label="Tiny tool size">
+                    <span class="size-popup-dot tiny"></span>
+                  </button>
+                  <button class="size-popup-btn" type="button" data-popup-size="small" aria-label="Small tool size">
+                    <span class="size-popup-dot small"></span>
+                  </button>
+                  <button class="size-popup-btn" type="button" data-popup-size="medium" aria-label="Medium tool size">
+                    <span class="size-popup-dot medium"></span>
+                  </button>
+                  <button class="size-popup-btn" type="button" data-popup-size="large" aria-label="Large tool size">
+                    <span class="size-popup-dot large"></span>
+                  </button>
+                  <button class="size-popup-btn" type="button" data-popup-size="xlarge" aria-label="Extra large tool size">
+                    <span class="size-popup-dot xlarge"></span>
+                  </button>
+                </div>
+              </div>
             </div>
 
             <div class="board-sticker-row">
@@ -3879,11 +4305,14 @@
         <div class="feature-tool-stage">
           <div class="feature-widget active" id="featureCalculatorWidget" data-feature-widget="calculator">
             <div class="feature-device-shell feature-calculator-shell">
-              <div class="feature-display-panel feature-calculator-display-panel">
-                <div class="feature-calculator-memory" id="featureCalculatorMemoryBadge"></div>
-                <div class="feature-display feature-calculator-display" id="featureCalculatorDisplay">0</div>
-              </div>
-              <div class="feature-calc-grid">
+              <img class="feature-device-art feature-calculator-art" src="feature-widget-assets/fx-golden-frame.png" alt="" aria-hidden="true" draggable="false">
+              <div class="feature-calculator-overlay">
+                <div class="feature-display-panel feature-calculator-display-panel">
+                  <div class="feature-calculator-memory" id="featureCalculatorMemoryBadge"></div>
+                  <div class="feature-calculator-expression" id="featureCalculatorExpression"></div>
+                  <div class="feature-display feature-calculator-display" id="featureCalculatorDisplay">0</div>
+                </div>
+                <div class="feature-calc-grid">
                 <button class="feature-control-btn feature-calc-key utility small-label" type="button" data-calc-key="mrc" aria-label="Memory recall and clear">MRC</button>
                 <button class="feature-control-btn feature-calc-key utility small-label" type="button" data-calc-key="m-" aria-label="Subtract from memory">M-</button>
                 <button class="feature-control-btn feature-calc-key utility small-label" type="button" data-calc-key="m+" aria-label="Add to memory">M+</button>
@@ -3910,6 +4339,7 @@
 
                 <button class="feature-control-btn feature-calc-key zero" type="button" data-calc-key="0" aria-label="Zero">0</button>
                 <button class="feature-control-btn feature-calc-key" type="button" data-calc-key="." aria-label="Decimal point">.</button>
+                </div>
               </div>
             </div>
             <p class="feature-widget-status" id="featureCalculatorStatus">Calculator ready.</p>
@@ -3917,39 +4347,42 @@
 
           <div class="feature-widget" id="featureTimerWidget" data-feature-widget="timer">
             <div class="feature-device-shell feature-timer-shell">
-              <div class="feature-display-panel feature-timer-display-panel">
-                <div class="feature-timer-lock-indicator" id="featureTimerLockIndicator">Open</div>
-                <div class="feature-timer-labels">
-                  <span>MIN</span>
-                  <span>SEC</span>
+              <img class="feature-device-art feature-timer-art" src="feature-widget-assets/fx-golden-frame.png" alt="" aria-hidden="true" draggable="false">
+              <div class="feature-timer-overlay">
+                <div class="feature-display-panel feature-timer-display-panel">
+                  <div class="feature-timer-lock-indicator" id="featureTimerLockIndicator">Open</div>
+                  <div class="feature-timer-labels">
+                    <span>MIN</span>
+                    <span>SEC</span>
+                  </div>
+                  <div class="feature-display feature-timer-display" id="featureTimerDisplay">25:00</div>
                 </div>
-                <div class="feature-display feature-timer-display" id="featureTimerDisplay">25:00</div>
-              </div>
-              <div class="feature-timer-board">
-                <div class="feature-timer-cluster">
-                  <div class="feature-timer-cluster-title">Minutes</div>
-                  <div class="feature-timer-adjust-row">
-                    <button class="feature-control-btn feature-timer-sign utility" id="featureTimerMinuteMinusBtn" type="button" aria-label="Subtract one minute">−</button>
-                    <button class="feature-control-btn feature-timer-btn-min" id="featureTimerMinuteBtn" type="button" aria-label="Add one minute"><span>MIN</span></button>
-                    <button class="feature-control-btn feature-timer-sign utility" id="featureTimerMinutePlusBtn" type="button" aria-label="Add one minute">+</button>
+                <div class="feature-timer-board">
+                  <div class="feature-timer-cluster">
+                    <div class="feature-timer-cluster-title">Minutes</div>
+                    <div class="feature-timer-adjust-row">
+                      <button class="feature-control-btn feature-timer-sign utility" id="featureTimerMinuteMinusBtn" type="button" aria-label="Subtract one minute">−</button>
+                      <button class="feature-control-btn feature-timer-btn-min" id="featureTimerMinuteBtn" type="button" aria-label="Add one minute"><span>MIN</span></button>
+                      <button class="feature-control-btn feature-timer-sign utility" id="featureTimerMinutePlusBtn" type="button" aria-label="Add one minute">+</button>
+                    </div>
+                  </div>
+                  <button class="feature-control-btn feature-timer-btn-toggle primary" id="featureTimerToggleBtn" type="button" aria-label="Start or pause timer">
+                    <span class="feature-timer-toggle-star">★</span>
+                    <span class="feature-timer-toggle-label" id="featureTimerToggleLabel">Start</span>
+                  </button>
+                  <div class="feature-timer-cluster">
+                    <div class="feature-timer-cluster-title">Seconds</div>
+                    <div class="feature-timer-adjust-row">
+                      <button class="feature-control-btn feature-timer-sign utility" id="featureTimerSecondMinusBtn" type="button" aria-label="Subtract one second">−</button>
+                      <button class="feature-control-btn feature-timer-btn-sec" id="featureTimerSecondBtn" type="button" aria-label="Add one second"><span>SEC</span></button>
+                      <button class="feature-control-btn feature-timer-sign utility" id="featureTimerSecondPlusBtn" type="button" aria-label="Add one second">+</button>
+                    </div>
                   </div>
                 </div>
-                <button class="feature-control-btn feature-timer-btn-toggle primary" id="featureTimerToggleBtn" type="button" aria-label="Start or pause timer">
-                  <span class="feature-timer-toggle-star">★</span>
-                  <span class="feature-timer-toggle-label" id="featureTimerToggleLabel">Start</span>
-                </button>
-                <div class="feature-timer-cluster">
-                  <div class="feature-timer-cluster-title">Seconds</div>
-                  <div class="feature-timer-adjust-row">
-                    <button class="feature-control-btn feature-timer-sign utility" id="featureTimerSecondMinusBtn" type="button" aria-label="Subtract one second">−</button>
-                    <button class="feature-control-btn feature-timer-btn-sec" id="featureTimerSecondBtn" type="button" aria-label="Add one second"><span>SEC</span></button>
-                    <button class="feature-control-btn feature-timer-sign utility" id="featureTimerSecondPlusBtn" type="button" aria-label="Add one second">+</button>
-                  </div>
+                <div class="feature-timer-footer">
+                  <button class="feature-control-btn feature-timer-btn-reset utility" id="featureTimerResetBtn" type="button" aria-label="Reset timer">Reset</button>
+                  <button class="feature-control-btn feature-timer-btn-lock utility" id="featureTimerLockBtn" type="button" aria-label="Lock timer editing">Lock</button>
                 </div>
-              </div>
-              <div class="feature-timer-footer">
-                <button class="feature-control-btn feature-timer-btn-reset utility" id="featureTimerResetBtn" type="button" aria-label="Reset timer">Reset</button>
-                <button class="feature-control-btn feature-timer-btn-lock utility" id="featureTimerLockBtn" type="button" aria-label="Lock timer editing">Lock</button>
               </div>
             </div>
             <div class="feature-timer-meta">
@@ -4003,11 +4436,15 @@
       sizePopupTool: null,
       selectedColor: "#ff69b4",
       activeInkColors: ["#ff69b4"],
+      penStrokeStyle: "brush",
       penSize: "medium",
       eraserSize: "medium",
       eraserOn: false,
       drawing: false,
       lastPoint: null,
+      lastRawPoint: null,
+      lastStrokeWidth: 0,
+      currentStrokePointerType: "mouse",
       boardVisible: false,
       pointerSession: null,
       spellTrayExpanded: false,
@@ -4074,6 +4511,7 @@
     const clearBoardBtn = document.getElementById("clearBoardBtn");
     const boardModeButtons = Array.from(document.querySelectorAll("[data-board-mode]"));
     const toolSizePopup = document.getElementById("toolSizePopup");
+    const popupStyleButtons = Array.from(toolSizePopup.querySelectorAll("[data-popup-style]"));
     const popupSizeButtons = Array.from(toolSizePopup.querySelectorAll("[data-popup-size]"));
     const boardTop = document.querySelector(".board-top");
     const boardBackgroundControl = document.getElementById("boardBackgroundControl");
@@ -4129,6 +4567,7 @@
     const closeFeatureToolsBtn = document.getElementById("closeFeatureToolsBtn");
     const featureWidgets = Array.from(document.querySelectorAll("[data-feature-widget]"));
     const featureCalculatorDisplay = document.getElementById("featureCalculatorDisplay");
+    const featureCalculatorExpression = document.getElementById("featureCalculatorExpression");
     const featureCalculatorMemoryBadge = document.getElementById("featureCalculatorMemoryBadge");
     const featureCalculatorStatus = document.getElementById("featureCalculatorStatus");
     const calculatorHotspotButtons = Array.from(document.querySelectorAll("[data-calc-key]"));
@@ -4235,12 +4674,12 @@
     ];
     const FEATURE_SURFACE_DIMENSIONS = Object.freeze({
       calculator: {
-        stageHeightRatio: 0.66,
-        boardWidthRatio: 1.72
+        stageHeightRatio: 934 / 1438,
+        boardWidthRatio: 1438 / 934
       },
       timer: {
-        stageHeightRatio: 0.76,
-        boardWidthRatio: 1.58
+        stageHeightRatio: 934 / 1438,
+        boardWidthRatio: 1438 / 934
       },
       die: {
         stageHeightRatio: 1,
@@ -4261,17 +4700,40 @@
       5: [2, 4, 1, 5, 3],
       6: [2, 6, 4, 5, 7, 3]
     });
+    const FEATURE_DIE_LAYOUTS = Object.freeze({
+      1: { top: 1, bottom: 6, front: 2, back: 5, right: 3, left: 4 },
+      2: { top: 2, bottom: 5, front: 6, back: 1, right: 3, left: 4 },
+      3: { top: 3, bottom: 4, front: 2, back: 5, right: 6, left: 1 },
+      4: { top: 4, bottom: 3, front: 2, back: 5, right: 1, left: 6 },
+      5: { top: 5, bottom: 2, front: 1, back: 6, right: 3, left: 4 },
+      6: { top: 6, bottom: 1, front: 5, back: 2, right: 3, left: 4 }
+    });
+    const PEN_STYLE_DEFS = Object.freeze([
+      { id: "brush", label: "Brush", widthScale: 1.1 },
+      { id: "pencil", label: "Pencil", widthScale: 0.72 },
+      { id: "charcoal", label: "Charcoal", widthScale: 1.28 },
+      { id: "calligraphy", label: "Calligraphy", widthScale: 1.06 },
+      { id: "airbrush", label: "Airbrush", widthScale: 1.38 }
+    ]);
+    const PEN_STYLE_MAP = Object.freeze(
+      PEN_STYLE_DEFS.reduce((map, style) => {
+        map[style.id] = style;
+        return map;
+      }, {})
+    );
     const PEN_STROKE_WIDTHS = {
+      tiny: 2.5,
       small: 4,
-      medium: 8,
+      medium: 7.5,
       large: 16,
-      xlarge: 26
+      xlarge: 28
     };
     const ERASER_STROKE_WIDTHS = {
-      small: 14,
-      medium: 28,
-      large: 44,
-      xlarge: 64
+      tiny: 10,
+      small: 15,
+      medium: 24,
+      large: 40,
+      xlarge: 60
     };
     const LETTER_VARIANTS = {
       classic: {
@@ -4316,6 +4778,7 @@
     let embeddedExportAssetsPromise = null;
     const calculatorState = {
       display: "0",
+      expression: "",
       storedValue: null,
       operator: null,
       waitingForNextEntry: false,
@@ -4348,6 +4811,7 @@
       send: false,
       drive: false
     };
+    let featureDieRollSuppressUntil = 0;
     let googleDriveTokenClient = null;
     let googleDriveTokenClientId = "";
     let googleDriveAccessToken = "";
@@ -5091,8 +5555,12 @@
       return surface === "board" ? state.boardItems : state.placedItems;
     }
 
-    function findFeatureSurfaceItem(surface = "stage") {
-      return featureSurfaceItems(surface).find(isFeatureItem) || null;
+    function findFeatureSurfaceItem(surface = "stage", toolId = "") {
+      const items = featureSurfaceItems(surface).filter(isFeatureItem);
+      if (!toolId) {
+        return items[0] || null;
+      }
+      return items.find((item) => item.toolId === toolId) || null;
     }
 
     function allFeatureSurfaceWidgetRoots(toolId = "") {
@@ -5152,11 +5620,7 @@
       const nextIdKey = normalizedSurface === "board" ? "nextBoardItemId" : "nextItemId";
       const nextZIndexKey = normalizedSurface === "board" ? "nextBoardZIndex" : "nextZIndex";
       const featureItems = featureSurfaceItems(normalizedSurface).filter(isFeatureItem);
-      const primaryFeatureItem = featureItems[0] || null;
-
-      if (featureItems.length > 1) {
-        state[collectionKey] = state[collectionKey].filter((candidate, index) => !isFeatureItem(candidate) || candidate === featureItems[0]);
-      }
+      const existingToolItem = findFeatureSurfaceItem(normalizedSurface, tool.id);
 
       closeFeaturePanels();
       closeFeatureToolsModal();
@@ -5173,9 +5637,8 @@
       state.selectedFeatureTool = tool.id;
       state.featureToolSurface = surfaceKey;
 
-      let item = primaryFeatureItem;
+      let item = existingToolItem;
       if (item) {
-        item.toolId = tool.id;
         syncFeatureItemShape(item);
         item.size = clamp(
           item.size || defaultFeatureSurfaceSize(normalizedSurface, tool.id),
@@ -5197,7 +5660,16 @@
           rotation: 0,
           zIndex: state[nextZIndexKey] += 1
         });
-        const nextPosition = centeredFeatureSurfacePosition(normalizedSurface, item);
+        const basePosition = centeredFeatureSurfacePosition(normalizedSurface, item);
+        const offsetX = (normalizedSurface === "board" ? 28 : 36) * featureItems.length;
+        const offsetY = (normalizedSurface === "board" ? 24 : 28) * featureItems.length;
+        const nextPosition = clampSurfaceItemPosition(
+          normalizedSurface,
+          item,
+          basePosition.x + offsetX,
+          basePosition.y + offsetY,
+          item.size
+        );
         item.x = nextPosition.x;
         item.y = nextPosition.y;
         state[collectionKey].push(item);
@@ -5263,11 +5735,14 @@
     function featureCalculatorMarkup() {
       return `
         <div class="feature-device-shell feature-calculator-shell">
-          <div class="feature-display-panel feature-calculator-display-panel">
-            <div class="feature-calculator-memory" data-feature-calculator-memory></div>
-            <div class="feature-display feature-calculator-display" data-feature-calculator-display>${calculatorState.display}</div>
-          </div>
-          <div class="feature-calc-grid">
+          <img class="feature-device-art feature-calculator-art" src="feature-widget-assets/fx-golden-frame.png" alt="" aria-hidden="true" draggable="false">
+          <div class="feature-calculator-overlay">
+            <div class="feature-display-panel feature-calculator-display-panel">
+              <div class="feature-calculator-memory" data-feature-calculator-memory></div>
+              <div class="feature-calculator-expression" data-feature-calculator-expression>${calculatorState.expression}</div>
+              <div class="feature-display feature-calculator-display" data-feature-calculator-display>${calculatorState.display}</div>
+            </div>
+            <div class="feature-calc-grid">
             <button class="feature-control-btn feature-calc-key utility small-label" type="button" data-calc-key="mrc" data-feature-interactive="true" aria-label="Memory recall and clear">MRC</button>
             <button class="feature-control-btn feature-calc-key utility small-label" type="button" data-calc-key="m-" data-feature-interactive="true" aria-label="Subtract from memory">M-</button>
             <button class="feature-control-btn feature-calc-key utility small-label" type="button" data-calc-key="m+" data-feature-interactive="true" aria-label="Add to memory">M+</button>
@@ -5294,6 +5769,7 @@
 
             <button class="feature-control-btn feature-calc-key zero" type="button" data-calc-key="0" data-feature-interactive="true" aria-label="Zero">0</button>
             <button class="feature-control-btn feature-calc-key" type="button" data-calc-key="." data-feature-interactive="true" aria-label="Decimal point">.</button>
+            </div>
           </div>
         </div>
       `;
@@ -5302,66 +5778,95 @@
     function featureTimerMarkup() {
       return `
         <div class="feature-device-shell feature-timer-shell">
-          <div class="feature-display-panel feature-timer-display-panel">
-            <div class="feature-timer-lock-indicator" data-feature-timer-lock-indicator>${featureTimerState.locked ? "Locked" : "Open"}</div>
-            <div class="feature-timer-labels">
-              <span>MIN</span>
-              <span>SEC</span>
+          <img class="feature-device-art feature-timer-art" src="feature-widget-assets/fx-golden-frame.png" alt="" aria-hidden="true" draggable="false">
+          <div class="feature-timer-overlay">
+            <div class="feature-display-panel feature-timer-display-panel">
+              <div class="feature-timer-lock-indicator" data-feature-timer-lock-indicator>${featureTimerState.locked ? "Locked" : "Open"}</div>
+              <div class="feature-timer-labels">
+                <span>MIN</span>
+                <span>SEC</span>
+              </div>
+              <div class="feature-display feature-timer-display" data-feature-timer-display>${formatFeatureTimerTime(featureTimerState.remainingMs)}</div>
             </div>
-            <div class="feature-display feature-timer-display" data-feature-timer-display>${formatFeatureTimerTime(featureTimerState.remainingMs)}</div>
-          </div>
-          <div class="feature-timer-board">
-            <div class="feature-timer-cluster">
-              <div class="feature-timer-adjust-row">
-                <button class="feature-control-btn feature-timer-sign utility" type="button" data-feature-action="timer-minute-minus" data-feature-interactive="true" data-feature-timer-adjust aria-label="Subtract one minute"${featureTimerState.locked ? " disabled" : ""}>−</button>
-                <button class="feature-control-btn feature-timer-btn-min" type="button" data-feature-action="timer-minute-plus" data-feature-interactive="true" data-feature-timer-adjust aria-label="Add one minute"${featureTimerState.locked ? " disabled" : ""}><span>MIN</span></button>
-                <button class="feature-control-btn feature-timer-sign utility" type="button" data-feature-action="timer-minute-plus" data-feature-interactive="true" data-feature-timer-adjust aria-label="Add one minute"${featureTimerState.locked ? " disabled" : ""}>+</button>
+            <div class="feature-timer-board">
+              <div class="feature-timer-cluster">
+                <div class="feature-timer-adjust-row">
+                  <button class="feature-control-btn feature-timer-sign utility" type="button" data-feature-action="timer-minute-minus" data-feature-interactive="true" data-feature-timer-adjust aria-label="Subtract one minute"${featureTimerState.locked ? " disabled" : ""}>−</button>
+                  <button class="feature-control-btn feature-timer-btn-min" type="button" data-feature-action="timer-minute-plus" data-feature-interactive="true" data-feature-timer-adjust aria-label="Add one minute"${featureTimerState.locked ? " disabled" : ""}><span>MIN</span></button>
+                  <button class="feature-control-btn feature-timer-sign utility" type="button" data-feature-action="timer-minute-plus" data-feature-interactive="true" data-feature-timer-adjust aria-label="Add one minute"${featureTimerState.locked ? " disabled" : ""}>+</button>
+                </div>
+              </div>
+              <button class="feature-control-btn feature-timer-btn-toggle primary${featureTimerState.running ? " active" : ""}" type="button" data-feature-action="timer-toggle" data-feature-interactive="true" aria-label="${featureTimerState.running ? "Pause timer" : "Start timer"}">
+                <span class="feature-timer-toggle-star">★</span>
+                <span class="feature-timer-toggle-label" data-feature-timer-toggle-label>${featureTimerState.running ? "Pause" : "Start"}</span>
+              </button>
+              <div class="feature-timer-cluster">
+                <div class="feature-timer-adjust-row">
+                  <button class="feature-control-btn feature-timer-sign utility" type="button" data-feature-action="timer-second-minus" data-feature-interactive="true" data-feature-timer-adjust aria-label="Subtract one second"${featureTimerState.locked ? " disabled" : ""}>−</button>
+                  <button class="feature-control-btn feature-timer-btn-sec" type="button" data-feature-action="timer-second-plus" data-feature-interactive="true" data-feature-timer-adjust aria-label="Add one second"${featureTimerState.locked ? " disabled" : ""}><span>SEC</span></button>
+                  <button class="feature-control-btn feature-timer-sign utility" type="button" data-feature-action="timer-second-plus" data-feature-interactive="true" data-feature-timer-adjust aria-label="Add one second"${featureTimerState.locked ? " disabled" : ""}>+</button>
+                </div>
               </div>
             </div>
-            <button class="feature-control-btn feature-timer-btn-toggle primary${featureTimerState.running ? " active" : ""}" type="button" data-feature-action="timer-toggle" data-feature-interactive="true" aria-label="${featureTimerState.running ? "Pause timer" : "Start timer"}">
-              <span class="feature-timer-toggle-star">★</span>
-              <span class="feature-timer-toggle-label" data-feature-timer-toggle-label>${featureTimerState.running ? "Pause" : "Start"}</span>
-            </button>
-            <div class="feature-timer-cluster">
-              <div class="feature-timer-adjust-row">
-                <button class="feature-control-btn feature-timer-sign utility" type="button" data-feature-action="timer-second-minus" data-feature-interactive="true" data-feature-timer-adjust aria-label="Subtract one second"${featureTimerState.locked ? " disabled" : ""}>−</button>
-                <button class="feature-control-btn feature-timer-btn-sec" type="button" data-feature-action="timer-second-plus" data-feature-interactive="true" data-feature-timer-adjust aria-label="Add one second"${featureTimerState.locked ? " disabled" : ""}><span>SEC</span></button>
-                <button class="feature-control-btn feature-timer-sign utility" type="button" data-feature-action="timer-second-plus" data-feature-interactive="true" data-feature-timer-adjust aria-label="Add one second"${featureTimerState.locked ? " disabled" : ""}>+</button>
-              </div>
+            <div class="feature-timer-footer">
+              <button class="feature-control-btn feature-timer-btn-reset utility" type="button" data-feature-action="timer-reset" data-feature-interactive="true" aria-label="Reset timer">Reset</button>
+              <button class="feature-control-btn feature-timer-btn-lock utility${featureTimerState.locked ? " locked" : ""}" type="button" data-feature-action="timer-lock" data-feature-interactive="true" data-feature-timer-lock-btn aria-label="Lock timer editing">${featureTimerState.locked ? "Unlock" : "Lock"}</button>
             </div>
-          </div>
-          <div class="feature-timer-footer">
-            <button class="feature-control-btn feature-timer-btn-reset utility" type="button" data-feature-action="timer-reset" data-feature-interactive="true" aria-label="Reset timer">Reset</button>
-            <button class="feature-control-btn feature-timer-btn-lock utility${featureTimerState.locked ? " locked" : ""}" type="button" data-feature-action="timer-lock" data-feature-interactive="true" data-feature-timer-lock-btn aria-label="Lock timer editing">${featureTimerState.locked ? "Unlock" : "Lock"}</button>
           </div>
         </div>
       `;
     }
 
-    function featureDieMarkup() {
-      const historyMarkup = featureDieState.history
-        .map((value) => `<span class="feature-die-history-chip">${value}</span>`)
-        .join("");
+    function featureDieLayout(value = featureDieState.value) {
+      return FEATURE_DIE_LAYOUTS[value] || FEATURE_DIE_LAYOUTS[1];
+    }
+
+    function featureDieFaceMarkup(value, faceClass) {
+      const visiblePips = new Set(DIE_FACE_PIPS[value] || DIE_FACE_PIPS[1]);
+      const landedClass = faceClass === "face-top" && !featureDieState.rolling ? " result-face" : "";
       return `
-        <div class="feature-device-shell feature-die-shell${featureDieState.rolling ? " rolling" : ""}">
+        <span class="feature-die-face-panel ${faceClass}${landedClass}" aria-hidden="true">
+          <span class="feature-die-pip-layer">
+            <span class="feature-die-pip pip-1${visiblePips.has(1) ? " visible" : ""}"></span>
+            <span class="feature-die-pip pip-2${visiblePips.has(2) ? " visible" : ""}"></span>
+            <span class="feature-die-pip pip-3${visiblePips.has(3) ? " visible" : ""}"></span>
+            <span class="feature-die-pip pip-4${visiblePips.has(4) ? " visible" : ""}"></span>
+            <span class="feature-die-pip pip-5${visiblePips.has(5) ? " visible" : ""}"></span>
+            <span class="feature-die-pip pip-6${visiblePips.has(6) ? " visible" : ""}"></span>
+            <span class="feature-die-pip pip-7${visiblePips.has(7) ? " visible" : ""}"></span>
+          </span>
+        </span>
+      `;
+    }
+
+    function featureDieMarkup() {
+      const layout = featureDieLayout(featureDieState.value);
+      return `
+        <div class="feature-die-shell${featureDieState.rolling ? " rolling" : ""}">
           <button class="feature-die-face" type="button" data-feature-action="roll-die" data-feature-interactive="true" aria-label="Roll the die">
-            <div class="feature-die-pip-layer" aria-hidden="true">
-              <span class="feature-die-pip pip-1${DIE_FACE_PIPS[featureDieState.value].includes(1) ? " visible" : ""}"></span>
-              <span class="feature-die-pip pip-2${DIE_FACE_PIPS[featureDieState.value].includes(2) ? " visible" : ""}"></span>
-              <span class="feature-die-pip pip-3${DIE_FACE_PIPS[featureDieState.value].includes(3) ? " visible" : ""}"></span>
-              <span class="feature-die-pip pip-4${DIE_FACE_PIPS[featureDieState.value].includes(4) ? " visible" : ""}"></span>
-              <span class="feature-die-pip pip-5${DIE_FACE_PIPS[featureDieState.value].includes(5) ? " visible" : ""}"></span>
-              <span class="feature-die-pip pip-6${DIE_FACE_PIPS[featureDieState.value].includes(6) ? " visible" : ""}"></span>
-              <span class="feature-die-pip pip-7${DIE_FACE_PIPS[featureDieState.value].includes(7) ? " visible" : ""}"></span>
-            </div>
+            <span class="feature-die-scene" aria-hidden="true">
+              <span class="feature-die-cube" data-feature-die-cube>
+                ${featureDieFaceMarkup(layout.front, "face-front")}
+                ${featureDieFaceMarkup(layout.back, "face-back")}
+                ${featureDieFaceMarkup(layout.right, "face-right")}
+                ${featureDieFaceMarkup(layout.left, "face-left")}
+                ${featureDieFaceMarkup(layout.top, "face-top")}
+                ${featureDieFaceMarkup(layout.bottom, "face-bottom")}
+              </span>
+            </span>
           </button>
-          <div class="feature-die-controls">
-            <button class="action-btn" type="button" data-feature-action="roll-die" data-feature-interactive="true">Roll Die</button>
-            <p class="feature-die-result" data-feature-die-result>Result: ${featureDieState.value}</p>
-          </div>
-          <div class="feature-die-history" data-feature-die-history>${historyMarkup}</div>
         </div>
       `;
+    }
+
+    function syncFeatureDieFacePanel(root, faceClass, value) {
+      const visiblePips = new Set(DIE_FACE_PIPS[value] || DIE_FACE_PIPS[1]);
+      root.querySelectorAll(`.feature-die-face-panel.${faceClass}`).forEach((panel) => {
+        panel.classList.toggle("result-face", faceClass === "face-top" && !featureDieState.rolling);
+      });
+      root.querySelectorAll(`.feature-die-face-panel.${faceClass} .feature-die-pip`).forEach((pip, index) => {
+        pip.classList.toggle("visible", visiblePips.has(index + 1));
+      });
     }
 
     function buildFeatureSurfaceWidget(item) {
@@ -5631,16 +6136,58 @@
       return Number.parseFloat(value.toFixed(10)).toString();
     }
 
+    function calculatorOperatorSymbol(operator) {
+      if (operator === "*") {
+        return "×";
+      }
+      if (operator === "/") {
+        return "÷";
+      }
+      if (operator === "-") {
+        return "−";
+      }
+      return operator || "";
+    }
+
+    function setCalculatorExpression(value = "") {
+      calculatorState.expression = String(value || "").trim();
+    }
+
+    function syncCalculatorExpressionFromState() {
+      if (calculatorState.error) {
+        setCalculatorExpression("");
+        return;
+      }
+
+      const current = String(calculatorState.display || "0");
+      if (calculatorState.storedValue !== null && calculatorState.operator) {
+        const prefix = `${formatCalculatorNumber(calculatorState.storedValue)} ${calculatorOperatorSymbol(calculatorState.operator)}`;
+        setCalculatorExpression(
+          calculatorState.waitingForNextEntry
+            ? prefix
+            : `${prefix} ${current}`
+        );
+        return;
+      }
+
+      setCalculatorExpression(current === "0" ? "" : current);
+    }
+
     function calculatorValue() {
       return Number(calculatorState.display);
     }
 
     function updateCalculatorUI(message = "") {
       const memoryVisible = Math.abs(calculatorState.memory) > 1e-12;
+      const expressionText = calculatorState.expression || "";
       featureCalculatorDisplay.textContent = calculatorState.display;
+      featureCalculatorExpression.textContent = expressionText;
       featureCalculatorMemoryBadge.textContent = memoryVisible ? "M" : "";
       featureCalculatorMemoryBadge.style.opacity = memoryVisible ? "1" : "0";
       allFeatureSurfaceWidgetRoots("calculator").forEach((root) => {
+        root.querySelectorAll("[data-feature-calculator-expression]").forEach((node) => {
+          node.textContent = expressionText;
+        });
         root.querySelectorAll("[data-feature-calculator-display]").forEach((node) => {
           node.textContent = calculatorState.display;
         });
@@ -5675,6 +6222,7 @@
 
     function resetCalculatorState(clearMemory = false) {
       calculatorState.display = "0";
+      calculatorState.expression = "";
       calculatorState.storedValue = null;
       calculatorState.operator = null;
       calculatorState.waitingForNextEntry = false;
@@ -5688,6 +6236,7 @@
 
     function setCalculatorError(message) {
       calculatorState.display = "Error";
+      calculatorState.expression = "";
       calculatorState.storedValue = null;
       calculatorState.operator = null;
       calculatorState.waitingForNextEntry = false;
@@ -5729,6 +6278,7 @@
         calculatorState.display += digit;
       }
       calculatorState.lastMemoryAction = null;
+      syncCalculatorExpressionFromState();
       updateCalculatorUI();
     }
 
@@ -5744,6 +6294,7 @@
         calculatorState.display += ".";
       }
       calculatorState.lastMemoryAction = null;
+      syncCalculatorExpressionFromState();
       updateCalculatorUI();
     }
 
@@ -5768,6 +6319,7 @@
       calculatorState.operator = nextOperator;
       calculatorState.waitingForNextEntry = true;
       calculatorState.lastMemoryAction = null;
+      setCalculatorExpression(`${formatCalculatorNumber(calculatorState.storedValue)} ${calculatorOperatorSymbol(nextOperator)}`);
       updateCalculatorUI(`${nextOperator} selected.`);
     }
 
@@ -5781,12 +6333,16 @@
         return;
       }
 
-      const result = computeCalculatorOperation(calculatorState.storedValue, calculatorValue(), calculatorState.operator);
+      const leftValue = calculatorState.storedValue;
+      const rightValue = calculatorValue();
+      const expression = `${formatCalculatorNumber(leftValue)} ${calculatorOperatorSymbol(calculatorState.operator)} ${formatCalculatorNumber(rightValue)} =`;
+      const result = computeCalculatorOperation(leftValue, rightValue, calculatorState.operator);
       if (result === null) {
         setCalculatorError("Cannot divide by zero.");
         return;
       }
 
+      setCalculatorExpression(expression);
       calculatorState.display = formatCalculatorNumber(result);
       calculatorState.storedValue = null;
       calculatorState.operator = null;
@@ -5803,6 +6359,11 @@
       const percentValue = calculatorState.storedValue !== null && calculatorState.operator
         ? (calculatorState.storedValue * currentValue) / 100
         : currentValue / 100;
+      setCalculatorExpression(
+        calculatorState.storedValue !== null && calculatorState.operator
+          ? `${formatCalculatorNumber(calculatorState.storedValue)} ${calculatorOperatorSymbol(calculatorState.operator)} ${formatCalculatorNumber(currentValue)}%`
+          : `${formatCalculatorNumber(currentValue)}%`
+      );
       calculatorState.display = formatCalculatorNumber(percentValue);
       calculatorState.waitingForNextEntry = false;
       calculatorState.lastMemoryAction = null;
@@ -5818,6 +6379,7 @@
         setCalculatorError("Square root needs a positive number.");
         return;
       }
+      setCalculatorExpression(`√(${formatCalculatorNumber(currentValue)})`);
       calculatorState.display = formatCalculatorNumber(Math.sqrt(currentValue));
       calculatorState.waitingForNextEntry = true;
       calculatorState.lastMemoryAction = null;
@@ -5843,12 +6405,14 @@
       if (calculatorState.lastMemoryAction === "recall" && formattedMemory === calculatorState.display) {
         calculatorState.memory = 0;
         calculatorState.display = "0";
+        calculatorState.expression = "";
         calculatorState.lastMemoryAction = "clear";
         updateCalculatorUI("Memory cleared.");
         return;
       }
 
       calculatorState.display = formattedMemory;
+      setCalculatorExpression(`MR ${formattedMemory}`);
       calculatorState.waitingForNextEntry = true;
       calculatorState.error = false;
       calculatorState.lastMemoryAction = "recall";
@@ -5863,6 +6427,7 @@
       if (calculatorState.waitingForNextEntry) {
         calculatorState.display = "0";
         calculatorState.waitingForNextEntry = false;
+        syncCalculatorExpressionFromState();
         updateCalculatorUI("Entry cleared.");
         return;
       }
@@ -5872,6 +6437,7 @@
       if (calculatorState.display === "-" || calculatorState.display === "") {
         calculatorState.display = "0";
       }
+      syncCalculatorExpressionFromState();
       updateCalculatorUI();
     }
 
@@ -5911,6 +6477,7 @@
 
     function updateFeatureDieUI(message = "") {
       const visiblePips = new Set(DIE_FACE_PIPS[featureDieState.value] || DIE_FACE_PIPS[1]);
+      const layout = featureDieLayout(featureDieState.value);
       featureDiePips.forEach((pip, index) => {
         pip.classList.toggle("visible", visiblePips.has(index + 1));
       });
@@ -5924,21 +6491,12 @@
       });
       featureDieShell.setAttribute("aria-label", `Roll the die. Current result ${featureDieState.value}.`);
       allFeatureSurfaceWidgetRoots("die").forEach((root) => {
-        root.querySelectorAll(".feature-die-pip").forEach((pip, index) => {
-          pip.classList.toggle("visible", visiblePips.has(index + 1));
-        });
-        root.querySelectorAll("[data-feature-die-result]").forEach((node) => {
-          node.textContent = `Result: ${featureDieState.value}`;
-        });
-        root.querySelectorAll("[data-feature-die-history]").forEach((historyNode) => {
-          historyNode.innerHTML = "";
-          featureDieState.history.forEach((value) => {
-            const chip = document.createElement("span");
-            chip.className = "feature-die-history-chip";
-            chip.textContent = value;
-            historyNode.appendChild(chip);
-          });
-        });
+        syncFeatureDieFacePanel(root, "face-top", layout.top);
+        syncFeatureDieFacePanel(root, "face-front", layout.front);
+        syncFeatureDieFacePanel(root, "face-right", layout.right);
+        syncFeatureDieFacePanel(root, "face-left", layout.left);
+        syncFeatureDieFacePanel(root, "face-back", layout.back);
+        syncFeatureDieFacePanel(root, "face-bottom", layout.bottom);
         root.querySelectorAll(".feature-die-shell").forEach((shell) => {
           shell.classList.toggle("rolling", featureDieState.rolling);
         });
@@ -5956,30 +6514,47 @@
         return;
       }
 
+      const nextValue = 1 + Math.floor(Math.random() * 6);
+      const baseTransform = "rotateX(-32deg) rotateY(38deg)";
+
       featureDieState.rolling = true;
       featureDieShell.classList.add("rolling");
       if (featureDieState.animationTimer) {
         clearTimeout(featureDieState.animationTimer);
         featureDieState.animationTimer = null;
       }
+      updateFeatureDieUI("Rolling...");
 
-      let frame = 0;
-      const totalFrames = 8;
-      const animate = () => {
-        featureDieState.value = 1 + Math.floor(Math.random() * 6);
-        updateFeatureDieUI(frame < totalFrames ? "Rolling..." : `Rolled ${featureDieState.value}.`);
-        if (frame >= totalFrames) {
-          featureDieState.history = [featureDieState.value, ...featureDieState.history].slice(0, 6);
-          featureDieState.rolling = false;
-          featureDieShell.classList.remove("rolling");
-          updateFeatureDieUI(`Rolled ${featureDieState.value}.`);
-          return;
-        }
-        frame += 1;
-        featureDieState.animationTimer = window.setTimeout(animate, frame < 5 ? 82 : 112);
-      };
+      allFeatureSurfaceWidgetRoots("die").forEach((root) => {
+        root.querySelectorAll("[data-feature-die-cube]").forEach((cube) => {
+          if (cube.getAnimations) {
+            cube.getAnimations().forEach((animation) => animation.cancel());
+          }
+          if (typeof cube.animate === "function") {
+            cube.animate([
+              { transform: `${baseTransform} scale(0.96)`, offset: 0 },
+              { transform: "rotateX(-162deg) rotateY(176deg) scale(1.01)", offset: 0.18 },
+              { transform: "rotateX(226deg) rotateY(-124deg) scale(0.985)", offset: 0.4 },
+              { transform: "rotateX(-302deg) rotateY(248deg) scale(1.015)", offset: 0.7 },
+              { transform: baseTransform, offset: 1 }
+            ], {
+              duration: 2000,
+              easing: "cubic-bezier(0.16, 0.82, 0.2, 1)",
+              fill: "forwards"
+            });
+          } else {
+            cube.style.transform = baseTransform;
+          }
+        });
+      });
 
-      animate();
+      featureDieState.animationTimer = window.setTimeout(() => {
+        featureDieState.value = nextValue;
+        featureDieState.history = [featureDieState.value, ...featureDieState.history].slice(0, 6);
+        featureDieState.rolling = false;
+        featureDieShell.classList.remove("rolling");
+        updateFeatureDieUI(`Rolled ${featureDieState.value}.`);
+      }, 2000);
     }
 
     function updateFeatureStageCopy() {
@@ -9430,6 +10005,22 @@
       const localY = clientY - rect.top;
       const width = surface === "board" ? boardItemWidth(item) : item.size;
       const height = surface === "board" ? boardItemHeight(item) : itemHeight(item);
+      if (item && item.kind === "feature" && item.toolId === "calculator") {
+        return (
+          localX >= item.x + width * 0.04 &&
+          localX <= item.x + width * 0.96 &&
+          localY >= item.y + height * 0.56 &&
+          localY <= item.y + height
+        );
+      }
+      if (item && item.kind === "feature" && item.toolId === "die") {
+        return (
+          localX >= item.x + width * 0.16 &&
+          localX <= item.x + width * 0.84 &&
+          localY >= item.y + height * 0.62 &&
+          localY <= item.y + height
+        );
+      }
       return (
         localX >= item.x &&
         localX <= item.x + width &&
@@ -9526,9 +10117,22 @@
     function finishGestureSession(session, event = null) {
       clearGestureHold(session);
       releaseSessionPointer(session);
-      const removedByTap = session.mode === "pending" && event && event.type !== "pointercancel"
-        ? registerSurfaceTap(session.surface, session.itemId)
-        : false;
+      const shouldHandleDieTap = Boolean(session.dieRollOnTap && event && event.type !== "pointercancel");
+      let removedByTap = false;
+
+      if (shouldHandleDieTap) {
+        featureDieRollSuppressUntil = performance.now() + 460;
+        if (session.mode === "pending") {
+          removedByTap = registerSurfaceTap(session.surface, session.itemId);
+          if (!removedByTap && session.holdMode !== "resize") {
+            rollFeatureDie();
+          }
+        }
+      } else {
+        removedByTap = session.mode === "pending" && event && event.type !== "pointercancel"
+          ? registerSurfaceTap(session.surface, session.itemId)
+          : false;
+      }
 
       if (!removedByTap && session.element) {
         session.element.classList.remove("moving");
@@ -9982,6 +10586,23 @@
       return tool === "eraser" ? state.eraserSize : state.penSize;
     }
 
+    function currentPenStrokeStyle() {
+      return PEN_STYLE_MAP[state.penStrokeStyle] ? state.penStrokeStyle : PEN_STYLE_DEFS[0].id;
+    }
+
+    function setPenStrokeStyle(style) {
+      if (!PEN_STYLE_MAP[style]) {
+        return;
+      }
+
+      state.penStrokeStyle = style;
+      popupStyleButtons.forEach((button) => {
+        const isMatch = button.dataset.popupStyle === style;
+        button.classList.toggle("active", isMatch);
+        button.setAttribute("aria-pressed", String(isMatch));
+      });
+    }
+
     function setToolSize(tool, size) {
       const sizeMap = tool === "eraser" ? ERASER_STROKE_WIDTHS : PEN_STROKE_WIDTHS;
       if (!sizeMap[size]) {
@@ -10003,13 +10624,26 @@
 
     function updateSizePopupButtons(tool) {
       const selectedSize = currentToolSize(tool);
+      const sizeLabelMap = {
+        tiny: "tiny",
+        small: "small",
+        medium: "medium",
+        large: "large",
+        xlarge: "extra large"
+      };
       popupSizeButtons.forEach((button) => {
         const size = button.dataset.popupSize;
         const isMatch = size === selectedSize;
-        const sizeLabel = size === "xlarge" ? "extra large" : size;
+        const sizeLabel = sizeLabelMap[size] || size;
         button.classList.toggle("active", isMatch);
         button.setAttribute("aria-pressed", String(isMatch));
         button.setAttribute("aria-label", `${sizeLabel} ${tool} size`);
+      });
+      popupStyleButtons.forEach((button) => {
+        const style = button.dataset.popupStyle;
+        const isMatch = tool === "pen" && style === currentPenStrokeStyle();
+        button.classList.toggle("active", isMatch);
+        button.setAttribute("aria-pressed", String(isMatch));
       });
     }
 
@@ -10035,8 +10669,11 @@
       state.sizePopupTool = tool;
       state.sizePopupVisible = true;
       sizePopupAnchor = anchor;
+      toolSizePopup.classList.toggle("eraser-popup", tool === "eraser");
+      toolSizePopup.classList.toggle("pen-popup", tool === "pen");
       toolSizePopup.classList.remove("hidden");
       toolSizePopup.setAttribute("aria-hidden", "false");
+      toolSizePopup.setAttribute("aria-label", tool === "eraser" ? "Eraser size options" : "Pen stroke and size options");
       updateSizePopupButtons(tool);
       requestAnimationFrame(positionSizePopup);
     }
@@ -10046,6 +10683,7 @@
       state.sizePopupTool = null;
       sizePopupAnchor = null;
       toolSizePopup.classList.add("hidden");
+      toolSizePopup.classList.remove("eraser-popup", "pen-popup");
       toolSizePopup.setAttribute("aria-hidden", "true");
       toolSizePopup.style.removeProperty("left");
       toolSizePopup.style.removeProperty("top");
@@ -10465,7 +11103,7 @@
       setStatus("The spelling area is clear.");
     }
 
-    function startSurfaceItemGesture(surface, event, element) {
+    function startSurfaceItemGesture(surface, event, element, options = {}) {
       if (surface === "board" && state.boardPenMode) {
         return;
       }
@@ -10482,6 +11120,7 @@
       event.preventDefault();
       element.classList.add("moving");
       applySurfaceItemStyles(surface, element, item);
+      const startsInResizeZone = pointerStartsInResizeZone(surface, item, event.clientX, event.clientY);
       const session = {
         type: "gesture-item",
         pointerType: event.pointerType || "mouse",
@@ -10504,12 +11143,17 @@
         startItemY: item.y,
         startSize: item.size,
         startRotation: item.rotation || 0,
-        holdMode: pointerStartsInResizeZone(surface, item, event.clientX, event.clientY) ? "resize" : "rotate",
+        dieRollOnTap: Boolean(options.dieRollOnTap),
+        holdMode: startsInResizeZone ? "resize" : "rotate",
         holdTimer: null
       };
       state.pointerSession = session;
       tryCaptureSessionPointer(session);
-      scheduleGestureRotate(session);
+      if (startsInResizeZone && item.kind === "feature" && item.toolId === "calculator") {
+        beginGestureResize(session);
+      } else {
+        scheduleGestureRotate(session);
+      }
     }
 
     function updateSurfaceMoveGesture(session) {
@@ -10589,6 +11233,15 @@
     }
 
     function handleSpellStagePointerDown(event) {
+      const dieButton = event.target.closest("[data-feature-action='roll-die']");
+      if (dieButton) {
+        const dieTile = event.target.closest(".placed-feature");
+        if (dieTile && !state.pointerSession) {
+          startSurfaceItemGesture("stage", event, dieTile, { dieRollOnTap: true });
+        }
+        return;
+      }
+
       if (event.target.closest("[data-feature-interactive]")) {
         return;
       }
@@ -10659,7 +11312,11 @@
         if (session.mode === "pending") {
           const pointer = singleGesturePointer(session);
           if (pointer && Math.hypot(pointer.x - pointer.startX, pointer.y - pointer.startY) > GESTURE_MOVE_THRESHOLD) {
-            beginGestureMove(session);
+            if (session.dieRollOnTap && session.holdMode === "resize") {
+              beginGestureResize(session);
+            } else {
+              beginGestureMove(session);
+            }
           }
         }
 
@@ -11075,6 +11732,15 @@
         return;
       }
 
+      const dieButton = event.target.closest("[data-feature-action='roll-die']");
+      if (dieButton) {
+        const dieSticker = event.target.closest(".board-sticker");
+        if (dieSticker && !state.pointerSession) {
+          startSurfaceItemGesture("board", event, dieSticker, { dieRollOnTap: true });
+        }
+        return;
+      }
+
       if (event.target.closest("[data-feature-interactive]")) {
         return;
       }
@@ -11266,10 +11932,452 @@
       };
     }
 
+    function colorChannels(color) {
+      const normalized = normalizeColorKey(color) || String(color || "");
+
+      if (normalized.startsWith("#")) {
+        if (normalized.length === 4) {
+          return {
+            r: Number.parseInt(normalized[1] + normalized[1], 16),
+            g: Number.parseInt(normalized[2] + normalized[2], 16),
+            b: Number.parseInt(normalized[3] + normalized[3], 16)
+          };
+        }
+
+        if (normalized.length === 7) {
+          return {
+            r: Number.parseInt(normalized.slice(1, 3), 16),
+            g: Number.parseInt(normalized.slice(3, 5), 16),
+            b: Number.parseInt(normalized.slice(5, 7), 16)
+          };
+        }
+      }
+
+      const rgbMatch = normalized.match(/^rgba?\(([^)]+)\)$/i);
+      if (rgbMatch) {
+        const [r = 17, g = 17, b = 17] = rgbMatch[1]
+          .split(",")
+          .map((part) => Number.parseFloat(part.trim()))
+          .map((value) => (Number.isFinite(value) ? clamp(value, 0, 255) : 17));
+        return { r, g, b };
+      }
+
+      return { r: 17, g: 17, b: 17 };
+    }
+
+    function colorWithAlpha(color, alpha) {
+      const { r, g, b } = colorChannels(color);
+      return `rgba(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)}, ${clamp(alpha, 0, 1)})`;
+    }
+
+    function segmentMetrics(from, to) {
+      const dx = to.x - from.x;
+      const dy = to.y - from.y;
+      const length = Math.max(0.001, Math.hypot(dx, dy));
+      return {
+        dx,
+        dy,
+        length,
+        angle: Math.atan2(dy, dx),
+        normalX: -dy / length,
+        normalY: dx / length
+      };
+    }
+
+    function lerpPoint(from, to, t) {
+      return {
+        x: from.x + (to.x - from.x) * t,
+        y: from.y + (to.y - from.y) * t
+      };
+    }
+
+    function midpointPoint(from, to) {
+      return {
+        x: (from.x + to.x) / 2,
+        y: (from.y + to.y) / 2
+      };
+    }
+
+    function offsetPoint(point, offsetX, offsetY) {
+      return {
+        x: point.x + offsetX,
+        y: point.y + offsetY
+      };
+    }
+
+    function quadraticPoint(from, control, to, t) {
+      const inverse = 1 - t;
+      return {
+        x: (inverse * inverse * from.x) + (2 * inverse * t * control.x) + (t * t * to.x),
+        y: (inverse * inverse * from.y) + (2 * inverse * t * control.y) + (t * t * to.y)
+      };
+    }
+
+    function filterStrokePoint(previous, next, pointerType = "mouse") {
+      if (!previous) {
+        return next;
+      }
+
+      const distance = Math.hypot(next.x - previous.x, next.y - previous.y);
+      const base =
+        pointerType === "pen"
+          ? 0.84
+          : pointerType === "touch"
+            ? 0.76
+            : 0.62;
+      const catchUp = clamp(distance / 22, 0, 0.16);
+      const blend = clamp(base + catchUp, 0.62, 0.98);
+      return lerpPoint(previous, next, blend);
+    }
+
+    function traceLine(from, to, options = {}) {
+      ctx.lineCap = options.lineCap || "round";
+      ctx.lineJoin = options.lineJoin || "round";
+      ctx.strokeStyle = options.strokeStyle || state.selectedColor;
+      ctx.lineWidth = options.lineWidth || 1;
+      ctx.beginPath();
+      ctx.moveTo(from.x, from.y);
+      ctx.lineTo(to.x, to.y);
+      ctx.stroke();
+    }
+
+    function traceQuadratic(from, control, to, options = {}) {
+      ctx.lineCap = options.lineCap || "round";
+      ctx.lineJoin = options.lineJoin || "round";
+      ctx.strokeStyle = options.strokeStyle || state.selectedColor;
+      ctx.lineWidth = options.lineWidth || 1;
+      ctx.beginPath();
+      ctx.moveTo(from.x, from.y);
+      ctx.quadraticCurveTo(control.x, control.y, to.x, to.y);
+      ctx.stroke();
+    }
+
+    function fillCircle(x, y, radius, fillStyle, alpha = 1) {
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = fillStyle;
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawBrushSegment(from, to, lineWidth) {
+      ctx.save();
+      ctx.globalCompositeOperation = "source-over";
+      ctx.shadowColor = colorWithAlpha(state.selectedColor, 0.18);
+      ctx.shadowBlur = lineWidth * 0.4;
+      traceLine(from, to, {
+        lineWidth: lineWidth * 1.65,
+        strokeStyle: colorWithAlpha(state.selectedColor, 0.22)
+      });
+      traceLine(from, to, {
+        lineWidth: lineWidth * 1.12,
+        strokeStyle: colorWithAlpha(state.selectedColor, 0.42)
+      });
+      traceLine(from, to, {
+        lineWidth: lineWidth * 0.78,
+        strokeStyle: colorWithAlpha(state.selectedColor, 0.94)
+      });
+      ctx.restore();
+    }
+
+    function drawBrushDot(point, dotWidth) {
+      fillCircle(point.x, point.y, dotWidth * 0.82, colorWithAlpha(state.selectedColor, 0.2));
+      fillCircle(point.x, point.y, dotWidth * 0.54, colorWithAlpha(state.selectedColor, 0.42));
+      fillCircle(point.x, point.y, dotWidth * 0.34, colorWithAlpha(state.selectedColor, 0.96));
+    }
+
+    function drawPencilSegment(from, to, lineWidth) {
+      const metrics = segmentMetrics(from, to);
+      const grainOffset = Math.max(0.55, lineWidth * 0.1);
+
+      ctx.save();
+      ctx.globalCompositeOperation = "source-over";
+      ctx.shadowColor = colorWithAlpha(state.selectedColor, 0.08);
+      ctx.shadowBlur = lineWidth * 0.22;
+      traceLine(from, to, {
+        lineWidth: lineWidth * 0.82,
+        strokeStyle: colorWithAlpha(state.selectedColor, 0.82)
+      });
+      [-1, 1].forEach((factor) => {
+        const offsetX = metrics.normalX * grainOffset * factor;
+        const offsetY = metrics.normalY * grainOffset * factor;
+        traceLine(offsetPoint(from, offsetX, offsetY), offsetPoint(to, offsetX, offsetY), {
+          lineWidth: Math.max(1, lineWidth * 0.14),
+          strokeStyle: colorWithAlpha(state.selectedColor, 0.16)
+        });
+      });
+      ctx.restore();
+    }
+
+    function drawPencilDot(point, dotWidth) {
+      fillCircle(point.x, point.y, dotWidth * 0.36, colorWithAlpha(state.selectedColor, 0.82));
+      fillCircle(point.x, point.y, dotWidth * 0.18, colorWithAlpha(state.selectedColor, 0.22));
+    }
+
+    function drawCharcoalSegment(from, to, lineWidth) {
+      const metrics = segmentMetrics(from, to);
+      const sideOffsets = [-0.44, -0.18, 0.2, 0.46];
+
+      ctx.save();
+      ctx.globalCompositeOperation = "source-over";
+      ctx.shadowColor = colorWithAlpha(state.selectedColor, 0.22);
+      ctx.shadowBlur = lineWidth * 0.8;
+      traceLine(from, to, {
+        lineWidth: lineWidth * 1.95,
+        strokeStyle: colorWithAlpha(state.selectedColor, 0.13)
+      });
+      traceLine(from, to, {
+        lineWidth: lineWidth * 1.12,
+        strokeStyle: colorWithAlpha(state.selectedColor, 0.36)
+      });
+      traceLine(from, to, {
+        lineWidth: lineWidth * 0.78,
+        strokeStyle: colorWithAlpha(state.selectedColor, 0.86)
+      });
+
+      sideOffsets.forEach((factor, index) => {
+        const offsetX = metrics.normalX * lineWidth * factor;
+        const offsetY = metrics.normalY * lineWidth * factor;
+        traceLine(offsetPoint(from, offsetX, offsetY), offsetPoint(to, offsetX, offsetY), {
+          lineWidth: Math.max(1, lineWidth * (0.18 + (index % 2) * 0.06)),
+          strokeStyle: colorWithAlpha(state.selectedColor, 0.12 + index * 0.03)
+        });
+      });
+      ctx.restore();
+    }
+
+    function drawCharcoalDot(point, dotWidth) {
+      fillCircle(point.x, point.y, dotWidth * 0.7, colorWithAlpha(state.selectedColor, 0.12));
+      fillCircle(point.x, point.y, dotWidth * 0.42, colorWithAlpha(state.selectedColor, 0.48));
+      fillCircle(point.x, point.y, dotWidth * 0.24, colorWithAlpha(state.selectedColor, 0.9));
+    }
+
+    function drawCalligraphySegment(from, to, lineWidth) {
+      const metrics = segmentMetrics(from, to);
+      const nibInfluence = 0.68 + Math.abs(Math.cos(metrics.angle - Math.PI / 4)) * 0.78;
+      const broadWidth = lineWidth * nibInfluence;
+      const layers = [
+        { offset: -broadWidth * 0.16, width: broadWidth * 0.58, alpha: 0.28 },
+        { offset: 0, width: broadWidth * 0.84, alpha: 0.92 },
+        { offset: broadWidth * 0.2, width: broadWidth * 0.26, alpha: 0.16 }
+      ];
+
+      ctx.save();
+      ctx.globalCompositeOperation = "source-over";
+      layers.forEach((layer) => {
+        const offsetX = metrics.normalX * layer.offset;
+        const offsetY = metrics.normalY * layer.offset;
+        traceLine(offsetPoint(from, offsetX, offsetY), offsetPoint(to, offsetX, offsetY), {
+          lineWidth: Math.max(1, layer.width),
+          lineCap: "butt",
+          lineJoin: "miter",
+          strokeStyle: colorWithAlpha(state.selectedColor, layer.alpha)
+        });
+      });
+      ctx.restore();
+    }
+
+    function drawCalligraphyDot(point, dotWidth) {
+      ctx.save();
+      ctx.translate(point.x, point.y);
+      ctx.rotate(-Math.PI / 7);
+      ctx.fillStyle = colorWithAlpha(state.selectedColor, 0.92);
+      ctx.beginPath();
+      ctx.ellipse(0, 0, dotWidth * 0.5, dotWidth * 0.22, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = colorWithAlpha(state.selectedColor, 0.2);
+      ctx.beginPath();
+      ctx.ellipse(dotWidth * 0.11, dotWidth * 0.16, dotWidth * 0.3, dotWidth * 0.12, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawAirbrushSegment(from, to, lineWidth) {
+      ctx.save();
+      ctx.globalCompositeOperation = "source-over";
+      ctx.shadowColor = colorWithAlpha(state.selectedColor, 0.34);
+      ctx.shadowBlur = lineWidth * 1.28;
+      traceLine(from, to, {
+        lineWidth: lineWidth * 2.2,
+        strokeStyle: colorWithAlpha(state.selectedColor, 0.12)
+      });
+      traceLine(from, to, {
+        lineWidth: lineWidth * 1.4,
+        strokeStyle: colorWithAlpha(state.selectedColor, 0.22)
+      });
+      ctx.shadowBlur = lineWidth * 0.82;
+      traceLine(from, to, {
+        lineWidth: lineWidth * 0.62,
+        strokeStyle: colorWithAlpha(state.selectedColor, 0.32)
+      });
+      ctx.restore();
+    }
+
+    function drawAirbrushDot(point, dotWidth) {
+      fillCircle(point.x, point.y, dotWidth * 1.16, colorWithAlpha(state.selectedColor, 0.08));
+      fillCircle(point.x, point.y, dotWidth * 0.78, colorWithAlpha(state.selectedColor, 0.16));
+      fillCircle(point.x, point.y, dotWidth * 0.38, colorWithAlpha(state.selectedColor, 0.22));
+    }
+
+    function drawBrushCurve(from, control, to, lineWidth) {
+      const lowLatency = state.currentStrokePointerType === "pen" || state.currentStrokePointerType === "touch";
+      ctx.save();
+      ctx.globalCompositeOperation = "source-over";
+      ctx.shadowColor = colorWithAlpha(state.selectedColor, 0.16);
+      ctx.shadowBlur = lineWidth * (lowLatency ? 0.16 : 0.34);
+      traceQuadratic(from, control, to, {
+        lineWidth: lineWidth * (lowLatency ? 1.24 : 1.6),
+        strokeStyle: colorWithAlpha(state.selectedColor, lowLatency ? 0.26 : 0.2)
+      });
+      traceQuadratic(from, control, to, {
+        lineWidth: lineWidth * 1.08,
+        strokeStyle: colorWithAlpha(state.selectedColor, 0.4)
+      });
+      if (!lowLatency) {
+        traceQuadratic(from, control, to, {
+          lineWidth: lineWidth * 0.76,
+          strokeStyle: colorWithAlpha(state.selectedColor, 0.96)
+        });
+      } else {
+        traceQuadratic(from, control, to, {
+          lineWidth: lineWidth * 0.82,
+          strokeStyle: colorWithAlpha(state.selectedColor, 0.94)
+        });
+      }
+      ctx.restore();
+    }
+
+    function drawPencilCurve(from, control, to, lineWidth) {
+      const metrics = segmentMetrics(from, to);
+      const lowLatency = state.currentStrokePointerType === "pen" || state.currentStrokePointerType === "touch";
+      const grainOffset = Math.max(0.34, lineWidth * (lowLatency ? 0.05 : 0.08));
+      ctx.save();
+      ctx.globalCompositeOperation = "source-over";
+      traceQuadratic(from, control, to, {
+        lineWidth: lineWidth * 0.8,
+        strokeStyle: colorWithAlpha(state.selectedColor, 0.84)
+      });
+      (lowLatency ? [-1] : [-1, 1]).forEach((factor) => {
+        const offsetX = metrics.normalX * grainOffset * factor;
+        const offsetY = metrics.normalY * grainOffset * factor;
+        traceQuadratic(
+          offsetPoint(from, offsetX, offsetY),
+          offsetPoint(control, offsetX, offsetY),
+          offsetPoint(to, offsetX, offsetY),
+          {
+            lineWidth: Math.max(1, lineWidth * 0.1),
+            strokeStyle: colorWithAlpha(state.selectedColor, 0.15)
+          }
+        );
+      });
+      ctx.restore();
+    }
+
+    function drawCharcoalCurve(from, control, to, lineWidth) {
+      const metrics = segmentMetrics(from, to);
+      const lowLatency = state.currentStrokePointerType === "pen" || state.currentStrokePointerType === "touch";
+      const sideOffsets = lowLatency ? [-0.18, 0.18] : [-0.36, -0.14, 0.16, 0.38];
+      ctx.save();
+      ctx.globalCompositeOperation = "source-over";
+      ctx.shadowColor = colorWithAlpha(state.selectedColor, 0.18);
+      ctx.shadowBlur = lineWidth * (lowLatency ? 0.22 : 0.56);
+      traceQuadratic(from, control, to, {
+        lineWidth: lineWidth * (lowLatency ? 1.42 : 1.88),
+        strokeStyle: colorWithAlpha(state.selectedColor, lowLatency ? 0.18 : 0.12)
+      });
+      traceQuadratic(from, control, to, {
+        lineWidth: lineWidth * 1.08,
+        strokeStyle: colorWithAlpha(state.selectedColor, 0.34)
+      });
+      if (!lowLatency) {
+        traceQuadratic(from, control, to, {
+          lineWidth: lineWidth * 0.78,
+          strokeStyle: colorWithAlpha(state.selectedColor, 0.9)
+        });
+      }
+      sideOffsets.forEach((factor, index) => {
+        const offsetX = metrics.normalX * lineWidth * factor;
+        const offsetY = metrics.normalY * lineWidth * factor;
+        traceQuadratic(
+          offsetPoint(from, offsetX, offsetY),
+          offsetPoint(control, offsetX, offsetY),
+          offsetPoint(to, offsetX, offsetY),
+          {
+            lineWidth: Math.max(1, lineWidth * (0.12 + (index % 2) * 0.04)),
+            strokeStyle: colorWithAlpha(state.selectedColor, 0.1 + index * 0.03)
+          }
+        );
+      });
+      ctx.restore();
+    }
+
+    function drawCalligraphyCurve(from, control, to, lineWidth) {
+      const metrics = segmentMetrics(from, to);
+      const lowLatency = state.currentStrokePointerType === "pen" || state.currentStrokePointerType === "touch";
+      const nibInfluence = 0.68 + Math.abs(Math.cos(metrics.angle - Math.PI / 4)) * 0.78;
+      const broadWidth = lineWidth * nibInfluence;
+      const layers = lowLatency
+        ? [
+            { offset: -broadWidth * 0.08, width: broadWidth * 0.5, alpha: 0.22 },
+            { offset: 0, width: broadWidth * 0.82, alpha: 0.92 }
+          ]
+        : [
+            { offset: -broadWidth * 0.16, width: broadWidth * 0.58, alpha: 0.28 },
+            { offset: 0, width: broadWidth * 0.84, alpha: 0.92 },
+            { offset: broadWidth * 0.2, width: broadWidth * 0.26, alpha: 0.16 }
+          ];
+
+      ctx.save();
+      ctx.globalCompositeOperation = "source-over";
+      layers.forEach((layer) => {
+        const offsetX = metrics.normalX * layer.offset;
+        const offsetY = metrics.normalY * layer.offset;
+        traceQuadratic(
+          offsetPoint(from, offsetX, offsetY),
+          offsetPoint(control, offsetX, offsetY),
+          offsetPoint(to, offsetX, offsetY),
+          {
+            lineWidth: Math.max(1, layer.width),
+            lineCap: "butt",
+            lineJoin: "miter",
+            strokeStyle: colorWithAlpha(state.selectedColor, layer.alpha)
+          }
+        );
+      });
+      ctx.restore();
+    }
+
+    function drawAirbrushCurve(from, control, to, lineWidth) {
+      const lowLatency = state.currentStrokePointerType === "pen" || state.currentStrokePointerType === "touch";
+      ctx.save();
+      ctx.globalCompositeOperation = "source-over";
+      ctx.shadowColor = colorWithAlpha(state.selectedColor, 0.28);
+      ctx.shadowBlur = lineWidth * (lowLatency ? 0.44 : 1.1);
+      traceQuadratic(from, control, to, {
+        lineWidth: lineWidth * (lowLatency ? 1.36 : 2),
+        strokeStyle: colorWithAlpha(state.selectedColor, lowLatency ? 0.16 : 0.11)
+      });
+      traceQuadratic(from, control, to, {
+        lineWidth: lineWidth * (lowLatency ? 0.94 : 1.26),
+        strokeStyle: colorWithAlpha(state.selectedColor, lowLatency ? 0.24 : 0.2)
+      });
+      if (!lowLatency) {
+        ctx.shadowBlur = lineWidth * 0.68;
+        traceQuadratic(from, control, to, {
+          lineWidth: lineWidth * 0.56,
+          strokeStyle: colorWithAlpha(state.selectedColor, 0.28)
+        });
+      }
+      ctx.restore();
+    }
+
     function currentStrokeWidth() {
       const sizeKey = state.eraserOn ? state.eraserSize : state.penSize;
       const sizeMap = state.eraserOn ? ERASER_STROKE_WIDTHS : PEN_STROKE_WIDTHS;
-      return sizeMap[sizeKey] * ((window.devicePixelRatio || 1) * 0.95);
+      const styleScale = state.eraserOn ? 1 : (PEN_STYLE_MAP[currentPenStrokeStyle()]?.widthScale || 1);
+      return sizeMap[sizeKey] * styleScale * ((window.devicePixelRatio || 1) * 0.95);
     }
 
     function strokeWidthForEvent(event) {
@@ -11288,26 +12396,105 @@
       return base;
     }
 
+    function drawSmoothStrokeCurve(from, control, to, lineWidth = currentStrokeWidth()) {
+      if (Math.hypot(to.x - from.x, to.y - from.y) < 0.001) {
+        return;
+      }
+
+      if (state.eraserOn) {
+        ctx.save();
+        ctx.globalCompositeOperation = "destination-out";
+        traceQuadratic(from, control, to, {
+          lineWidth,
+          strokeStyle: "#000000"
+        });
+        ctx.restore();
+        return;
+      }
+
+      switch (currentPenStrokeStyle()) {
+        case "pencil":
+          drawPencilCurve(from, control, to, lineWidth);
+          return;
+        case "charcoal":
+          drawCharcoalCurve(from, control, to, lineWidth);
+          return;
+        case "calligraphy":
+          drawCalligraphyCurve(from, control, to, lineWidth);
+          return;
+        case "airbrush":
+          drawAirbrushCurve(from, control, to, lineWidth);
+          return;
+        case "brush":
+        default:
+          drawBrushCurve(from, control, to, lineWidth);
+      }
+    }
+
     function drawSegment(from, to, lineWidth = currentStrokeWidth()) {
-      ctx.save();
-      ctx.globalCompositeOperation = state.eraserOn ? "destination-out" : "source-over";
-      ctx.strokeStyle = state.selectedColor;
-      ctx.lineWidth = lineWidth;
-      ctx.beginPath();
-      ctx.moveTo(from.x, from.y);
-      ctx.lineTo(to.x, to.y);
-      ctx.stroke();
-      ctx.restore();
+      if (state.eraserOn) {
+        ctx.save();
+        ctx.globalCompositeOperation = "destination-out";
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.strokeStyle = "#000000";
+        ctx.lineWidth = lineWidth;
+        ctx.beginPath();
+        ctx.moveTo(from.x, from.y);
+        ctx.lineTo(to.x, to.y);
+        ctx.stroke();
+        ctx.restore();
+        return;
+      }
+
+      switch (currentPenStrokeStyle()) {
+        case "pencil":
+          drawPencilSegment(from, to, lineWidth);
+          return;
+        case "charcoal":
+          drawCharcoalSegment(from, to, lineWidth);
+          return;
+        case "calligraphy":
+          drawCalligraphySegment(from, to, lineWidth);
+          return;
+        case "airbrush":
+          drawAirbrushSegment(from, to, lineWidth);
+          return;
+        case "brush":
+        default:
+          drawBrushSegment(from, to, lineWidth);
+      }
     }
 
     function drawDot(point, dotWidth = currentStrokeWidth()) {
-      ctx.save();
-      ctx.globalCompositeOperation = state.eraserOn ? "destination-out" : "source-over";
-      ctx.fillStyle = state.selectedColor;
-      ctx.beginPath();
-      ctx.arc(point.x, point.y, dotWidth / 2, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
+      if (state.eraserOn) {
+        ctx.save();
+        ctx.globalCompositeOperation = "destination-out";
+        ctx.fillStyle = "#000000";
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, dotWidth / 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+        return;
+      }
+
+      switch (currentPenStrokeStyle()) {
+        case "pencil":
+          drawPencilDot(point, dotWidth);
+          return;
+        case "charcoal":
+          drawCharcoalDot(point, dotWidth);
+          return;
+        case "calligraphy":
+          drawCalligraphyDot(point, dotWidth);
+          return;
+        case "airbrush":
+          drawAirbrushDot(point, dotWidth);
+          return;
+        case "brush":
+        default:
+          drawBrushDot(point, dotWidth);
+      }
     }
 
     function startDrawing(event) {
@@ -11325,8 +12512,11 @@
 
       event.preventDefault();
       state.drawing = true;
+      state.currentStrokePointerType = event.pointerType || "mouse";
       state.lastPoint = pointFromEvent(event);
-      drawDot(state.lastPoint, strokeWidthForEvent(event));
+      state.lastRawPoint = state.lastPoint;
+      state.lastStrokeWidth = strokeWidthForEvent(event);
+      drawDot(state.lastPoint, state.lastStrokeWidth);
       boardWrap.setPointerCapture(event.pointerId);
     }
 
@@ -11336,14 +12526,30 @@
       }
 
       event.preventDefault();
-      const samples = typeof event.getCoalescedEvents === "function"
+      const pointerType = event.pointerType || state.currentStrokePointerType || "mouse";
+      state.currentStrokePointerType = pointerType;
+      const rawSamples = typeof event.getCoalescedEvents === "function"
         ? event.getCoalescedEvents()
         : [event];
+      const samples =
+        pointerType === "pen"
+          ? rawSamples.slice(-2)
+          : pointerType === "touch"
+            ? rawSamples.slice(-3)
+            : rawSamples;
 
       samples.forEach((sample) => {
         const nextPoint = pointFromEvent(sample);
-        drawSegment(state.lastPoint, nextPoint, strokeWidthForEvent(sample));
-        state.lastPoint = nextPoint;
+        const samplePointerType = sample.pointerType || pointerType;
+        const filteredPoint = filterStrokePoint(state.lastRawPoint || state.lastPoint, nextPoint, samplePointerType);
+        const curveEnd = samplePointerType === "pen"
+          ? nextPoint
+          : midpointPoint(filteredPoint, nextPoint);
+        const strokeWidth = strokeWidthForEvent(sample);
+        drawSmoothStrokeCurve(state.lastPoint, state.lastRawPoint || state.lastPoint, curveEnd, strokeWidth);
+        state.lastPoint = curveEnd;
+        state.lastRawPoint = filteredPoint;
+        state.lastStrokeWidth = strokeWidth;
       });
     }
 
@@ -11352,8 +12558,20 @@
         return;
       }
 
+      if (state.lastPoint && state.lastRawPoint) {
+        drawSmoothStrokeCurve(
+          state.lastPoint,
+          state.lastRawPoint,
+          state.lastRawPoint,
+          state.lastStrokeWidth || currentStrokeWidth()
+        );
+      }
+
       state.drawing = false;
       state.lastPoint = null;
+      state.lastRawPoint = null;
+      state.lastStrokeWidth = 0;
+      state.currentStrokePointerType = "mouse";
 
       if (event && typeof event.pointerId === "number") {
         try {
@@ -11568,6 +12786,9 @@
           toggleFeatureTimerLock();
           break;
         case "roll-die":
+          if (performance.now() < featureDieRollSuppressUntil) {
+            return;
+          }
           rollFeatureDie();
           break;
         default:
@@ -11741,7 +12962,7 @@
 
     swatches.forEach((swatch) => {
       const baseLabel = swatch.getAttribute("aria-label") || "Pencil color";
-      swatch.setAttribute("aria-label", `${baseLabel}. Click once to choose or mix, click twice for size.`);
+      swatch.setAttribute("aria-label", `${baseLabel}. Click once to choose or mix, click twice for pen style and size.`);
       swatch.addEventListener("pointerdown", handleSwatchPointerDown);
       swatch.addEventListener("click", (event) => {
         const target = event.currentTarget;
@@ -11752,6 +12973,7 @@
         }
         const isDoubleClick = isSecondControlClick("pen", target);
         if (isDoubleClick) {
+          setEraserMode(false);
           if (!state.activeInkColors.includes(normalizeColorKey(target.dataset.color))) {
             setActiveColor(target.dataset.color);
           }
@@ -11814,6 +13036,14 @@
     clearBoardBtn.addEventListener("click", clearBoard);
     boardModeButtons.forEach((button) => {
       button.addEventListener("click", () => setBoardAssetMode(button.dataset.boardMode));
+    });
+    popupStyleButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        if (state.sizePopupTool !== "pen") {
+          return;
+        }
+        setPenStrokeStyle(button.dataset.popupStyle);
+      });
     });
     popupSizeButtons.forEach((button) => {
       button.addEventListener("click", () => {
@@ -11956,6 +13186,7 @@
     setActiveColor(state.selectedColor);
     setBoardPenMode(state.boardPenMode);
     setEraserMode(state.eraserOn);
+    setPenStrokeStyle(state.penStrokeStyle);
     setToolSize("pen", state.penSize);
     setToolSize("eraser", state.eraserSize);
     updateCalculatorUI();
