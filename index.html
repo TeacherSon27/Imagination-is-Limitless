@@ -689,6 +689,7 @@
     .space-chip,
     .placed-icon,
     .placed-photo,
+    .placed-feature,
     .board-sticker {
       position: absolute;
       left: 0;
@@ -714,6 +715,7 @@
     .space-chip::after,
     .placed-icon::after,
     .placed-photo::after,
+    .placed-feature::after,
     .board-sticker::after {
       content: none;
     }
@@ -725,6 +727,7 @@
 
     .placed-icon,
     .placed-photo,
+    .placed-feature,
     .board-sticker {
       aspect-ratio: 1 / 1;
       overflow: visible;
@@ -745,6 +748,7 @@
     .space-chip.moving,
     .placed-icon.moving,
     .placed-photo.moving,
+    .placed-feature.moving,
     .board-sticker.moving {
       transition: none;
       cursor: grabbing;
@@ -781,6 +785,137 @@
       text-transform: uppercase;
       box-shadow: 0 10px 18px rgba(48, 53, 84, 0.1);
       padding-bottom: 6px;
+    }
+
+    .placed-feature,
+    .board-sticker.feature-widget-item {
+      overflow: visible;
+      background: transparent;
+      border: 0;
+      box-shadow: none;
+      cursor: grab;
+    }
+
+    .placed-feature img,
+    .board-sticker.feature-widget-item img {
+      display: none;
+    }
+
+    .feature-surface-widget {
+      width: 100%;
+      height: 100%;
+      container-type: size;
+      display: grid;
+    }
+
+    .feature-surface-widget .feature-device-shell {
+      width: 100%;
+      height: 100%;
+      max-width: none;
+      padding: clamp(10px, 4cqw, 24px);
+      border-radius: clamp(18px, 6cqw, 34px);
+    }
+
+    .feature-surface-widget .feature-display-panel {
+      padding: clamp(10px, 3.2cqw, 22px);
+      border-radius: clamp(16px, 5cqw, 28px);
+    }
+
+    .feature-surface-widget .feature-control-btn,
+    .feature-surface-widget .action-btn {
+      min-height: 0;
+      font-size: clamp(0.62rem, 4.6cqw, 1.28rem);
+    }
+
+    .feature-surface-widget .feature-calculator-display {
+      font-size: clamp(1.05rem, 8cqw, 3rem);
+    }
+
+    .feature-surface-widget .feature-calculator-memory {
+      font-size: clamp(0.52rem, 2.8cqw, 0.82rem);
+    }
+
+    .feature-surface-widget .feature-calc-grid {
+      gap: clamp(5px, 1.8cqw, 12px);
+    }
+
+    .feature-surface-widget .feature-calc-key {
+      min-height: clamp(26px, 12cqh, 78px);
+      border-radius: clamp(12px, 4cqw, 22px);
+    }
+
+    .feature-surface-widget .feature-timer-display {
+      font-size: clamp(1.15rem, 8.5cqw, 4.2rem);
+    }
+
+    .feature-surface-widget .feature-timer-labels,
+    .feature-surface-widget .feature-timer-cluster-title,
+    .feature-surface-widget .feature-timer-toggle-label {
+      font-size: clamp(0.56rem, 3cqw, 1rem);
+    }
+
+    .feature-surface-widget .feature-timer-labels {
+      gap: clamp(28px, 12cqw, 120px);
+    }
+
+    .feature-surface-widget .feature-timer-board {
+      gap: clamp(10px, 3.2cqw, 18px);
+    }
+
+    .feature-surface-widget .feature-timer-adjust-row {
+      gap: clamp(6px, 2cqw, 10px);
+    }
+
+    .feature-surface-widget .feature-timer-sign {
+      width: clamp(24px, 8cqw, 54px);
+      height: clamp(24px, 8cqw, 54px);
+      font-size: clamp(0.72rem, 4.2cqw, 1.4rem);
+    }
+
+    .feature-surface-widget .feature-timer-btn-min,
+    .feature-surface-widget .feature-timer-btn-sec {
+      width: clamp(48px, 18cqw, 124px);
+      font-size: clamp(0.62rem, 4.2cqw, 1.2rem);
+    }
+
+    .feature-surface-widget .feature-timer-btn-toggle {
+      width: clamp(76px, 24cqw, 168px);
+    }
+
+    .feature-surface-widget .feature-timer-toggle-star {
+      font-size: clamp(1rem, 7cqw, 2.6rem);
+    }
+
+    .feature-surface-widget .feature-timer-btn-reset,
+    .feature-surface-widget .feature-timer-btn-lock {
+      min-height: clamp(26px, 10cqh, 56px);
+      padding: 0 clamp(10px, 3cqw, 20px);
+      font-size: clamp(0.56rem, 3cqw, 0.96rem);
+    }
+
+    .feature-surface-widget .feature-die-face {
+      width: min(100%, clamp(100px, 62cqw, 320px));
+      border-radius: clamp(18px, 6cqw, 28px);
+    }
+
+    .feature-surface-widget .feature-die-controls {
+      gap: clamp(6px, 2cqw, 12px);
+    }
+
+    .feature-surface-widget .feature-die-result {
+      font-size: clamp(0.62rem, 3.8cqw, 1rem);
+    }
+
+    .feature-surface-widget .feature-die-history {
+      gap: clamp(4px, 1.6cqw, 8px);
+      justify-content: center;
+    }
+
+    .feature-surface-widget .feature-die-history-chip {
+      min-width: clamp(20px, 9cqw, 42px);
+      min-height: clamp(20px, 9cqw, 42px);
+      padding: 0 clamp(6px, 2cqw, 12px);
+      font-size: clamp(0.56rem, 3cqw, 0.88rem);
     }
 
     .builder-actions,
@@ -3076,6 +3211,11 @@
       cursor: crosshair;
     }
 
+    .board-wrap.pen-mode .board-sticker.feature-widget-item {
+      pointer-events: auto;
+      cursor: grab;
+    }
+
     .tool-btn.active {
       background: linear-gradient(180deg, #ffe6d8, #ffb58c);
     }
@@ -3828,7 +3968,7 @@
 
   <script>
     const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
-    const GAME_ACCESS_CODE = "ILOVELEARNING";
+    const GAME_ACCESS_CODE = "123abc";
 
     const state = {
       gameAccessUnlocked: false,
@@ -4074,6 +4214,20 @@
         thumbSrc: "feature-widget-assets/die-thumb.webp"
       }
     ];
+    const FEATURE_SURFACE_DIMENSIONS = Object.freeze({
+      calculator: {
+        stageHeightRatio: 1.12,
+        boardWidthRatio: 0.9
+      },
+      timer: {
+        stageHeightRatio: 1.28,
+        boardWidthRatio: 0.8
+      },
+      die: {
+        stageHeightRatio: 1,
+        boardWidthRatio: 1
+      }
+    });
     const FEATURE_TOOL_MAP = Object.freeze(
       FEATURE_TOOL_DEFS.reduce((map, tool) => {
         map[tool.id] = tool;
@@ -4886,6 +5040,162 @@
       return FEATURE_TOOL_MAP[toolId] || FEATURE_TOOL_MAP.calculator;
     }
 
+    function featureSurfaceDimensions(toolId = "calculator") {
+      return FEATURE_SURFACE_DIMENSIONS[toolId] || FEATURE_SURFACE_DIMENSIONS.calculator;
+    }
+
+    function normalizeFeatureSurface(surface = "spell") {
+      return surface === "board" ? "board" : "stage";
+    }
+
+    function featureSurfaceStateKey(surface = "stage") {
+      return surface === "board" ? "board" : "spell";
+    }
+
+    function isFeatureItem(item) {
+      return Boolean(item && item.kind === "feature");
+    }
+
+    function syncFeatureItemShape(item) {
+      if (!isFeatureItem(item)) {
+        return item;
+      }
+      const tool = featureToolDef(item.toolId);
+      const dimensions = featureSurfaceDimensions(tool.id);
+      item.label = tool.label;
+      item.heightRatio = dimensions.stageHeightRatio;
+      item.widthRatio = dimensions.boardWidthRatio;
+      return item;
+    }
+
+    function featureSurfaceItems(surface = "stage") {
+      return surface === "board" ? state.boardItems : state.placedItems;
+    }
+
+    function findFeatureSurfaceItem(surface = "stage") {
+      return featureSurfaceItems(surface).find(isFeatureItem) || null;
+    }
+
+    function allFeatureSurfaceWidgetRoots(toolId = "") {
+      const selector = toolId
+        ? `[data-feature-tool-item="${featureToolDef(toolId).id}"]`
+        : "[data-feature-tool-item]";
+      return Array.from(document.querySelectorAll(selector));
+    }
+
+    function defaultFeatureSurfaceSize(surface = "stage", toolId = "calculator") {
+      const probe = syncFeatureItemShape({
+        kind: "feature",
+        toolId
+      });
+      return surface === "board"
+        ? defaultBoardStickerSize(probe)
+        : defaultTileSize(probe);
+    }
+
+    function centeredFeatureSurfacePosition(surface = "stage", item) {
+      if (surface === "board") {
+        const rect = boardRect();
+        return centeredBoardItemPosition(
+          item,
+          rect.left + rect.width * 0.5,
+          rect.top + rect.height * 0.56,
+          item.size
+        );
+      }
+
+      const rect = stageRect();
+      return clampItemPosition(
+        item,
+        (rect.width - item.size) / 2,
+        Math.max(92, (rect.height - itemHeight(item, item.size)) / 2),
+        item.size
+      );
+    }
+
+    function syncFeatureSurfaceUI(toolId) {
+      if (toolId === "timer") {
+        updateFeatureTimerUI();
+        return;
+      }
+      if (toolId === "die") {
+        updateFeatureDieUI();
+        return;
+      }
+      updateCalculatorUI();
+    }
+
+    function showFeatureToolOnSurface(toolId, surface = "stage") {
+      const normalizedSurface = normalizeFeatureSurface(surface);
+      const surfaceKey = featureSurfaceStateKey(normalizedSurface);
+      const tool = featureToolDef(toolId);
+      const collectionKey = normalizedSurface === "board" ? "boardItems" : "placedItems";
+      const nextIdKey = normalizedSurface === "board" ? "nextBoardItemId" : "nextItemId";
+      const nextZIndexKey = normalizedSurface === "board" ? "nextBoardZIndex" : "nextZIndex";
+      const featureItems = featureSurfaceItems(normalizedSurface).filter(isFeatureItem);
+      const primaryFeatureItem = featureItems[0] || null;
+
+      if (featureItems.length > 1) {
+        state[collectionKey] = state[collectionKey].filter((candidate, index) => !isFeatureItem(candidate) || candidate === featureItems[0]);
+      }
+
+      closeFeaturePanels();
+      closeFeatureToolsModal();
+      if (normalizedSurface === "board") {
+        setBoardBackgroundPanelVisible(false);
+      } else {
+        setSpellingToolsPanelVisible(false);
+        setBackgroundPanelVisible(false);
+      }
+      if (activityProductModal.classList.contains("modal-open")) {
+        closeActivityProductModal();
+      }
+
+      state.selectedFeatureTool = tool.id;
+      state.featureToolSurface = surfaceKey;
+
+      let item = primaryFeatureItem;
+      if (item) {
+        item.toolId = tool.id;
+        syncFeatureItemShape(item);
+        item.size = clamp(
+          item.size || defaultFeatureSurfaceSize(normalizedSurface, tool.id),
+          normalizedSurface === "board" ? 120 : minTileSize("feature"),
+          maxSurfaceTileSize(normalizedSurface, item)
+        );
+        item.zIndex = state[nextZIndexKey] += 1;
+        const nextPosition = clampSurfaceItemPosition(normalizedSurface, item, item.x || 0, item.y || 0, item.size);
+        item.x = nextPosition.x;
+        item.y = nextPosition.y;
+      } else {
+        item = syncFeatureItemShape({
+          id: state[nextIdKey],
+          kind: "feature",
+          toolId: tool.id,
+          size: defaultFeatureSurfaceSize(normalizedSurface, tool.id),
+          x: 0,
+          y: 0,
+          rotation: 0,
+          zIndex: state[nextZIndexKey] += 1
+        });
+        const nextPosition = centeredFeatureSurfacePosition(normalizedSurface, item);
+        item.x = nextPosition.x;
+        item.y = nextPosition.y;
+        state[collectionKey].push(item);
+        state[nextIdKey] += 1;
+      }
+
+      if (normalizedSurface === "board") {
+        renderBoardStickers();
+      } else {
+        renderPlacedSpelling();
+      }
+      animatePlacedItemEntry(normalizedSurface, item.id);
+      syncFeatureSurfaceUI(tool.id);
+      setStatus(`${tool.label} opened on the ${featureSurfaceLabel(surfaceKey)}.`, "good");
+      return item;
+    }
+
     function setFeatureWidgetStatus(toolId, message) {
       if (toolId === "calculator" && featureCalculatorStatus) {
         featureCalculatorStatus.textContent = message;
@@ -4919,14 +5229,133 @@
       copy.className = mode === "nav" ? "feature-nav-copy" : "feature-popup-copy";
       const title = document.createElement("strong");
       title.textContent = tool.label;
-      const note = document.createElement("small");
-      note.textContent = tool.popupNote;
       copy.appendChild(title);
-      copy.appendChild(note);
+      if (mode === "nav") {
+        const note = document.createElement("small");
+        note.textContent = tool.popupNote;
+        copy.appendChild(note);
+      }
 
       button.appendChild(thumb);
       button.appendChild(copy);
       return button;
+    }
+
+    function featureCalculatorMarkup() {
+      return `
+        <div class="feature-device-shell feature-calculator-shell">
+          <div class="feature-display-panel feature-calculator-display-panel">
+            <div class="feature-calculator-memory" data-feature-calculator-memory></div>
+            <div class="feature-display feature-calculator-display" data-feature-calculator-display>${calculatorState.display}</div>
+          </div>
+          <div class="feature-calc-grid">
+            <button class="feature-control-btn feature-calc-key utility small-label" type="button" data-calc-key="mrc" data-feature-interactive="true" aria-label="Memory recall and clear">MRC</button>
+            <button class="feature-control-btn feature-calc-key utility small-label" type="button" data-calc-key="m-" data-feature-interactive="true" aria-label="Subtract from memory">M-</button>
+            <button class="feature-control-btn feature-calc-key utility small-label" type="button" data-calc-key="m+" data-feature-interactive="true" aria-label="Add to memory">M+</button>
+            <button class="feature-control-btn feature-calc-key utility" type="button" data-calc-key="%" data-feature-interactive="true" aria-label="Percent">%</button>
+            <button class="feature-control-btn feature-calc-key utility" type="button" data-calc-key="sqrt" data-feature-interactive="true" aria-label="Square root">√</button>
+
+            <button class="feature-control-btn feature-calc-key" type="button" data-calc-key="7" data-feature-interactive="true" aria-label="Seven">7</button>
+            <button class="feature-control-btn feature-calc-key" type="button" data-calc-key="8" data-feature-interactive="true" aria-label="Eight">8</button>
+            <button class="feature-control-btn feature-calc-key" type="button" data-calc-key="9" data-feature-interactive="true" aria-label="Nine">9</button>
+            <button class="feature-control-btn feature-calc-key operator" type="button" data-calc-key="/" data-feature-interactive="true" aria-label="Divide">÷</button>
+            <button class="feature-control-btn feature-calc-key utility" type="button" data-calc-key="ce" data-feature-interactive="true" aria-label="Clear entry">CE</button>
+
+            <button class="feature-control-btn feature-calc-key" type="button" data-calc-key="4" data-feature-interactive="true" aria-label="Four">4</button>
+            <button class="feature-control-btn feature-calc-key" type="button" data-calc-key="5" data-feature-interactive="true" aria-label="Five">5</button>
+            <button class="feature-control-btn feature-calc-key" type="button" data-calc-key="6" data-feature-interactive="true" aria-label="Six">6</button>
+            <button class="feature-control-btn feature-calc-key operator" type="button" data-calc-key="*" data-feature-interactive="true" aria-label="Multiply">×</button>
+            <button class="feature-control-btn feature-calc-key operator" type="button" data-calc-key="-" data-feature-interactive="true" aria-label="Minus">−</button>
+
+            <button class="feature-control-btn feature-calc-key" type="button" data-calc-key="1" data-feature-interactive="true" aria-label="One">1</button>
+            <button class="feature-control-btn feature-calc-key" type="button" data-calc-key="2" data-feature-interactive="true" aria-label="Two">2</button>
+            <button class="feature-control-btn feature-calc-key" type="button" data-calc-key="3" data-feature-interactive="true" aria-label="Three">3</button>
+            <button class="feature-control-btn feature-calc-key operator plus" type="button" data-calc-key="+" data-feature-interactive="true" aria-label="Plus">+</button>
+            <button class="feature-control-btn feature-calc-key primary equals" type="button" data-calc-key="=" data-feature-interactive="true" aria-label="Equals">=</button>
+
+            <button class="feature-control-btn feature-calc-key zero" type="button" data-calc-key="0" data-feature-interactive="true" aria-label="Zero">0</button>
+            <button class="feature-control-btn feature-calc-key" type="button" data-calc-key="." data-feature-interactive="true" aria-label="Decimal point">.</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function featureTimerMarkup() {
+      return `
+        <div class="feature-device-shell feature-timer-shell">
+          <div class="feature-display-panel feature-timer-display-panel">
+            <div class="feature-timer-lock-indicator" data-feature-timer-lock-indicator>${featureTimerState.locked ? "Locked" : "Open"}</div>
+            <div class="feature-timer-labels">
+              <span>MIN</span>
+              <span>SEC</span>
+            </div>
+            <div class="feature-display feature-timer-display" data-feature-timer-display>${formatFeatureTimerTime(featureTimerState.remainingMs)}</div>
+          </div>
+          <div class="feature-timer-board">
+            <div class="feature-timer-cluster">
+              <div class="feature-timer-adjust-row">
+                <button class="feature-control-btn feature-timer-sign utility" type="button" data-feature-action="timer-minute-minus" data-feature-interactive="true" data-feature-timer-adjust aria-label="Subtract one minute"${featureTimerState.locked ? " disabled" : ""}>−</button>
+                <button class="feature-control-btn feature-timer-btn-min" type="button" data-feature-action="timer-minute-plus" data-feature-interactive="true" data-feature-timer-adjust aria-label="Add one minute"${featureTimerState.locked ? " disabled" : ""}><span>MIN</span></button>
+                <button class="feature-control-btn feature-timer-sign utility" type="button" data-feature-action="timer-minute-plus" data-feature-interactive="true" data-feature-timer-adjust aria-label="Add one minute"${featureTimerState.locked ? " disabled" : ""}>+</button>
+              </div>
+            </div>
+            <button class="feature-control-btn feature-timer-btn-toggle primary${featureTimerState.running ? " active" : ""}" type="button" data-feature-action="timer-toggle" data-feature-interactive="true" aria-label="${featureTimerState.running ? "Pause timer" : "Start timer"}">
+              <span class="feature-timer-toggle-star">★</span>
+              <span class="feature-timer-toggle-label" data-feature-timer-toggle-label>${featureTimerState.running ? "Pause" : "Start"}</span>
+            </button>
+            <div class="feature-timer-cluster">
+              <div class="feature-timer-adjust-row">
+                <button class="feature-control-btn feature-timer-sign utility" type="button" data-feature-action="timer-second-minus" data-feature-interactive="true" data-feature-timer-adjust aria-label="Subtract one second"${featureTimerState.locked ? " disabled" : ""}>−</button>
+                <button class="feature-control-btn feature-timer-btn-sec" type="button" data-feature-action="timer-second-plus" data-feature-interactive="true" data-feature-timer-adjust aria-label="Add one second"${featureTimerState.locked ? " disabled" : ""}><span>SEC</span></button>
+                <button class="feature-control-btn feature-timer-sign utility" type="button" data-feature-action="timer-second-plus" data-feature-interactive="true" data-feature-timer-adjust aria-label="Add one second"${featureTimerState.locked ? " disabled" : ""}>+</button>
+              </div>
+            </div>
+          </div>
+          <div class="feature-timer-footer">
+            <button class="feature-control-btn feature-timer-btn-reset utility" type="button" data-feature-action="timer-reset" data-feature-interactive="true" aria-label="Reset timer">Reset</button>
+            <button class="feature-control-btn feature-timer-btn-lock utility${featureTimerState.locked ? " locked" : ""}" type="button" data-feature-action="timer-lock" data-feature-interactive="true" data-feature-timer-lock-btn aria-label="Lock timer editing">${featureTimerState.locked ? "Unlock" : "Lock"}</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function featureDieMarkup() {
+      const historyMarkup = featureDieState.history
+        .map((value) => `<span class="feature-die-history-chip">${value}</span>`)
+        .join("");
+      return `
+        <div class="feature-device-shell feature-die-shell${featureDieState.rolling ? " rolling" : ""}">
+          <button class="feature-die-face" type="button" data-feature-action="roll-die" data-feature-interactive="true" aria-label="Roll the die">
+            <div class="feature-die-pip-layer" aria-hidden="true">
+              <span class="feature-die-pip pip-1${DIE_FACE_PIPS[featureDieState.value].includes(1) ? " visible" : ""}"></span>
+              <span class="feature-die-pip pip-2${DIE_FACE_PIPS[featureDieState.value].includes(2) ? " visible" : ""}"></span>
+              <span class="feature-die-pip pip-3${DIE_FACE_PIPS[featureDieState.value].includes(3) ? " visible" : ""}"></span>
+              <span class="feature-die-pip pip-4${DIE_FACE_PIPS[featureDieState.value].includes(4) ? " visible" : ""}"></span>
+              <span class="feature-die-pip pip-5${DIE_FACE_PIPS[featureDieState.value].includes(5) ? " visible" : ""}"></span>
+              <span class="feature-die-pip pip-6${DIE_FACE_PIPS[featureDieState.value].includes(6) ? " visible" : ""}"></span>
+              <span class="feature-die-pip pip-7${DIE_FACE_PIPS[featureDieState.value].includes(7) ? " visible" : ""}"></span>
+            </div>
+          </button>
+          <div class="feature-die-controls">
+            <button class="action-btn" type="button" data-feature-action="roll-die" data-feature-interactive="true">Roll Die</button>
+            <p class="feature-die-result" data-feature-die-result>Result: ${featureDieState.value}</p>
+          </div>
+          <div class="feature-die-history" data-feature-die-history>${historyMarkup}</div>
+        </div>
+      `;
+    }
+
+    function buildFeatureSurfaceWidget(item) {
+      const widget = document.createElement("div");
+      widget.className = `feature-surface-widget feature-surface-${item.toolId}`;
+      widget.dataset.featureToolItem = item.toolId;
+      widget.innerHTML = item.toolId === "timer"
+        ? featureTimerMarkup()
+        : item.toolId === "die"
+          ? featureDieMarkup()
+          : featureCalculatorMarkup();
+      widget.querySelectorAll(".feature-control-btn, .feature-surface-widget .action-btn").forEach(attachFeatureButtonPressFeedback);
+      return widget;
     }
 
     function renderFeaturePopupChoices(container, surface) {
@@ -5013,20 +5442,47 @@
         featureTimerSecondBtn,
         featureTimerSecondPlusBtn
       ];
+      const timerRoots = allFeatureSurfaceWidgetRoots("timer");
+      const stateLabel = featureTimerState.running
+        ? "Running"
+        : featureTimerState.remainingMs === featureTimerState.presetMs
+          ? "Ready"
+          : "Paused";
+      const timerMessage = message || (featureTimerState.running ? "Timer running." : featureTimerState.locked ? `${stateLabel} • Locked` : stateLabel);
+
       timerAdjustButtons.forEach((button) => {
         if (button) {
           button.disabled = featureTimerState.locked;
         }
       });
+      timerRoots.forEach((root) => {
+        root.querySelectorAll("[data-feature-timer-display]").forEach((node) => {
+          node.textContent = formatFeatureTimerTime(featureTimerState.remainingMs);
+        });
+        root.querySelectorAll("[data-feature-timer-lock-indicator]").forEach((node) => {
+          node.textContent = featureTimerState.locked ? "Locked" : "Open";
+        });
+        root.querySelectorAll("[data-feature-timer-adjust]").forEach((button) => {
+          button.disabled = featureTimerState.locked;
+        });
+        root.querySelectorAll("[data-feature-timer-toggle-label]").forEach((node) => {
+          node.textContent = featureTimerState.running ? "Pause" : "Start";
+        });
+        root.querySelectorAll("[data-feature-action='timer-toggle']").forEach((button) => {
+          button.classList.toggle("active", featureTimerState.running);
+          button.setAttribute("aria-label", featureTimerState.running ? "Pause timer" : "Start timer");
+        });
+        root.querySelectorAll("[data-feature-timer-lock-btn]").forEach((button) => {
+          button.textContent = featureTimerState.locked ? "Unlock" : "Lock";
+          button.classList.toggle("locked", featureTimerState.locked);
+          button.setAttribute("aria-label", featureTimerState.locked ? "Unlock timer editing" : "Lock timer editing");
+        });
+        root.setAttribute("aria-label", `Timer tool. ${timerMessage}`);
+      });
       if (featureTimerPresetChip) {
         featureTimerPresetChip.textContent = `Preset ${formatFeatureTimerTime(featureTimerState.presetMs)}`;
       }
       if (featureTimerStateChip) {
-        const stateLabel = featureTimerState.running
-          ? "Running"
-          : featureTimerState.remainingMs === featureTimerState.presetMs
-            ? "Ready"
-            : "Paused";
         featureTimerStateChip.textContent = featureTimerState.locked ? `${stateLabel} • Locked` : stateLabel;
       }
       if (featureTimerToggleBtn) {
@@ -5161,9 +5617,27 @@
     }
 
     function updateCalculatorUI(message = "") {
+      const memoryVisible = Math.abs(calculatorState.memory) > 1e-12;
       featureCalculatorDisplay.textContent = calculatorState.display;
-      featureCalculatorMemoryBadge.textContent = Math.abs(calculatorState.memory) > 1e-12 ? "M" : "";
-      featureCalculatorMemoryBadge.style.opacity = Math.abs(calculatorState.memory) > 1e-12 ? "1" : "0";
+      featureCalculatorMemoryBadge.textContent = memoryVisible ? "M" : "";
+      featureCalculatorMemoryBadge.style.opacity = memoryVisible ? "1" : "0";
+      allFeatureSurfaceWidgetRoots("calculator").forEach((root) => {
+        root.querySelectorAll("[data-feature-calculator-display]").forEach((node) => {
+          node.textContent = calculatorState.display;
+        });
+        root.querySelectorAll("[data-feature-calculator-memory]").forEach((node) => {
+          node.textContent = memoryVisible ? "M" : "";
+          node.style.opacity = memoryVisible ? "1" : "0";
+        });
+        const rootLabel = message
+          ? `Calculator tool. ${message}`
+          : calculatorState.error
+            ? "Calculator tool. Error."
+            : calculatorState.operator
+              ? `Calculator tool. ${calculatorState.operator} selected.`
+              : "Calculator tool. Ready.";
+        root.setAttribute("aria-label", rootLabel);
+      });
       if (message) {
         featureCalculatorStatus.textContent = message;
         return;
@@ -5430,6 +5904,29 @@
         featureDieHistory.appendChild(chip);
       });
       featureDieShell.setAttribute("aria-label", `Roll the die. Current result ${featureDieState.value}.`);
+      allFeatureSurfaceWidgetRoots("die").forEach((root) => {
+        root.querySelectorAll(".feature-die-pip").forEach((pip, index) => {
+          pip.classList.toggle("visible", visiblePips.has(index + 1));
+        });
+        root.querySelectorAll("[data-feature-die-result]").forEach((node) => {
+          node.textContent = `Result: ${featureDieState.value}`;
+        });
+        root.querySelectorAll("[data-feature-die-history]").forEach((historyNode) => {
+          historyNode.innerHTML = "";
+          featureDieState.history.forEach((value) => {
+            const chip = document.createElement("span");
+            chip.className = "feature-die-history-chip";
+            chip.textContent = value;
+            historyNode.appendChild(chip);
+          });
+        });
+        root.querySelectorAll(".feature-die-shell").forEach((shell) => {
+          shell.classList.toggle("rolling", featureDieState.rolling);
+        });
+        root.querySelectorAll("[data-feature-action='roll-die']").forEach((button) => {
+          button.setAttribute("aria-label", `Roll the die. Current result ${featureDieState.value}.`);
+        });
+      });
       if (message) {
         featureDieStatus.textContent = message;
       }
@@ -5525,7 +6022,7 @@
     }
 
     function openFeatureToolFromChoice(toolId, surface) {
-      openFeatureToolsModal(surface, toolId);
+      showFeatureToolOnSurface(toolId, surface);
     }
 
     function attachFeatureButtonPressFeedback(button) {
@@ -8762,6 +9259,12 @@
         return Number.isFinite(item && item.heightRatio) ? item.heightRatio : letterVariant.tileHeightRatio;
       }
 
+      if (item.kind === "feature") {
+        return Number.isFinite(item.heightRatio) && item.heightRatio > 0
+          ? item.heightRatio
+          : featureSurfaceDimensions(item.toolId).stageHeightRatio;
+      }
+
       if (item.kind === "photo") {
         return Number.isFinite(item.heightRatio) && item.heightRatio > 0 ? item.heightRatio : 0.75;
       }
@@ -9023,6 +9526,9 @@
       if (kind === "space") {
         return MIN_SPACE_SIZE;
       }
+      if (kind === "feature") {
+        return 120;
+      }
       if (kind === "photo") {
         return MIN_PHOTO_SIZE;
       }
@@ -9058,6 +9564,9 @@
         if (kind === "space") {
           return 112;
         }
+        if (kind === "feature") {
+          return 240;
+        }
         if (kind === "photo") {
           return 176;
         }
@@ -9069,13 +9578,15 @@
 
       const candidate = kind === "space"
         ? Math.min(rect.width * 0.18, rect.height * 0.24, 164)
+        : kind === "feature"
+          ? Math.min(rect.width * 0.28, (rect.height * 0.42) / Math.max(0.45, heightRatioForItem(probeItem)), 360)
         : kind === "photo"
           ? Math.min(rect.width * 0.34, (rect.height * 0.34) / Math.max(0.28, heightRatioForItem(probeItem)), 300)
         : kind === "icon"
           ? Math.min(rect.width * 0.16, rect.height * 0.24, 170)
           : Math.min(rect.width * 0.19, rect.height * 0.38, 186);
 
-      return clamp(Math.round(candidate), minTileSize(kind), kind === "space" ? 180 : kind === "photo" ? 320 : 220);
+      return clamp(Math.round(candidate), minTileSize(kind), kind === "space" ? 180 : kind === "photo" ? 320 : kind === "feature" ? 420 : 220);
     }
 
     function maxTileSize(kindOrItem = "letter") {
@@ -9248,6 +9759,10 @@
 
           if (item.kind === "space") {
             tile.textContent = "Space";
+          } else if (item.kind === "feature") {
+            tile.className = "placed-feature";
+            applyPlacedStyles(tile, item);
+            tile.appendChild(buildFeatureSurfaceWidget(item));
           } else if (item.kind === "icon" || item.kind === "photo") {
             const image = document.createElement("img");
             image.src = item.src;
@@ -10055,7 +10570,11 @@
     }
 
     function handleSpellStagePointerDown(event) {
-      const tile = event.target.closest(".placed-tile, .space-chip, .placed-icon, .placed-photo");
+      if (event.target.closest("[data-feature-interactive]")) {
+        return;
+      }
+
+      const tile = event.target.closest(".placed-tile, .space-chip, .placed-icon, .placed-photo, .placed-feature");
       if (tile) {
         if (!state.pointerSession) {
           startSurfaceItemGesture("stage", event, tile);
@@ -10160,6 +10679,8 @@
         if (item.kind === "letter") {
           item.letterVariant = item.letterVariant || "classic";
           item.heightRatio = Number.isFinite(item.heightRatio) ? item.heightRatio : getLetterVariant(item.letterVariant).tileHeightRatio;
+        } else if (isFeatureItem(item)) {
+          syncFeatureItemShape(item);
         }
         item.size = clamp(item.size || defaultTileSize(item), minTileSize(item.kind), maxTileSize(item));
         item.rotation = normalizeRotation(item.rotation || 0);
@@ -10344,13 +10865,15 @@
     function defaultBoardStickerSize(item = { kind: "icon", widthRatio: 1 }) {
       const rect = boardRect();
       if (!rect.width || !rect.height) {
-        return item.kind === "photo" ? 176 : 132;
+        return item.kind === "photo" ? 176 : item.kind === "feature" ? 220 : 132;
       }
 
       const candidate = item.kind === "photo"
         ? Math.min(rect.height * 0.34, (rect.width * 0.42) / boardItemWidthRatio(item), 260)
-        : Math.min(rect.width * 0.18, rect.height * 0.28, 240);
-      return clamp(Math.round(candidate), item.kind === "photo" ? MIN_PHOTO_SIZE : MIN_ICON_SIZE, 320);
+        : item.kind === "feature"
+          ? Math.min(rect.height * 0.46, (rect.width * 0.42) / boardItemWidthRatio(item), 320)
+          : Math.min(rect.width * 0.18, rect.height * 0.28, 240);
+      return clamp(Math.round(candidate), item.kind === "photo" ? MIN_PHOTO_SIZE : item.kind === "feature" ? 120 : MIN_ICON_SIZE, 420);
     }
 
     function maxBoardStickerSize(item = { widthRatio: 1 }) {
@@ -10362,7 +10885,7 @@
       const widthRatio = boardItemWidthRatio(item);
       return clamp(
         Math.floor(Math.min((rect.width - 12) / widthRatio, rect.height - 12, MAX_BOARD_ICON_SIZE)),
-        item.kind === "photo" ? MIN_PHOTO_SIZE : MIN_ICON_SIZE,
+        item.kind === "photo" ? MIN_PHOTO_SIZE : item.kind === "feature" ? 120 : MIN_ICON_SIZE,
         MAX_BOARD_ICON_SIZE
       );
     }
@@ -10450,16 +10973,20 @@
         .sort((a, b) => a.zIndex - b.zIndex)
         .forEach((item) => {
           const sticker = document.createElement("div");
-          sticker.className = `board-sticker${item.colorable ? " colorable" : ""}${item.kind === "photo" ? " photo" : ""}`;
+          sticker.className = `board-sticker${item.colorable ? " colorable" : ""}${item.kind === "photo" ? " photo" : ""}${item.kind === "feature" ? " feature-widget-item" : ""}`;
           sticker.dataset.itemId = item.id;
           sticker.dataset.colorable = item.colorable ? "true" : "false";
           applyBoardItemStyles(sticker, item);
 
-          const image = document.createElement("img");
-          image.src = boardStickerSource(item);
-          image.alt = item.label;
-          image.draggable = false;
-          sticker.appendChild(image);
+          if (item.kind === "feature") {
+            sticker.appendChild(buildFeatureSurfaceWidget(item));
+          } else {
+            const image = document.createElement("img");
+            image.src = boardStickerSource(item);
+            image.alt = item.label;
+            image.draggable = false;
+            sticker.appendChild(image);
+          }
           boardStickerLayer.appendChild(sticker);
         });
     }
@@ -10529,6 +11056,10 @@
         return;
       }
 
+      if (event.target.closest("[data-feature-interactive]")) {
+        return;
+      }
+
       const sticker = event.target.closest(".board-sticker");
       if (sticker) {
         if (!state.pointerSession) {
@@ -10539,10 +11070,13 @@
 
     function normalizeBoardItems() {
       state.boardItems.forEach((item) => {
+        if (isFeatureItem(item)) {
+          syncFeatureItemShape(item);
+        }
         item.widthRatio = boardItemWidthRatio(item);
         item.size = clamp(
           item.size || defaultBoardStickerSize(item),
-          item.kind === "photo" ? MIN_PHOTO_SIZE : MIN_ICON_SIZE,
+          item.kind === "photo" ? MIN_PHOTO_SIZE : item.kind === "feature" ? 120 : MIN_ICON_SIZE,
           maxBoardStickerSize(item)
         );
         item.rotation = normalizeRotation(item.rotation || 0);
@@ -10766,6 +11300,10 @@
         return;
       }
 
+      if (event.target.closest("[data-feature-interactive]")) {
+        return;
+      }
+
       event.preventDefault();
       state.drawing = true;
       state.lastPoint = pointFromEvent(event);
@@ -10880,11 +11418,11 @@
     }
 
     function handleFeatureKeyboardShortcuts(event) {
-      if (!featureToolsModal.classList.contains("modal-open")) {
+      if (!featureToolsModal.classList.contains("modal-open") && !allFeatureSurfaceWidgetRoots().length) {
         return false;
       }
 
-      if (event.key === "Escape") {
+      if (event.key === "Escape" && featureToolsModal.classList.contains("modal-open")) {
         event.preventDefault();
         closeFeatureToolsModal();
         return true;
@@ -10965,6 +11503,57 @@
       }
 
       return false;
+    }
+
+    function handleFeatureSurfaceClick(event) {
+      const target = event.target.closest("[data-feature-interactive]");
+      if (!target) {
+        return;
+      }
+
+      const widget = target.closest("[data-feature-tool-item]");
+      if (!widget) {
+        return;
+      }
+
+      state.selectedFeatureTool = widget.dataset.featureToolItem || state.selectedFeatureTool;
+      state.featureToolSurface = target.closest(".board-sticker") ? "board" : "spell";
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (target.dataset.calcKey) {
+        handleCalculatorKey(target.dataset.calcKey);
+        return;
+      }
+
+      switch (target.dataset.featureAction) {
+        case "timer-minute-minus":
+          adjustFeatureTimer(-(60 * 1000));
+          break;
+        case "timer-minute-plus":
+          adjustFeatureTimer(60 * 1000);
+          break;
+        case "timer-second-minus":
+          adjustFeatureTimer(-1000);
+          break;
+        case "timer-second-plus":
+          adjustFeatureTimer(1000);
+          break;
+        case "timer-toggle":
+          toggleFeatureTimerRunning();
+          break;
+        case "timer-reset":
+          resetFeatureTimer();
+          break;
+        case "timer-lock":
+          toggleFeatureTimerLock();
+          break;
+        case "roll-die":
+          rollFeatureDie();
+          break;
+        default:
+          break;
+      }
     }
 
     function handleKeyboardShortcuts(event) {
@@ -11057,7 +11646,9 @@
     document.addEventListener("fullscreenchange", updateFullscreenLabel);
     document.addEventListener("keydown", handleKeyboardShortcuts);
     spellStage.addEventListener("pointerdown", handleSpellStagePointerDown);
+    spellStage.addEventListener("click", handleFeatureSurfaceClick);
     boardStickerLayer.addEventListener("pointerdown", handleBoardStickerLayerPointerDown);
+    boardStickerLayer.addEventListener("click", handleFeatureSurfaceClick);
     document.addEventListener("pointermove", handleGlobalPointerMove);
     document.addEventListener("pointerup", finishPointerSession);
     document.addEventListener("pointercancel", finishPointerSession);
