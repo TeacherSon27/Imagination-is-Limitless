@@ -308,10 +308,44 @@
       left: 8px;
       bottom: 8px;
       z-index: 12;
+      display: block;
+      justify-items: center;
+      pointer-events: auto;
+    }
+
+    .launcher-option-stack {
+      position: absolute;
+      left: 0;
+      bottom: calc(100% + 12px);
       display: grid;
       gap: 12px;
       justify-items: center;
+      transform-origin: center bottom;
+      transition:
+        opacity var(--launcher-motion-ms) var(--launcher-motion-ease),
+        transform var(--launcher-motion-ms) var(--launcher-motion-ease),
+        visibility 0s linear 0s;
+      will-change: opacity, transform;
+    }
+
+    .bank-card.collapsed .launcher-option-stack,
+    .board-top.collapsed .launcher-option-stack {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transform: translate3d(0, 10px, 0) scale(0.82);
+      transition:
+        opacity var(--launcher-motion-ms) var(--launcher-motion-ease),
+        transform var(--launcher-motion-ms) var(--launcher-motion-ease),
+        visibility 0s linear var(--launcher-motion-ms);
+    }
+
+    .bank-card:not(.collapsed) .launcher-option-stack,
+    .board-top:not(.collapsed) .launcher-option-stack {
+      opacity: 1;
+      visibility: visible;
       pointer-events: auto;
+      transform: translate3d(0, 0, 0) scale(1);
     }
 
     .tray-launcher,
@@ -500,8 +534,8 @@
       bottom: 0;
     }
 
-    .bank-card.collapsed .tray-launcher-stack .tray-launcher,
-    .board-top.collapsed .tray-launcher-stack .tray-launcher {
+    .bank-card.collapsed .tray-launcher-stack .tray-launcher:not(.master-launcher),
+    .board-top.collapsed .tray-launcher-stack .tray-launcher:not(.master-launcher) {
       position: static;
       width: 72px;
       height: 72px;
@@ -555,6 +589,46 @@
       font-size: 0.98rem;
       letter-spacing: 0.08em;
       text-transform: uppercase;
+    }
+
+    .close-launcher .tray-launcher-icon {
+      font-size: 1.28rem;
+      line-height: 1;
+    }
+
+    .master-launcher .tray-launcher-icon {
+      font-size: 1.34rem;
+    }
+
+    .bank-card.collapsed .master-launcher .tray-launcher-icon,
+    .board-top.collapsed .master-launcher .tray-launcher-icon {
+      font-size: 1.6rem;
+    }
+
+    .tray-launcher-stack #closeBoardBtn {
+      position: static;
+      top: auto;
+      left: auto;
+      z-index: auto;
+      width: 56px;
+      min-width: 56px;
+      min-height: 56px;
+      padding: 0;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0;
+      letter-spacing: 0;
+      flex: 0 0 56px;
+    }
+
+    .bank-card.collapsed .tray-launcher-stack #closeBoardBtn,
+    .board-top.collapsed .tray-launcher-stack #closeBoardBtn {
+      width: 72px;
+      height: 72px;
+      min-width: 72px;
+      min-height: 72px;
     }
 
     .gold-launcher.inactive {
@@ -3805,12 +3879,6 @@
         padding: 8px 8px 8px 76px;
       }
 
-      #closeBoardBtn {
-        top: 12px;
-        left: 12px;
-        min-width: 108px;
-      }
-
       .icon-bank {
         grid-template-columns: repeat(auto-fit, minmax(58px, 1fr));
       }
@@ -3952,40 +4020,42 @@
 
           <section class="bank-card collapsed" id="spellTray">
             <div class="tray-launcher-stack">
-              <div class="launcher-module" id="spellingToolsControl">
-                <button class="gold-launcher spell-tools-launcher" id="spellingToolsLauncher" type="button" aria-label="Spelling board tools." aria-expanded="false">
-                  <span class="tray-launcher-icon">≡</span>
-                </button>
-                <div class="launcher-popup utility-popup hidden" id="spellingToolsPopup" aria-hidden="true">
-                  <div class="utility-actions">
-                    <button class="action-btn" id="fullscreenBtn" type="button">Fullscreen</button>
-                    <button class="ghost-btn" id="openBoardBtn" type="button">Open Screen Board</button>
-                    <button class="ghost-btn" id="removeBtn" type="button">Remove Last</button>
-                    <button class="action-btn" id="clearBtn" type="button">Clear All</button>
+              <div class="launcher-option-stack" id="spellLauncherOptions" aria-hidden="true">
+                <div class="launcher-module" id="spellingToolsControl">
+                  <button class="gold-launcher spell-tools-launcher" id="spellingToolsLauncher" type="button" aria-label="Spelling board tools." aria-expanded="false">
+                    <span class="tray-launcher-icon">≡</span>
+                  </button>
+                  <div class="launcher-popup utility-popup hidden" id="spellingToolsPopup" aria-hidden="true">
+                    <div class="utility-actions">
+                      <button class="action-btn" id="fullscreenBtn" type="button">Fullscreen</button>
+                      <button class="ghost-btn" id="openBoardBtn" type="button">Open Screen Board</button>
+                      <button class="ghost-btn" id="removeBtn" type="button">Remove Last</button>
+                      <button class="action-btn" id="clearBtn" type="button">Clear All</button>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div class="launcher-module background-control" id="backgroundControl">
-                <button class="gold-launcher background-launcher" id="backgroundLauncher" type="button" aria-label="Background controls closed. Tap once to open." aria-expanded="false">
-                  <span class="tray-launcher-icon">◐</span>
-                </button>
-                <div class="launcher-popup background-popup hidden" id="backgroundPopup" aria-hidden="true">
-                  <p class="background-popup-title">Background Fade</p>
-                  <input class="background-slider" id="backgroundTransparencyRange" type="range" min="0" max="100" value="0" aria-label="Background fade level">
+                <div class="launcher-module background-control" id="backgroundControl">
+                  <button class="gold-launcher background-launcher" id="backgroundLauncher" type="button" aria-label="Background controls closed. Tap once to open." aria-expanded="false">
+                    <span class="tray-launcher-icon">◐</span>
+                  </button>
+                  <div class="launcher-popup background-popup hidden" id="backgroundPopup" aria-hidden="true">
+                    <p class="background-popup-title">Background Fade</p>
+                    <input class="background-slider" id="backgroundTransparencyRange" type="range" min="0" max="100" value="0" aria-label="Background fade level">
+                  </div>
                 </div>
-              </div>
-              <div class="launcher-module" id="spellFeatureControl">
-                <button class="gold-launcher feature-tools-launcher" id="spellFeatureLauncher" type="button" aria-label="Open the calculator, timer, and die tools for the spelling board." aria-expanded="false">
-                  <span class="tray-launcher-icon">FX</span>
-                </button>
-                <div class="launcher-popup feature-tools-popup hidden" id="spellFeaturePopup" aria-hidden="true">
-                  <div class="feature-popup-grid" id="spellFeaturePopupGrid"></div>
+                <div class="launcher-module" id="spellFeatureControl">
+                  <button class="gold-launcher feature-tools-launcher" id="spellFeatureLauncher" type="button" aria-label="Open the calculator, timer, and die tools for the spelling board." aria-expanded="false">
+                    <span class="tray-launcher-icon">FX</span>
+                  </button>
+                  <div class="launcher-popup feature-tools-popup hidden" id="spellFeaturePopup" aria-hidden="true">
+                    <div class="feature-popup-grid" id="spellFeaturePopupGrid"></div>
+                  </div>
                 </div>
+                <button class="gold-launcher activity-launcher" id="spellActivityLauncher" type="button" aria-label="Open Activity Product for the spelling board." aria-expanded="false">
+                  <span class="tray-launcher-icon">AP</span>
+                </button>
               </div>
-              <button class="gold-launcher activity-launcher" id="spellActivityLauncher" type="button" aria-label="Open Activity Product for the spelling board." aria-expanded="false">
-                <span class="tray-launcher-icon">AP</span>
-              </button>
-              <button class="tray-launcher" id="spellTrayLauncher" type="button" aria-label="Spelling tray launcher. Tap once to open the tray.">
+              <button class="tray-launcher gold-launcher master-launcher" id="spellTrayLauncher" type="button" aria-label="Spelling launcher closed. Tap once to open." aria-expanded="false">
                 <span class="tray-launcher-icon">Aa</span>
               </button>
             </div>
@@ -4061,7 +4131,6 @@
   <div class="modal-backdrop hidden" id="boardModal" aria-hidden="true">
     <div class="board-shell" role="dialog" aria-modal="true" aria-label="Screen Board">
       <div class="board-inner">
-        <button class="close-btn board-control-btn" id="closeBoardBtn" type="button">Close</button>
         <div class="board-wrap" id="boardWrap">
           <canvas id="drawCanvas"></canvas>
           <div class="board-sticker-layer" id="boardStickerLayer" aria-hidden="true"></div>
@@ -4069,27 +4138,32 @@
 
         <section class="board-top collapsed" id="boardTop">
           <div class="tray-launcher-stack">
-            <div class="launcher-module background-control" id="boardBackgroundControl">
-              <button class="gold-launcher background-launcher" id="boardBackgroundLauncher" type="button" aria-label="Screen Board background controls closed. Tap once to open." aria-expanded="false">
-                <span class="tray-launcher-icon">◐</span>
+            <div class="launcher-option-stack" id="boardLauncherOptions" aria-hidden="true">
+              <button class="gold-launcher close-launcher board-control-btn" id="closeBoardBtn" type="button" aria-label="Close the Screen Board.">
+                <span class="tray-launcher-icon">✕</span>
               </button>
-              <div class="launcher-popup background-popup hidden" id="boardBackgroundPopup" aria-hidden="true">
-                <p class="background-popup-title">Background Fade</p>
-                <input class="background-slider" id="boardBackgroundTransparencyRange" type="range" min="0" max="100" value="0" aria-label="Screen Board background fade level">
+              <div class="launcher-module background-control" id="boardBackgroundControl">
+                <button class="gold-launcher background-launcher" id="boardBackgroundLauncher" type="button" aria-label="Screen Board background controls closed. Tap once to open." aria-expanded="false">
+                  <span class="tray-launcher-icon">◐</span>
+                </button>
+                <div class="launcher-popup background-popup hidden" id="boardBackgroundPopup" aria-hidden="true">
+                  <p class="background-popup-title">Background Fade</p>
+                  <input class="background-slider" id="boardBackgroundTransparencyRange" type="range" min="0" max="100" value="0" aria-label="Screen Board background fade level">
+                </div>
               </div>
-            </div>
-            <div class="launcher-module" id="boardFeatureControl">
-              <button class="gold-launcher feature-tools-launcher" id="boardFeatureLauncher" type="button" aria-label="Open the calculator, timer, and die tools for the screen board." aria-expanded="false">
-                <span class="tray-launcher-icon">FX</span>
+              <div class="launcher-module" id="boardFeatureControl">
+                <button class="gold-launcher feature-tools-launcher" id="boardFeatureLauncher" type="button" aria-label="Open the calculator, timer, and die tools for the screen board." aria-expanded="false">
+                  <span class="tray-launcher-icon">FX</span>
+                </button>
+                <div class="launcher-popup feature-tools-popup hidden" id="boardFeaturePopup" aria-hidden="true">
+                  <div class="feature-popup-grid" id="boardFeaturePopupGrid"></div>
+                </div>
+              </div>
+              <button class="gold-launcher activity-launcher" id="boardActivityLauncher" type="button" aria-label="Open Activity Product for the screen board." aria-expanded="false">
+                <span class="tray-launcher-icon">AP</span>
               </button>
-              <div class="launcher-popup feature-tools-popup hidden" id="boardFeaturePopup" aria-hidden="true">
-                <div class="feature-popup-grid" id="boardFeaturePopupGrid"></div>
-              </div>
             </div>
-            <button class="gold-launcher activity-launcher" id="boardActivityLauncher" type="button" aria-label="Open Activity Product for the screen board." aria-expanded="false">
-              <span class="tray-launcher-icon">AP</span>
-            </button>
-            <button class="tray-launcher" id="boardTrayLauncher" type="button" aria-label="Screen Board tray launcher. Tap once to open the tray.">
+            <button class="tray-launcher gold-launcher master-launcher" id="boardTrayLauncher" type="button" aria-label="Screen Board launcher closed. Tap once to open." aria-expanded="false">
               <span class="tray-launcher-icon">✦</span>
             </button>
           </div>
@@ -4473,6 +4547,7 @@
     const coverAccessMessage = document.getElementById("coverAccessMessage");
     const enterGameBtn = document.getElementById("enterGameBtn");
     const spellTray = document.getElementById("spellTray");
+    const spellLauncherOptions = document.getElementById("spellLauncherOptions");
     const spellingToolsControl = document.getElementById("spellingToolsControl");
     const spellingToolsLauncher = document.getElementById("spellingToolsLauncher");
     const spellingToolsPopup = document.getElementById("spellingToolsPopup");
@@ -4518,6 +4593,7 @@
     const boardBackgroundLauncher = document.getElementById("boardBackgroundLauncher");
     const boardBackgroundPopup = document.getElementById("boardBackgroundPopup");
     const boardBackgroundTransparencyRange = document.getElementById("boardBackgroundTransparencyRange");
+    const boardLauncherOptions = document.getElementById("boardLauncherOptions");
     const boardFeatureControl = document.getElementById("boardFeatureControl");
     const boardFeatureLauncher = document.getElementById("boardFeatureLauncher");
     const boardFeaturePopup = document.getElementById("boardFeaturePopup");
@@ -10705,30 +10781,39 @@
     function setSpellTrayExpanded(expanded) {
       state.spellTrayExpanded = Boolean(expanded);
       spellTray.classList.toggle("collapsed", !state.spellTrayExpanded);
+      if (spellLauncherOptions) {
+        spellLauncherOptions.setAttribute("aria-hidden", String(!state.spellTrayExpanded));
+      }
       if (!state.spellTrayExpanded) {
+        setSpellingToolsPanelVisible(false);
+        setBackgroundPanelVisible(false);
         setSpellFeaturePanelVisible(false);
       }
       spellTrayLauncher.setAttribute("aria-expanded", String(state.spellTrayExpanded));
       spellTrayLauncher.setAttribute(
         "aria-label",
         state.spellTrayExpanded
-          ? "Spelling tray open. Tap once to collapse."
-          : "Spelling tray closed. Tap once to open."
+          ? "Spelling launcher open. Tap once to close all launcher options."
+          : "Spelling launcher closed. Tap once to show launcher options."
       );
     }
 
     function setBoardTrayExpanded(expanded) {
       state.boardTrayExpanded = Boolean(expanded);
       boardTop.classList.toggle("collapsed", !state.boardTrayExpanded);
+      if (boardLauncherOptions) {
+        boardLauncherOptions.setAttribute("aria-hidden", String(!state.boardTrayExpanded));
+      }
       if (!state.boardTrayExpanded) {
+        setBoardBackgroundPanelVisible(false);
         setBoardFeaturePanelVisible(false);
       }
       boardTrayLauncher.setAttribute("aria-expanded", String(state.boardTrayExpanded));
       boardTrayLauncher.setAttribute(
         "aria-label",
         state.boardTrayExpanded
-          ? "Screen Board tray open. Tap once to collapse."
-          : "Screen Board tray closed. Tap once to open."
+          ? "Screen Board launcher open. Tap once to close all launcher options."
+          : "Screen Board launcher closed. Tap once to show launcher options."
       );
 
       if (!state.boardTrayExpanded) {
@@ -11915,6 +12000,7 @@
       const ratio = window.devicePixelRatio || 1;
       canvas.width = Math.max(1, Math.floor(rect.width * ratio));
       canvas.height = Math.max(1, Math.floor(rect.height * ratio));
+      ctx.imageSmoothingEnabled = true;
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
 
@@ -12225,27 +12311,20 @@
       const lowLatency = state.currentStrokePointerType === "pen" || state.currentStrokePointerType === "touch";
       ctx.save();
       ctx.globalCompositeOperation = "source-over";
-      ctx.shadowColor = colorWithAlpha(state.selectedColor, 0.16);
-      ctx.shadowBlur = lineWidth * (lowLatency ? 0.16 : 0.34);
+      ctx.shadowColor = colorWithAlpha(state.selectedColor, 0.1);
+      ctx.shadowBlur = lineWidth * (lowLatency ? 0.08 : 0.22);
       traceQuadratic(from, control, to, {
-        lineWidth: lineWidth * (lowLatency ? 1.24 : 1.6),
-        strokeStyle: colorWithAlpha(state.selectedColor, lowLatency ? 0.26 : 0.2)
+        lineWidth: lineWidth * (lowLatency ? 1.12 : 1.46),
+        strokeStyle: colorWithAlpha(state.selectedColor, lowLatency ? 0.22 : 0.18)
       });
       traceQuadratic(from, control, to, {
-        lineWidth: lineWidth * 1.08,
-        strokeStyle: colorWithAlpha(state.selectedColor, 0.4)
+        lineWidth: lineWidth * 0.98,
+        strokeStyle: colorWithAlpha(state.selectedColor, lowLatency ? 0.56 : 0.46)
       });
-      if (!lowLatency) {
-        traceQuadratic(from, control, to, {
-          lineWidth: lineWidth * 0.76,
-          strokeStyle: colorWithAlpha(state.selectedColor, 0.96)
-        });
-      } else {
-        traceQuadratic(from, control, to, {
-          lineWidth: lineWidth * 0.82,
-          strokeStyle: colorWithAlpha(state.selectedColor, 0.94)
-        });
-      }
+      traceQuadratic(from, control, to, {
+        lineWidth: lineWidth * (lowLatency ? 0.84 : 0.78),
+        strokeStyle: colorWithAlpha(state.selectedColor, 0.98)
+      });
       ctx.restore();
     }
 
@@ -12256,8 +12335,8 @@
       ctx.save();
       ctx.globalCompositeOperation = "source-over";
       traceQuadratic(from, control, to, {
-        lineWidth: lineWidth * 0.8,
-        strokeStyle: colorWithAlpha(state.selectedColor, 0.84)
+        lineWidth: lineWidth * 0.9,
+        strokeStyle: colorWithAlpha(state.selectedColor, 0.9)
       });
       (lowLatency ? [-1] : [-1, 1]).forEach((factor) => {
         const offsetX = metrics.normalX * grainOffset * factor;
@@ -12267,8 +12346,8 @@
           offsetPoint(control, offsetX, offsetY),
           offsetPoint(to, offsetX, offsetY),
           {
-            lineWidth: Math.max(1, lineWidth * 0.1),
-            strokeStyle: colorWithAlpha(state.selectedColor, 0.15)
+            lineWidth: Math.max(1, lineWidth * 0.08),
+            strokeStyle: colorWithAlpha(state.selectedColor, 0.12)
           }
         );
       });
@@ -12281,22 +12360,20 @@
       const sideOffsets = lowLatency ? [-0.18, 0.18] : [-0.36, -0.14, 0.16, 0.38];
       ctx.save();
       ctx.globalCompositeOperation = "source-over";
-      ctx.shadowColor = colorWithAlpha(state.selectedColor, 0.18);
-      ctx.shadowBlur = lineWidth * (lowLatency ? 0.22 : 0.56);
+      ctx.shadowColor = colorWithAlpha(state.selectedColor, 0.12);
+      ctx.shadowBlur = lineWidth * (lowLatency ? 0.12 : 0.34);
       traceQuadratic(from, control, to, {
-        lineWidth: lineWidth * (lowLatency ? 1.42 : 1.88),
-        strokeStyle: colorWithAlpha(state.selectedColor, lowLatency ? 0.18 : 0.12)
+        lineWidth: lineWidth * (lowLatency ? 1.32 : 1.72),
+        strokeStyle: colorWithAlpha(state.selectedColor, lowLatency ? 0.18 : 0.14)
       });
       traceQuadratic(from, control, to, {
-        lineWidth: lineWidth * 1.08,
-        strokeStyle: colorWithAlpha(state.selectedColor, 0.34)
+        lineWidth: lineWidth * 1.02,
+        strokeStyle: colorWithAlpha(state.selectedColor, lowLatency ? 0.44 : 0.34)
       });
-      if (!lowLatency) {
-        traceQuadratic(from, control, to, {
-          lineWidth: lineWidth * 0.78,
-          strokeStyle: colorWithAlpha(state.selectedColor, 0.9)
-        });
-      }
+      traceQuadratic(from, control, to, {
+        lineWidth: lineWidth * (lowLatency ? 0.82 : 0.76),
+        strokeStyle: colorWithAlpha(state.selectedColor, 0.94)
+      });
       sideOffsets.forEach((factor, index) => {
         const offsetX = metrics.normalX * lineWidth * factor;
         const offsetY = metrics.normalY * lineWidth * factor;
@@ -12305,8 +12382,8 @@
           offsetPoint(control, offsetX, offsetY),
           offsetPoint(to, offsetX, offsetY),
           {
-            lineWidth: Math.max(1, lineWidth * (0.12 + (index % 2) * 0.04)),
-            strokeStyle: colorWithAlpha(state.selectedColor, 0.1 + index * 0.03)
+            lineWidth: Math.max(1, lineWidth * (0.08 + (index % 2) * 0.03)),
+            strokeStyle: colorWithAlpha(state.selectedColor, 0.08 + index * 0.025)
           }
         );
       });
@@ -12340,8 +12417,8 @@
           offsetPoint(to, offsetX, offsetY),
           {
             lineWidth: Math.max(1, layer.width),
-            lineCap: "butt",
-            lineJoin: "miter",
+            lineCap: lowLatency ? "round" : "square",
+            lineJoin: lowLatency ? "round" : "miter",
             strokeStyle: colorWithAlpha(state.selectedColor, layer.alpha)
           }
         );
@@ -12353,23 +12430,20 @@
       const lowLatency = state.currentStrokePointerType === "pen" || state.currentStrokePointerType === "touch";
       ctx.save();
       ctx.globalCompositeOperation = "source-over";
-      ctx.shadowColor = colorWithAlpha(state.selectedColor, 0.28);
-      ctx.shadowBlur = lineWidth * (lowLatency ? 0.44 : 1.1);
+      ctx.shadowColor = colorWithAlpha(state.selectedColor, 0.16);
+      ctx.shadowBlur = lineWidth * (lowLatency ? 0.18 : 0.56);
       traceQuadratic(from, control, to, {
-        lineWidth: lineWidth * (lowLatency ? 1.36 : 2),
-        strokeStyle: colorWithAlpha(state.selectedColor, lowLatency ? 0.16 : 0.11)
+        lineWidth: lineWidth * (lowLatency ? 1.22 : 1.72),
+        strokeStyle: colorWithAlpha(state.selectedColor, lowLatency ? 0.18 : 0.12)
       });
       traceQuadratic(from, control, to, {
-        lineWidth: lineWidth * (lowLatency ? 0.94 : 1.26),
-        strokeStyle: colorWithAlpha(state.selectedColor, lowLatency ? 0.24 : 0.2)
+        lineWidth: lineWidth * (lowLatency ? 0.88 : 1.16),
+        strokeStyle: colorWithAlpha(state.selectedColor, lowLatency ? 0.34 : 0.24)
       });
-      if (!lowLatency) {
-        ctx.shadowBlur = lineWidth * 0.68;
-        traceQuadratic(from, control, to, {
-          lineWidth: lineWidth * 0.56,
-          strokeStyle: colorWithAlpha(state.selectedColor, 0.28)
-        });
-      }
+      traceQuadratic(from, control, to, {
+        lineWidth: lineWidth * (lowLatency ? 0.46 : 0.56),
+        strokeStyle: colorWithAlpha(state.selectedColor, lowLatency ? 0.2 : 0.28)
+      });
       ctx.restore();
     }
 
@@ -12543,9 +12617,14 @@
         const samplePointerType = sample.pointerType || pointerType;
         const filteredPoint = filterStrokePoint(state.lastRawPoint || state.lastPoint, nextPoint, samplePointerType);
         const curveEnd = samplePointerType === "pen"
-          ? nextPoint
-          : midpointPoint(filteredPoint, nextPoint);
-        const strokeWidth = strokeWidthForEvent(sample);
+          ? lerpPoint(filteredPoint, nextPoint, 0.72)
+          : samplePointerType === "touch"
+            ? lerpPoint(filteredPoint, nextPoint, 0.56)
+            : midpointPoint(filteredPoint, nextPoint);
+        const targetWidth = strokeWidthForEvent(sample);
+        const strokeWidth = state.lastStrokeWidth
+          ? (state.lastStrokeWidth * 0.74) + (targetWidth * 0.26)
+          : targetWidth;
         drawSmoothStrokeCurve(state.lastPoint, state.lastRawPoint || state.lastPoint, curveEnd, strokeWidth);
         state.lastPoint = curveEnd;
         state.lastRawPoint = filteredPoint;
