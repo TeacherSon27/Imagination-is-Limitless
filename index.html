@@ -15,6 +15,8 @@
       --warning: #d97900;
       --danger: #d63f52;
       --glow: 0 0 0 2px rgba(255, 223, 122, 0.65), 0 16px 26px rgba(255, 183, 64, 0.24);
+      --spell-background-image: url("assets/game-background-main.png");
+      --board-background-image: url("assets/screen-board-background.png");
       --spell-background-fade: 0;
       --board-background-fade: 0;
       --launcher-motion-ms: 220ms;
@@ -39,7 +41,7 @@
         linear-gradient(180deg, rgba(10, 12, 28, 0.28), rgba(7, 10, 26, 0.44)),
         radial-gradient(circle at 50% 18%, rgba(193, 151, 255, 0.16), transparent 28%),
         radial-gradient(circle at 82% 22%, rgba(107, 212, 255, 0.14), transparent 26%),
-        url("assets/game-background-main.png") center center / cover no-repeat;
+        var(--spell-background-image) center center / cover no-repeat;
       background-color: #070b1a;
       overflow: hidden;
       -webkit-tap-highlight-color: transparent;
@@ -3478,6 +3480,25 @@
         inset 0 -1px 0 rgba(184, 117, 0, 0.18);
     }
 
+    .activity-product-action.background {
+      grid-column: 1 / -1;
+      color: #5a3900;
+      background: linear-gradient(180deg, #fff5c7, #f7ce54);
+      border-color: rgba(255, 245, 198, 0.96);
+      box-shadow:
+        0 10px 18px rgba(156, 114, 15, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.86),
+        inset 0 -1px 0 rgba(184, 117, 0, 0.16);
+    }
+
+    .activity-product-action.background:hover {
+      background: linear-gradient(180deg, #fff9d8, #ffd967);
+      box-shadow:
+        0 12px 20px rgba(156, 114, 15, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9),
+        inset 0 -1px 0 rgba(184, 117, 0, 0.18);
+    }
+
     .activity-product-action.delete {
       color: #7b1122;
       background: linear-gradient(180deg, #ffe3e7, #ffb4c0);
@@ -3636,7 +3657,7 @@
       overflow: hidden;
       border: 0;
       background:
-        url("assets/screen-board-background.png") center center / cover no-repeat;
+        var(--board-background-image) center center / cover no-repeat;
       aspect-ratio: auto;
       width: 100%;
       height: 100%;
@@ -4530,6 +4551,8 @@
       boardBackgroundPanelVisible: false,
       backgroundWash: 0,
       boardBackgroundWash: 0,
+      spellBackgroundSource: "assets/game-background-main.png",
+      boardBackgroundSource: "assets/screen-board-background.png",
       featureToolSurface: "spell",
       selectedFeatureTool: "calculator",
       activityProductSurface: "spell",
@@ -8433,6 +8456,20 @@
             pasteActivityPhotoToCurrentSurface(photo.id);
           });
 
+          const backgroundBtn = document.createElement("button");
+          backgroundBtn.type = "button";
+          backgroundBtn.className = "ghost-btn activity-product-action background";
+          backgroundBtn.textContent = "Make as a Background";
+          backgroundBtn.setAttribute(
+            "aria-label",
+            `Make ${photo.label} the background of the current ${activitySourceLabel(state.activityProductSurface)} board.`
+          );
+          backgroundBtn.disabled = controlsLocked;
+          backgroundBtn.addEventListener("click", (event) => {
+            event.stopPropagation();
+            makeActivityPhotoBackground(photo.id, state.activityProductSurface);
+          });
+
           const deleteBtn = document.createElement("button");
           deleteBtn.type = "button";
           deleteBtn.className = "ghost-btn activity-product-action delete";
@@ -8445,6 +8482,7 @@
           });
 
           actions.appendChild(pasteBtn);
+          actions.appendChild(backgroundBtn);
           actions.appendChild(deleteBtn);
           card.appendChild(selectBtn);
           card.appendChild(actions);
@@ -9574,7 +9612,7 @@
       targetCtx.fillStyle = "#070b1a";
       targetCtx.fillRect(0, 0, width, height);
 
-      const mainBackground = await loadImageAsset("assets/game-background-main.png");
+      const mainBackground = await loadImageAsset(state.spellBackgroundSource || "assets/game-background-main.png");
       drawCoverImage(targetCtx, mainBackground, width, height);
 
       const darkOverlay = targetCtx.createLinearGradient(0, 0, 0, height);
@@ -9653,7 +9691,7 @@
     async function drawBoardBackdrop(targetCtx, width, height) {
       targetCtx.fillStyle = "#fdf6dd";
       targetCtx.fillRect(0, 0, width, height);
-      const boardBackground = await loadImageAsset("assets/screen-board-background.png");
+      const boardBackground = await loadImageAsset(state.boardBackgroundSource || "assets/screen-board-background.png");
       drawCoverImage(targetCtx, boardBackground, width, height);
       if (state.boardBackgroundWash > 0) {
         targetCtx.save();
@@ -11502,6 +11540,47 @@
           : state.boardBackgroundWash <= 0.04
             ? "Full picture background"
             : `${Math.round(state.boardBackgroundWash * 100)} percent faded`
+      );
+    }
+
+    function cssBackgroundImageValue(src, fallbackAsset) {
+      const resolved = String(src || fallbackAsset || "").replace(/"/g, '\\"');
+      return `url("${resolved}")`;
+    }
+
+    function setSpellBackgroundSource(src) {
+      state.spellBackgroundSource = src || "assets/game-background-main.png";
+      document.documentElement.style.setProperty(
+        "--spell-background-image",
+        cssBackgroundImageValue(state.spellBackgroundSource, "assets/game-background-main.png")
+      );
+    }
+
+    function setBoardBackgroundSource(src) {
+      state.boardBackgroundSource = src || "assets/screen-board-background.png";
+      document.documentElement.style.setProperty(
+        "--board-background-image",
+        cssBackgroundImageValue(state.boardBackgroundSource, "assets/screen-board-background.png")
+      );
+    }
+
+    function makeActivityPhotoBackground(photoId, surface = state.activityProductSurface) {
+      const photo = state.activityPhotos.find((entry) => entry.id === photoId);
+      if (!photo) {
+        setActivityStatus("Choose an uploaded photo first.", "warn");
+        return;
+      }
+
+      const targetSurface = surface === "board" ? "board" : "spell";
+      if (targetSurface === "board") {
+        setBoardBackgroundSource(photo.dataUrl);
+      } else {
+        setSpellBackgroundSource(photo.dataUrl);
+      }
+
+      setActivityStatus(
+        `${photo.label} is now the ${targetSurface === "board" ? "Screen Board" : "Spelling Board"} background.`,
+        "good"
       );
     }
 
