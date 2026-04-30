@@ -8724,20 +8724,66 @@
       const scale = Math.min(1, maxSide / Math.max(sourceWidth, sourceHeight, 1));
       const width = Math.max(1, Math.round(sourceWidth * scale));
       const height = Math.max(1, Math.round(sourceHeight * scale));
+      const portraitSource = sourceHeight > sourceWidth * 1.02;
+      const targetLandscapeRatio = 16 / 9;
+      const landscapeWidth = portraitSource
+        ? maxSide
+        : width;
+      const landscapeHeight = portraitSource
+        ? Math.max(1, Math.round(landscapeWidth / targetLandscapeRatio))
+        : height;
       const canvasEl = document.createElement("canvas");
-      canvasEl.width = width;
-      canvasEl.height = height;
+      canvasEl.width = landscapeWidth;
+      canvasEl.height = landscapeHeight;
       const canvasCtx = canvasEl.getContext("2d");
-      canvasCtx.fillStyle = "#ffffff";
-      canvasCtx.fillRect(0, 0, width, height);
-      canvasCtx.drawImage(image, 0, 0, width, height);
+      canvasCtx.imageSmoothingEnabled = true;
+      canvasCtx.imageSmoothingQuality = "high";
+
+      if (portraitSource) {
+        canvasCtx.save();
+        canvasCtx.filter = "blur(26px) saturate(1.04) brightness(0.92)";
+        drawCoverImage(canvasCtx, image, landscapeWidth, landscapeHeight);
+        canvasCtx.restore();
+
+        const dimOverlay = canvasCtx.createLinearGradient(0, 0, 0, landscapeHeight);
+        dimOverlay.addColorStop(0, "rgba(9, 12, 24, 0.2)");
+        dimOverlay.addColorStop(1, "rgba(9, 12, 24, 0.3)");
+        canvasCtx.fillStyle = dimOverlay;
+        canvasCtx.fillRect(0, 0, landscapeWidth, landscapeHeight);
+
+        const glow = canvasCtx.createRadialGradient(
+          landscapeWidth * 0.5,
+          landscapeHeight * 0.5,
+          0,
+          landscapeWidth * 0.5,
+          landscapeHeight * 0.5,
+          Math.max(landscapeWidth, landscapeHeight) * 0.54
+        );
+        glow.addColorStop(0, "rgba(255, 255, 255, 0.1)");
+        glow.addColorStop(1, "rgba(255, 255, 255, 0)");
+        canvasCtx.fillStyle = glow;
+        canvasCtx.fillRect(0, 0, landscapeWidth, landscapeHeight);
+
+        drawContainImage(
+          canvasCtx,
+          image,
+          landscapeWidth * 0.9,
+          landscapeHeight * 0.9,
+          landscapeWidth * 0.05,
+          landscapeHeight * 0.05
+        );
+      } else {
+        canvasCtx.fillStyle = "#ffffff";
+        canvasCtx.fillRect(0, 0, landscapeWidth, landscapeHeight);
+        canvasCtx.drawImage(image, 0, 0, landscapeWidth, landscapeHeight);
+      }
 
       return {
         id: createActivityProductId(),
         label: activityPhotoLabelFromName(file.name),
         createdAt: new Date().toISOString(),
         dataUrl: canvasEl.toDataURL("image/jpeg", 0.9),
-        aspectRatio: sourceWidth / Math.max(1, sourceHeight)
+        aspectRatio: canvasEl.width / Math.max(1, canvasEl.height)
       };
     }
 
@@ -9595,6 +9641,28 @@
       }
 
       targetCtx.drawImage(image, offsetX, offsetY, drawWidth, drawHeight);
+    }
+
+    function drawContainImage(targetCtx, image, width, height, offsetLeft = 0, offsetTop = 0) {
+      const imageRatio = image.naturalWidth / image.naturalHeight;
+      const frameRatio = width / height;
+      let drawWidth = width;
+      let drawHeight = height;
+      let offsetX = offsetLeft;
+      let offsetY = offsetTop;
+
+      if (imageRatio > frameRatio) {
+        drawWidth = width;
+        drawHeight = drawWidth / imageRatio;
+        offsetY += (height - drawHeight) / 2;
+      } else {
+        drawHeight = height;
+        drawWidth = drawHeight * imageRatio;
+        offsetX += (width - drawWidth) / 2;
+      }
+
+      targetCtx.drawImage(image, offsetX, offsetY, drawWidth, drawHeight);
+      return { drawWidth, drawHeight, offsetX, offsetY };
     }
 
     function drawRoundedRect(targetCtx, x, y, width, height, radius) {
