@@ -4303,50 +4303,15 @@
           <button class="ghost-btn" id="activityVoiceBtn" type="button">Record Voice</button>
           <button class="ghost-btn" id="activityVideoBtn" type="button">Record Video</button>
         </div>
-        <section class="activity-live-controls" aria-labelledby="activityLiveTitle">
+        <section class="activity-live-controls" aria-labelledby="activityFirebaseTitle">
           <div class="activity-live-head">
-            <p class="activity-live-title" id="activityLiveTitle">Teacher Website</p>
-            <p class="activity-live-note">Enter the live website URL once, then send the selected Activity Product from the Product Repository.</p>
+            <p class="activity-live-title" id="activityFirebaseTitle">Firebase Classroom</p>
+            <p class="activity-live-note">Enter the room code from the Teacher Dashboard, then send the selected Activity Product through Firestore.</p>
           </div>
           <div class="activity-live-row">
-            <input class="activity-live-input" id="activityLiveServerInput" type="url" placeholder="http://127.0.0.1:8787 or your Mac Wi-Fi address" aria-label="Teacher website URL">
-            <button class="action-btn" id="activitySendLiveBtn" type="button">Send Selected AP</button>
+            <input class="activity-live-input" id="activityFirebaseRoomInput" type="text" inputmode="text" maxlength="10" autocomplete="off" placeholder="ROOM CODE" aria-label="Firebase classroom room code">
+            <button class="action-btn" id="activitySendFirebaseBtn" type="button">Send Selected AP to Firebase</button>
           </div>
-        </section>
-        <section class="activity-drive-controls" aria-labelledby="activityDriveTitle">
-          <div class="activity-live-head">
-            <p class="activity-live-title" id="activityDriveTitle">Google Drive</p>
-            <p class="activity-live-note">Connect a Google account in the browser, then send the selected Activity Product directly to Drive. API key and App ID are only needed if you want to choose a specific Drive folder.</p>
-          </div>
-          <div class="activity-drive-grid">
-            <label class="activity-drive-field" for="activityGoogleClientIdInput">
-              <span class="activity-drive-label">Web Client ID</span>
-              <input class="activity-live-input" id="activityGoogleClientIdInput" type="text" placeholder="Google OAuth Web Client ID" aria-label="Google OAuth Web Client ID">
-            </label>
-            <label class="activity-drive-field" for="activityGoogleApiKeyInput">
-              <span class="activity-drive-label">Picker API Key</span>
-              <input class="activity-live-input" id="activityGoogleApiKeyInput" type="text" placeholder="Optional for folder picker" aria-label="Google Picker API key">
-            </label>
-            <label class="activity-drive-field" for="activityGoogleAppIdInput">
-              <span class="activity-drive-label">Cloud Project #</span>
-              <input class="activity-live-input" id="activityGoogleAppIdInput" type="text" inputmode="numeric" placeholder="Optional for folder picker" aria-label="Google Cloud project number">
-            </label>
-          </div>
-          <p class="activity-drive-folder" id="activityDriveFolderNote">Uploads go to My Drive root until you choose a folder.</p>
-          <div class="activity-drive-actions">
-            <button class="ghost-btn" id="activityConnectGoogleBtn" type="button">Connect Google</button>
-            <button class="ghost-btn" id="activityPickGoogleFolderBtn" type="button">Choose Folder</button>
-            <button class="ghost-btn" id="activityClearGoogleFolderBtn" type="button">Use Root Folder</button>
-            <button class="action-btn" id="activitySendGoogleBtn" type="button">Send Selected AP to Drive</button>
-          </div>
-          <p class="activity-drive-note">For GitHub Pages, add that exact site origin to the Google Cloud web client. Google sign-in requires `https://` or `localhost`.</p>
-        </section>
-        <section class="activity-filter-panel" aria-labelledby="activityFilterTitle">
-          <div class="activity-filter-head">
-            <p class="activity-filter-title" id="activityFilterTitle">Filters</p>
-            <p class="activity-filter-note">Choose one filter to save a new filtered version of the selected preview.</p>
-          </div>
-          <div class="activity-filter-grid" id="activityFilterGrid"></div>
         </section>
         <p class="activity-status" id="activityStatus"></p>
         <input class="activity-file-input" id="activityPhotoInput" type="file" accept="image/*">
@@ -4357,13 +4322,13 @@
       <section class="activity-repository-panel">
         <div class="activity-repository-head">
           <h3 class="activity-repository-title">Repositories</h3>
-          <p class="activity-repository-note">Use the Product Repository for screenshots, camera photos, and filtered versions. Use the Upload Photo Repository to paste gallery photos onto the current board.</p>
+          <p class="activity-repository-note">Use the Product Repository for screenshots, camera photos, voice recordings, and videos. Use the Upload Photo Repository to paste gallery photos onto the current board.</p>
         </div>
         <div class="activity-repository-stack">
           <section class="activity-repository-section">
             <div class="activity-repository-subhead">
               <h4 class="activity-repository-title">Product Repository</h4>
-              <p class="activity-repository-note">Saved screenshots, camera photos, and filtered results stay here on this device.</p>
+              <p class="activity-repository-note">Saved screenshots, camera photos, voice recordings, and videos stay here on this device.</p>
             </div>
             <div class="activity-repository-grid" id="activityRepository"></div>
           </section>
@@ -4637,6 +4602,8 @@
     const activityVideoBtn = document.getElementById("activityVideoBtn");
     const activityLiveServerInput = document.getElementById("activityLiveServerInput");
     const activitySendLiveBtn = document.getElementById("activitySendLiveBtn");
+    const activityFirebaseRoomInput = document.getElementById("activityFirebaseRoomInput");
+    const activitySendFirebaseBtn = document.getElementById("activitySendFirebaseBtn");
     const activityGoogleClientIdInput = document.getElementById("activityGoogleClientIdInput");
     const activityGoogleApiKeyInput = document.getElementById("activityGoogleApiKeyInput");
     const activityGoogleAppIdInput = document.getElementById("activityGoogleAppIdInput");
@@ -4720,6 +4687,20 @@
     const LIVE_ACTIVITY_FLUSH_INTERVAL_MS = 12000;
     const LIVE_ACTIVITY_MAX_IMAGE_EDGE = 1800;
     const LIVE_ACTIVITY_MAX_DATA_URL_LENGTH = 2_400_000;
+    const FIREBASE_ACTIVITY_ROOM_STORAGE_KEY = "spell-scribble-firebase-room-code-v1";
+    const FIREBASE_ACTIVITY_MAX_IMAGE_EDGE = 1200;
+    const FIREBASE_ACTIVITY_MAX_DATA_URL_LENGTH = 760_000;
+    const FIREBASE_SDK_VERSION = "10.12.0";
+    const FIREBASE_ACTIVITY_APP_NAME = "spell-scribble-teacher-dashboard-sender";
+    const FIREBASE_ACTIVITY_CONFIG = Object.freeze({
+      apiKey: "AIzaSyBFP-qPcQmi16nas6K5sVG4v3vjV-5zA2M",
+      authDomain: "teacher-dashboard-953d6.firebaseapp.com",
+      projectId: "teacher-dashboard-953d6",
+      storageBucket: "teacher-dashboard-953d6.firebasestorage.app",
+      messagingSenderId: "523904637360",
+      appId: "1:523904637360:web:d170b058b5afbcd0709e75",
+      measurementId: "G-PIZX61TGSL"
+    });
     const GOOGLE_DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file";
     const GOOGLE_DRIVE_CONFIG_STORAGE_KEY = "spell-scribble-google-drive-config-v1";
     const GOOGLE_DRIVE_FOLDER_STORAGE_KEY = "spell-scribble-google-drive-folder-v1";
@@ -4918,6 +4899,8 @@
     let googleDriveIdentityLoaded = false;
     let googleDriveAuthPromise = null;
     let googleDriveSelectedFolder = null;
+    let firebaseActivityDbPromise = null;
+    let firebaseActivityFirestoreModulePromise = null;
 
     function getLetterVariant(variantId = "classic") {
       return LETTER_VARIANTS[variantId] || LETTER_VARIANTS.classic;
@@ -7349,7 +7332,10 @@
       });
     }
 
-    async function buildLiveActivityDataUrl(dataUrl, cacheKey = "") {
+    async function buildLiveActivityDataUrl(dataUrl, cacheKey = "", {
+      maxImageEdge = LIVE_ACTIVITY_MAX_IMAGE_EDGE,
+      maxLength = LIVE_ACTIVITY_MAX_DATA_URL_LENGTH
+    } = {}) {
       const normalized = String(dataUrl || "").trim();
       if (!normalized) {
         throw new Error("This Activity Product does not contain any media yet.");
@@ -7370,7 +7356,7 @@
         return normalized;
       }
 
-      if (normalized.length <= LIVE_ACTIVITY_MAX_DATA_URL_LENGTH) {
+      if (normalized.length <= maxLength) {
         if (cacheKey) {
           liveActivityPayloadCache.set(cacheKey, {
             source: normalized,
@@ -7383,7 +7369,7 @@
       const image = await loadImageFromSource(normalized);
       const naturalWidth = Math.max(1, image.naturalWidth || image.width || 1);
       const naturalHeight = Math.max(1, image.naturalHeight || image.height || 1);
-      let scale = Math.min(1, LIVE_ACTIVITY_MAX_IMAGE_EDGE / Math.max(naturalWidth, naturalHeight));
+      let scale = Math.min(1, maxImageEdge / Math.max(naturalWidth, naturalHeight));
       let width = Math.max(1, Math.round(naturalWidth * scale));
       let height = Math.max(1, Math.round(naturalHeight * scale));
       let quality = 0.9;
@@ -7398,7 +7384,7 @@
         exportCtx.fillRect(0, 0, width, height);
         exportCtx.drawImage(image, 0, 0, width, height);
         output = exportCanvas.toDataURL("image/jpeg", quality);
-        if (output.length <= LIVE_ACTIVITY_MAX_DATA_URL_LENGTH || attempt === 4) {
+        if (output.length <= maxLength || attempt === 4) {
           break;
         }
         quality = Math.max(0.54, quality - 0.12);
@@ -7478,6 +7464,150 @@
         throw finalError;
       }
       return false;
+    }
+
+    function normalizeFirebaseRoomCode(value = "") {
+      return String(value || "")
+        .trim()
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g, "")
+        .slice(0, 10);
+    }
+
+    function firebaseRoomCodeValid(roomCode = "") {
+      return /^[A-Z0-9]{4,10}$/.test(roomCode);
+    }
+
+    function getStoredFirebaseRoomCode() {
+      try {
+        return normalizeFirebaseRoomCode(localStorage.getItem(FIREBASE_ACTIVITY_ROOM_STORAGE_KEY));
+      } catch (error) {
+        return "";
+      }
+    }
+
+    function setFirebaseRoomCode(value, { persist = true } = {}) {
+      const normalized = normalizeFirebaseRoomCode(value);
+      if (activityFirebaseRoomInput) {
+        activityFirebaseRoomInput.value = normalized;
+      }
+
+      if (!persist) {
+        return normalized;
+      }
+
+      try {
+        if (normalized) {
+          localStorage.setItem(FIREBASE_ACTIVITY_ROOM_STORAGE_KEY, normalized);
+        } else {
+          localStorage.removeItem(FIREBASE_ACTIVITY_ROOM_STORAGE_KEY);
+        }
+      } catch (error) {
+        // Ignore storage failures on restricted browsers.
+      }
+
+      return normalized;
+    }
+
+    async function firebaseActivityFirestoreModules() {
+      if (!firebaseActivityFirestoreModulePromise) {
+        firebaseActivityFirestoreModulePromise = import(`https://www.gstatic.com/firebasejs/${FIREBASE_SDK_VERSION}/firebase-firestore.js`)
+          .catch((error) => {
+            firebaseActivityFirestoreModulePromise = null;
+            throw error;
+          });
+      }
+      return firebaseActivityFirestoreModulePromise;
+    }
+
+    async function firebaseActivityDatabase() {
+      if (!firebaseActivityDbPromise) {
+        firebaseActivityDbPromise = (async () => {
+          const [{ initializeApp, getApps }, { getFirestore }] = await Promise.all([
+            import(`https://www.gstatic.com/firebasejs/${FIREBASE_SDK_VERSION}/firebase-app.js`),
+            firebaseActivityFirestoreModules()
+          ]);
+          const existingApp = getApps().find((app) => app.name === FIREBASE_ACTIVITY_APP_NAME);
+          const app = existingApp || initializeApp(FIREBASE_ACTIVITY_CONFIG, FIREBASE_ACTIVITY_APP_NAME);
+          return getFirestore(app);
+        })().catch((error) => {
+          firebaseActivityDbPromise = null;
+          throw error;
+        });
+      }
+      return firebaseActivityDbPromise;
+    }
+
+    async function createFirebaseActivitySubmissionPayload(product) {
+      const normalizedProduct = normalizeActivityProduct(product);
+      const mediaType = normalizeActivityMediaType(
+        normalizedProduct.mediaType,
+        normalizedProduct.dataUrl,
+        normalizedProduct.source
+      );
+      const dataUrl = mediaType === "image"
+        ? await buildLiveActivityDataUrl(normalizedProduct.dataUrl, "", {
+            maxImageEdge: FIREBASE_ACTIVITY_MAX_IMAGE_EDGE,
+            maxLength: FIREBASE_ACTIVITY_MAX_DATA_URL_LENGTH
+          })
+        : normalizedProduct.dataUrl;
+
+      if (String(dataUrl || "").length > FIREBASE_ACTIVITY_MAX_DATA_URL_LENGTH) {
+        throw new Error("This Activity Product is too large for Firebase. Try sending a screenshot or smaller image.");
+      }
+
+      const playerId = getLiveActivityPlayerId();
+      return {
+        originProductId: normalizedProduct.id,
+        source: normalizedProduct.source,
+        label: normalizedProduct.label,
+        createdAt: normalizedProduct.createdAt,
+        submittedAt: new Date().toISOString(),
+        dataUrl,
+        mediaType,
+        mimeType: normalizedProduct.mimeType || dataUrlMimeType(dataUrl),
+        posterDataUrl: normalizedProduct.posterDataUrl || "",
+        folderName: normalizedProduct.folderName || "",
+        folderCode: normalizedProduct.folderCode || "",
+        filterStyle: normalizedProduct.filterStyle || "",
+        submittedBy: {
+          id: playerId,
+          label: liveActivityPlayerLabel(playerId)
+        }
+      };
+    }
+
+    async function sendActivityProductToFirebase(product, roomCodeValue = "") {
+      if (!product) {
+        throw new Error("Save a screenshot or choose a Product Repository item first.");
+      }
+
+      const roomCode = setFirebaseRoomCode(roomCodeValue);
+      if (!firebaseRoomCodeValid(roomCode)) {
+        throw new Error("Enter the Teacher Dashboard room code. It must be 4 to 10 letters or numbers.");
+      }
+
+      const [db, { collection, addDoc, serverTimestamp }] = await Promise.all([
+        firebaseActivityDatabase(),
+        firebaseActivityFirestoreModules()
+      ]);
+      const payload = await createFirebaseActivitySubmissionPayload(product);
+      await addDoc(collection(db, "classrooms", roomCode, "activityProducts"), {
+        ...payload,
+        timestamp: serverTimestamp()
+      });
+      return payload;
+    }
+
+    function explainFirebaseSendError(error) {
+      const message = error && error.message ? error.message : "";
+      if (/failed to fetch dynamically imported module|loading chunk|network/i.test(message)) {
+        return "Firebase could not load. Check the internet connection, then try again.";
+      }
+      if (/permission|insufficient/i.test(message)) {
+        return "Firebase rejected the send. Check that the Firestore rules are published and the room code matches the dashboard.";
+      }
+      return message || "Firebase send failed.";
     }
 
     function normalizeGoogleDriveConfig(value = {}) {
@@ -8068,6 +8198,35 @@
       }
     }
 
+    async function handleSendSelectedActivityProductToFirebase() {
+      if (activityControlsBusy()) {
+        return;
+      }
+
+      const selectedProduct = state.activitySelectionMode === "product" ? currentActivityProduct() : null;
+      if (!selectedProduct) {
+        setActivityStatus("Select a saved item from the Product Repository before sending it to Firebase.", "warn");
+        return;
+      }
+
+      const roomCode = setFirebaseRoomCode(activityFirebaseRoomInput ? activityFirebaseRoomInput.value : getStoredFirebaseRoomCode());
+      if (!firebaseRoomCodeValid(roomCode)) {
+        setActivityStatus("Enter the Teacher Dashboard room code. It must be 4 to 10 letters or numbers.", "warn");
+        return;
+      }
+
+      setActivityBusy("send", true);
+      setActivityStatus(`Sending ${selectedProduct.label} to Firebase classroom ${roomCode}...`);
+      try {
+        await sendActivityProductToFirebase(selectedProduct, roomCode);
+        setActivityStatus(`${selectedProduct.label} sent to Firebase classroom ${roomCode}.`, "good");
+      } catch (error) {
+        setActivityStatus(explainFirebaseSendError(error), "bad");
+      } finally {
+        setActivityBusy("send", false);
+      }
+    }
+
     function resolveEmbeddedAssetSource(src) {
       if (!src) {
         return src;
@@ -8250,12 +8409,23 @@
       activityTakePhotoBtn.disabled = !photoCameraReady || controlsLocked || recordingAny;
       activityVoiceBtn.disabled = recordingAudio ? false : controlsLocked || recordingVideo || !canRecordVoice;
       activityVideoBtn.disabled = recordingVideo ? false : controlsLocked || recordingAudio || !canRecordVideo;
-      activitySendLiveBtn.disabled = controlsLocked || !selectedProductReady;
-      activityConnectGoogleBtn.textContent = googleDriveAccessToken ? "Refresh Google" : "Connect Google";
-      activityConnectGoogleBtn.disabled = controlsLocked || recordingAny || !googleDriveIdentityLoaded;
-      activityPickGoogleFolderBtn.disabled = controlsLocked || recordingAny || !googleDriveAccessToken || !googleDrivePickerReady();
-      activityClearGoogleFolderBtn.disabled = controlsLocked || recordingAny || !googleDriveSelectedFolder;
-      activitySendGoogleBtn.disabled = controlsLocked || !selectedProductReady || !googleDriveIdentityLoaded;
+      if (activitySendLiveBtn) {
+        activitySendLiveBtn.disabled = controlsLocked || !selectedProductReady;
+      }
+      activitySendFirebaseBtn.disabled = controlsLocked || !selectedProductReady;
+      if (activityConnectGoogleBtn) {
+        activityConnectGoogleBtn.textContent = googleDriveAccessToken ? "Refresh Google" : "Connect Google";
+        activityConnectGoogleBtn.disabled = controlsLocked || recordingAny || !googleDriveIdentityLoaded;
+      }
+      if (activityPickGoogleFolderBtn) {
+        activityPickGoogleFolderBtn.disabled = controlsLocked || recordingAny || !googleDriveAccessToken || !googleDrivePickerReady();
+      }
+      if (activityClearGoogleFolderBtn) {
+        activityClearGoogleFolderBtn.disabled = controlsLocked || recordingAny || !googleDriveSelectedFolder;
+      }
+      if (activitySendGoogleBtn) {
+        activitySendGoogleBtn.disabled = controlsLocked || !selectedProductReady || !googleDriveIdentityLoaded;
+      }
       closeActivityProductBtn.disabled = recordingAny;
       updateGoogleDriveFolderNote();
       renderActivityFilterGrid();
@@ -8310,7 +8480,7 @@
       if (!state.activityProducts.length) {
         const emptyState = document.createElement("div");
         emptyState.className = "activity-empty-repository";
-        emptyState.textContent = "Saved screenshots, camera photos, voice recordings, video recordings, and filtered results will appear here.";
+        emptyState.textContent = "Saved screenshots, camera photos, voice recordings, and video recordings will appear here.";
         activityRepository.appendChild(emptyState);
       } else {
         state.activityProducts.forEach((product) => {
@@ -9495,6 +9665,7 @@
       closeFeaturePanels();
       closeFeatureToolsModal();
       setLiveServerOrigin(defaultLiveServerOrigin(), { persist: false });
+      setFirebaseRoomCode(getStoredFirebaseRoomCode(), { persist: false });
       syncActivityCameraCaptureInput();
       if (activityVideoCaptureInput) {
         activityVideoCaptureInput.value = "";
@@ -13287,23 +13458,49 @@
     activityTakePhotoBtn.addEventListener("click", captureActivityPhoto);
     activityVoiceBtn.addEventListener("click", toggleActivityVoiceRecording);
     activityVideoBtn.addEventListener("click", toggleActivityVideoRecording);
-    activitySendLiveBtn.addEventListener("click", handleSendSelectedActivityProduct);
-    activityConnectGoogleBtn.addEventListener("click", handleConnectGoogleDrive);
-    activityPickGoogleFolderBtn.addEventListener("click", handleChooseGoogleDriveFolder);
-    activityClearGoogleFolderBtn.addEventListener("click", handleClearGoogleDriveFolder);
-    activitySendGoogleBtn.addEventListener("click", handleSendSelectedActivityProductToGoogleDrive);
-    activityLiveServerInput.addEventListener("change", (event) => {
-      const normalized = setLiveServerOrigin(event.currentTarget.value);
-      if (!normalized && event.currentTarget.value.trim()) {
-        setActivityStatus("Enter a valid Teacher Website URL, for example http://127.0.0.1:8787 or your Mac Wi-Fi address.", "warn");
+    if (activitySendLiveBtn) {
+      activitySendLiveBtn.addEventListener("click", handleSendSelectedActivityProduct);
+    }
+    activitySendFirebaseBtn.addEventListener("click", handleSendSelectedActivityProductToFirebase);
+    if (activityConnectGoogleBtn) {
+      activityConnectGoogleBtn.addEventListener("click", handleConnectGoogleDrive);
+    }
+    if (activityPickGoogleFolderBtn) {
+      activityPickGoogleFolderBtn.addEventListener("click", handleChooseGoogleDriveFolder);
+    }
+    if (activityClearGoogleFolderBtn) {
+      activityClearGoogleFolderBtn.addEventListener("click", handleClearGoogleDriveFolder);
+    }
+    if (activitySendGoogleBtn) {
+      activitySendGoogleBtn.addEventListener("click", handleSendSelectedActivityProductToGoogleDrive);
+    }
+    if (activityLiveServerInput) {
+      activityLiveServerInput.addEventListener("change", (event) => {
+        const normalized = setLiveServerOrigin(event.currentTarget.value);
+        if (!normalized && event.currentTarget.value.trim()) {
+          setActivityStatus("Enter a valid Teacher Website URL, for example http://127.0.0.1:8787 or your Mac Wi-Fi address.", "warn");
+          return;
+        }
+        if (normalized) {
+          setActivityStatus("Teacher Website URL saved for live sending.", "good");
+          flushPendingLiveActivityProducts();
+        }
+      });
+    }
+    activityFirebaseRoomInput.addEventListener("input", (event) => {
+      setFirebaseRoomCode(event.currentTarget.value);
+    });
+    activityFirebaseRoomInput.addEventListener("change", (event) => {
+      const roomCode = setFirebaseRoomCode(event.currentTarget.value);
+      if (!firebaseRoomCodeValid(roomCode) && roomCode) {
+        setActivityStatus("Firebase room code must be 4 to 10 letters or numbers.", "warn");
         return;
       }
-      if (normalized) {
-        setActivityStatus("Teacher Website URL saved for live sending.", "good");
-        flushPendingLiveActivityProducts();
+      if (roomCode) {
+        setActivityStatus(`Firebase classroom room code saved: ${roomCode}.`, "good");
       }
     });
-    [activityGoogleClientIdInput, activityGoogleApiKeyInput, activityGoogleAppIdInput].forEach((input) => {
+    [activityGoogleClientIdInput, activityGoogleApiKeyInput, activityGoogleAppIdInput].filter(Boolean).forEach((input) => {
       input.addEventListener("change", () => {
         saveGoogleDriveConfigFromInputs();
         setActivityStatus("Google Drive settings saved on this device.", "good");
@@ -13389,16 +13586,8 @@
     renderBoardStickers();
     loadActivityProducts();
     loadActivityPhotos();
-    applyGoogleDriveConfig({
-      ...embeddedGoogleDriveConfig(),
-      ...loadStoredGoogleDriveConfig()
-    });
-    googleDriveSelectedFolder = loadStoredGoogleDriveFolder();
-    loadPendingLiveActivityProducts().forEach((product) => {
-      queuePendingLiveActivityProduct(product, { manualOnly: true });
-    });
     renderActivityProductRepository();
-    setLiveServerOrigin(defaultLiveServerOrigin(), { persist: false });
+    setFirebaseRoomCode(getStoredFirebaseRoomCode(), { persist: false });
     syncActivityCameraCaptureInput();
     setSpellingToolsPanelVisible(false);
     setSpellTrayExpanded(false);
@@ -13420,7 +13609,6 @@
     updateFeatureDieUI();
     selectFeatureTool(state.selectedFeatureTool);
     updateFullscreenLabel();
-    flushPendingLiveActivityProducts();
     setGameAccessUnlocked(false);
     setCoverAccessMessage("Enter the access code to unlock the game.");
     requestAnimationFrame(() => {
@@ -13429,23 +13617,6 @@
       }
     });
 
-    window.onGoogleApiLoad = function onGoogleApiLoad() {
-      if (!window.gapi || typeof gapi.load !== "function") {
-        return;
-      }
-      gapi.load("picker", () => {
-        googleDrivePickerLoaded = true;
-        updateActivityControlState();
-      });
-    };
-
-    window.onGoogleIdentityLoaded = function onGoogleIdentityLoaded() {
-      googleDriveIdentityLoaded = true;
-      initializeGoogleDriveTokenClient();
-      updateActivityControlState();
-    };
   </script>
-  <script async defer src="https://apis.google.com/js/api.js" onload="onGoogleApiLoad()"></script>
-  <script async defer src="https://accounts.google.com/gsi/client" onload="onGoogleIdentityLoaded()"></script>
 </body>
 </html>
