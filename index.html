@@ -4301,7 +4301,7 @@
           <button class="ghost-btn" id="activitySwitchCameraBtn" type="button">Switch Camera</button>
           <button class="action-btn" id="activityTakePhotoBtn" type="button">Take Photo</button>
           <button class="ghost-btn" id="activityVoiceBtn" type="button">Record Voice</button>
-          <button class="ghost-btn" id="activityVideoBtn" type="button">Record Video</button>
+          <button class="ghost-btn" id="activityChooseVoiceBtn" type="button">Choose Voice File</button>
         </div>
         <section class="activity-live-controls" aria-labelledby="activityFirebaseTitle">
           <div class="activity-live-head">
@@ -4317,18 +4317,17 @@
         <input class="activity-file-input" id="activityPhotoInput" type="file" accept="image/*">
         <input class="activity-file-input" id="activityCameraCaptureInput" type="file" accept="image/*" capture="environment">
         <input class="activity-file-input" id="activityAudioCaptureInput" type="file" accept="audio/*">
-        <input class="activity-file-input" id="activityVideoCaptureInput" type="file" accept="video/*" capture="user">
       </section>
       <section class="activity-repository-panel">
         <div class="activity-repository-head">
           <h3 class="activity-repository-title">Repositories</h3>
-          <p class="activity-repository-note">Use the Product Repository for screenshots, camera photos, voice recordings, and videos. Use the Upload Photo Repository to paste gallery photos onto the current board.</p>
+          <p class="activity-repository-note">Use the Product Repository for screenshots, camera photos, and voice recordings. Use the Upload Photo Repository to paste gallery photos onto the current board.</p>
         </div>
         <div class="activity-repository-stack">
           <section class="activity-repository-section">
             <div class="activity-repository-subhead">
               <h4 class="activity-repository-title">Product Repository</h4>
-              <p class="activity-repository-note">Saved screenshots, camera photos, voice recordings, and videos stay here on this device.</p>
+              <p class="activity-repository-note">Saved screenshots, camera photos, and voice recordings stay here on this device.</p>
             </div>
             <div class="activity-repository-grid" id="activityRepository"></div>
           </section>
@@ -4599,7 +4598,7 @@
     const activitySwitchCameraBtn = document.getElementById("activitySwitchCameraBtn");
     const activityTakePhotoBtn = document.getElementById("activityTakePhotoBtn");
     const activityVoiceBtn = document.getElementById("activityVoiceBtn");
-    const activityVideoBtn = document.getElementById("activityVideoBtn");
+    const activityChooseVoiceBtn = document.getElementById("activityChooseVoiceBtn");
     const activityLiveServerInput = document.getElementById("activityLiveServerInput");
     const activitySendLiveBtn = document.getElementById("activitySendLiveBtn");
     const activityFirebaseRoomInput = document.getElementById("activityFirebaseRoomInput");
@@ -4616,7 +4615,6 @@
     const activityPhotoInput = document.getElementById("activityPhotoInput");
     const activityCameraCaptureInput = document.getElementById("activityCameraCaptureInput");
     const activityAudioCaptureInput = document.getElementById("activityAudioCaptureInput");
-    const activityVideoCaptureInput = document.getElementById("activityVideoCaptureInput");
     const activityStatus = document.getElementById("activityStatus");
     const activityRepository = document.getElementById("activityRepository");
     const activityPhotoRepository = document.getElementById("activityPhotoRepository");
@@ -8387,12 +8385,10 @@
       const hasCameraApi = Boolean(navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === "function");
       const canUseCameraFallback = activityCameraCaptureSupported();
       const canRecordVoice = activityVoiceCaptureSupported();
-      const canRecordVideo = activityVideoCaptureSupported();
       const surfaceLabel = activitySourceLabel(state.activityProductSurface);
       const controlsLocked = activityControlsBusy();
       const recordingAudio = activityRecordingKind === "audio";
-      const recordingVideo = activityRecordingKind === "video";
-      const recordingAny = recordingAudio || recordingVideo;
+      const recordingAny = recordingAudio;
       const selectedProductReady = state.activitySelectionMode === "product" && Boolean(currentActivityProduct()) && !recordingAny;
       const photoCameraReady = Boolean(activityCameraStream) && activityCameraPurpose === "photo";
 
@@ -8401,14 +8397,13 @@
       activityUploadPhotoBtn.textContent = "Upload Photo";
       activityCameraBtn.textContent = photoCameraReady ? "Close Camera" : "Open Camera";
       activityVoiceBtn.textContent = recordingAudio ? "Stop Voice" : "Record Voice";
-      activityVideoBtn.textContent = recordingVideo ? "Stop Video" : "Record Video";
       activityCaptureBtn.disabled = controlsLocked || recordingAny;
       activityUploadPhotoBtn.disabled = controlsLocked || recordingAny;
       activityCameraBtn.disabled = controlsLocked || recordingAny || (!hasCameraApi && !canUseCameraFallback);
       activitySwitchCameraBtn.disabled = controlsLocked || recordingAny || (!hasCameraApi && !canUseCameraFallback);
       activityTakePhotoBtn.disabled = !photoCameraReady || controlsLocked || recordingAny;
-      activityVoiceBtn.disabled = recordingAudio ? false : controlsLocked || recordingVideo || !canRecordVoice;
-      activityVideoBtn.disabled = recordingVideo ? false : controlsLocked || recordingAudio || !canRecordVideo;
+      activityVoiceBtn.disabled = recordingAudio ? false : controlsLocked || !canRecordVoice;
+      activityChooseVoiceBtn.disabled = controlsLocked || recordingAny || !activityAudioCaptureInput;
       if (activitySendLiveBtn) {
         activitySendLiveBtn.disabled = controlsLocked || !selectedProductReady;
       }
@@ -8451,7 +8446,7 @@
       }
 
       if (!entry) {
-        activityPreviewEmpty.textContent = "Save a screenshot, take a photo, upload one from your gallery, or record voice/video to build your activity product repositories.";
+        activityPreviewEmpty.textContent = "Save a screenshot, take a photo, upload one from your gallery, record voice, or choose a voice file to build your activity product repositories.";
         activityPreviewEmpty.classList.remove("hidden");
         return;
       }
@@ -8480,7 +8475,7 @@
       if (!state.activityProducts.length) {
         const emptyState = document.createElement("div");
         emptyState.className = "activity-empty-repository";
-        emptyState.textContent = "Saved screenshots, camera photos, voice recordings, and video recordings will appear here.";
+        emptyState.textContent = "Saved screenshots, camera photos, and voice recordings will appear here.";
         activityRepository.appendChild(emptyState);
       } else {
         state.activityProducts.forEach((product) => {
@@ -8770,10 +8765,6 @@
       return activityInlineMediaRecordingSupported() || Boolean(activityAudioCaptureInput);
     }
 
-    function activityVideoCaptureSupported() {
-      return activityInlineMediaRecordingSupported() || Boolean(activityVideoCaptureInput);
-    }
-
     function pickSupportedActivityRecorderMimeType(kind = "audio") {
       if (typeof window.MediaRecorder !== "function" || typeof window.MediaRecorder.isTypeSupported !== "function") {
         return "";
@@ -8853,26 +8844,45 @@
       };
     }
 
+    function activityAudioMimeTypeFromFileName(fileName = "") {
+      const normalized = String(fileName || "").trim().toLowerCase();
+      if (normalized.endsWith(".mp3")) return "audio/mpeg";
+      if (normalized.endsWith(".m4a") || normalized.endsWith(".mp4")) return "audio/mp4";
+      if (normalized.endsWith(".wav")) return "audio/wav";
+      if (normalized.endsWith(".webm")) return "audio/webm";
+      if (normalized.endsWith(".ogg") || normalized.endsWith(".oga")) return "audio/ogg";
+      if (normalized.endsWith(".aac")) return "audio/aac";
+      if (normalized.endsWith(".caf")) return "audio/x-caf";
+      return "";
+    }
+
     async function normalizeActivityCapturedMediaFile(file, kind = "audio") {
       const mediaType = kind === "video" ? "video" : "audio";
       const expectedPrefix = `${mediaType}/`;
-      if (!file || !String(file.type || "").startsWith(expectedPrefix)) {
+      const fileType = String(file && file.type || "").trim().toLowerCase();
+      const fileNameMimeType = mediaType === "audio" ? activityAudioMimeTypeFromFileName(file && file.name) : "";
+      const isExpectedMediaFile = fileType.startsWith(expectedPrefix) || (mediaType === "audio" && Boolean(fileNameMimeType));
+      if (!file || !isExpectedMediaFile) {
         throw new Error(mediaType === "video"
           ? "Capture a video from the device camera."
           : "Record a voice file from this device.");
       }
 
-      const dataUrl = await readBlobAsDataUrl(
+      let dataUrl = await readBlobAsDataUrl(
         file,
         mediaType === "video"
           ? "Unable to read the selected video."
           : "Unable to read the selected voice recording."
       );
+      const resolvedMimeType = fileType || dataUrlMimeType(dataUrl) || fileNameMimeType;
+      if (mediaType === "audio" && fileNameMimeType && !String(dataUrl || "").startsWith(`data:${fileNameMimeType}`)) {
+        dataUrl = String(dataUrl || "").replace(/^data:[^;,]*/i, `data:${fileNameMimeType}`);
+      }
 
       return buildRecordedActivityProduct({
         kind: mediaType,
         dataUrl,
-        mimeType: file.type || dataUrlMimeType(dataUrl),
+        mimeType: resolvedMimeType,
         createdAt: new Date().toISOString(),
         posterDataUrl: activityPreviewPosterDataUrl({
           label: activityDefaultProductLabel(mediaType),
@@ -9004,18 +9014,7 @@
       }
       activityAudioCaptureInput.value = "";
       activityAudioCaptureInput.click();
-      setActivityStatus("Opening voice recorder...");
-      return true;
-    }
-
-    function openActivityVideoCapturePicker({ force = false } = {}) {
-      if ((!force && (activityControlsBusy() || activityRecordingInProgress())) || !activityVideoCaptureInput) {
-        return false;
-      }
-      activityVideoCaptureInput.value = "";
-      activityVideoCaptureInput.setAttribute("capture", state.activityCameraFacingMode === "user" ? "user" : "environment");
-      activityVideoCaptureInput.click();
-      setActivityStatus(`Opening ${state.activityCameraFacingMode === "user" ? "front" : "back"} video recorder...`);
+      setActivityStatus("Choose a voice file or record one from this device.");
       return true;
     }
 
@@ -9033,7 +9032,7 @@
         recorder = mimeType
           ? new MediaRecorder(stream, {
             mimeType,
-            audioBitsPerSecond: kind === "audio" ? 128000 : 96000,
+            audioBitsPerSecond: kind === "audio" ? 64000 : 96000,
             ...(kind === "video" ? { videoBitsPerSecond: 1200000 } : {})
           })
           : new MediaRecorder(stream);
@@ -9187,49 +9186,6 @@
       }
     }
 
-    async function startActivityVideoRecording() {
-      if (activityRecordingInProgress() || activityControlsBusy()) {
-        return;
-      }
-
-      if (activityMediaCaptureFallbackPreferred() || !activityInlineMediaRecordingSupported()) {
-        if (!openActivityVideoCapturePicker()) {
-          setActivityStatus("Video recording needs a working front or back camera in this app.", "warn");
-        }
-        return;
-      }
-
-      setActivityStatus("Starting video recording...");
-      try {
-        if (activityCameraStream) {
-          await stopActivityCamera();
-        }
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: {
-              ideal: state.activityCameraFacingMode
-            },
-            width: { ideal: 1280 },
-            height: { ideal: 720 }
-          },
-          audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true
-          }
-        });
-        await beginActivityRecording({
-          kind: "video",
-          stream
-        });
-        setActivityStatus("Video recording started. Tap Record Video again to stop.", "good");
-      } catch (error) {
-        if (!openActivityVideoCapturePicker({ force: true })) {
-          setActivityStatus("Unable to start video recording right now.", "bad");
-        }
-      }
-    }
-
     async function toggleActivityVoiceRecording() {
       if (activityRecordingKind === "audio") {
         await stopActivityRecording();
@@ -9239,17 +9195,6 @@
         return;
       }
       await startActivityVoiceRecording();
-    }
-
-    async function toggleActivityVideoRecording() {
-      if (activityRecordingKind === "video") {
-        await stopActivityRecording();
-        return;
-      }
-      if (activityRecordingInProgress()) {
-        return;
-      }
-      await startActivityVideoRecording();
     }
 
     async function handleActivityPhotoFileChange(event) {
@@ -9335,34 +9280,6 @@
         );
       } catch (error) {
         setActivityStatus("Unable to save that voice recording right now.", "bad");
-      } finally {
-        if (input) {
-          input.value = "";
-        }
-        setActivityBusy("record", false);
-      }
-    }
-
-    async function handleActivityVideoCaptureChange(event) {
-      const input = event.target;
-      const file = input && input.files ? input.files[0] : null;
-      if (!file) {
-        return;
-      }
-
-      setActivityBusy("record", true);
-      setActivityStatus("Saving video recording...");
-      try {
-        const product = await normalizeActivityCapturedMediaFile(file, "video");
-        const persisted = saveActivityProduct(product);
-        setActivityStatus(
-          persisted
-            ? "Video recording saved in Activity Product."
-            : "Video recording saved, but the repository is full on this device.",
-          persisted ? "good" : "warn"
-        );
-      } catch (error) {
-        setActivityStatus("Unable to save that video recording right now.", "bad");
       } finally {
         if (input) {
           input.value = "";
@@ -9667,10 +9584,6 @@
       setLiveServerOrigin(defaultLiveServerOrigin(), { persist: false });
       setFirebaseRoomCode(getStoredFirebaseRoomCode(), { persist: false });
       syncActivityCameraCaptureInput();
-      if (activityVideoCaptureInput) {
-        activityVideoCaptureInput.value = "";
-        activityVideoCaptureInput.setAttribute("capture", state.activityCameraFacingMode === "user" ? "user" : "environment");
-      }
       setActivityLauncherExpanded(state.activityProductSurface, true);
       setAnimatedVisibility(activityProductModal, true, "modal-open");
       activityProductModal.setAttribute("aria-hidden", "false");
@@ -9704,7 +9617,7 @@
 
     async function closeActivityProductModal() {
       if (activityRecordingInProgress()) {
-        setActivityStatus("Stop the current voice or video recording first.", "warn");
+        setActivityStatus("Stop the current voice recording first.", "warn");
         return;
       }
       await stopActivityCamera();
@@ -10093,9 +10006,6 @@
       }
       state.activityCameraFacingMode = state.activityCameraFacingMode === "user" ? "environment" : "user";
       syncActivityCameraCaptureInput();
-      if (activityVideoCaptureInput) {
-        activityVideoCaptureInput.setAttribute("capture", state.activityCameraFacingMode === "user" ? "user" : "environment");
-      }
       if (activityCameraStream) {
         await startActivityCamera();
         return;
@@ -13457,7 +13367,7 @@
     activitySwitchCameraBtn.addEventListener("click", switchActivityCamera);
     activityTakePhotoBtn.addEventListener("click", captureActivityPhoto);
     activityVoiceBtn.addEventListener("click", toggleActivityVoiceRecording);
-    activityVideoBtn.addEventListener("click", toggleActivityVideoRecording);
+    activityChooseVoiceBtn.addEventListener("click", () => openActivityAudioCapturePicker({ force: true }));
     if (activitySendLiveBtn) {
       activitySendLiveBtn.addEventListener("click", handleSendSelectedActivityProduct);
     }
@@ -13541,7 +13451,6 @@
     activityPhotoInput.addEventListener("change", handleActivityPhotoFileChange);
     activityCameraCaptureInput.addEventListener("change", handleActivityCameraCaptureChange);
     activityAudioCaptureInput.addEventListener("change", handleActivityAudioCaptureChange);
-    activityVideoCaptureInput.addEventListener("change", handleActivityVideoCaptureChange);
 
     boardWrap.addEventListener("pointerdown", startDrawing);
     boardWrap.addEventListener("pointermove", continueDrawing);
