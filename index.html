@@ -518,6 +518,7 @@
     .utility-actions .action-btn,
     .utility-actions .ghost-btn {
       width: 100%;
+      min-width: 0;
       min-height: 52px;
       padding: 12px 10px;
       display: inline-flex;
@@ -528,6 +529,91 @@
       letter-spacing: 0.05em;
       text-transform: uppercase;
       white-space: normal;
+    }
+
+    .spelling-pencil-tools {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .spelling-pencil-palette,
+    .spelling-pencil-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .spell-swatch {
+      width: 44px;
+      height: 44px;
+      flex: 0 0 44px;
+      border-radius: 50%;
+      border: 3px solid rgba(255, 255, 255, 0.95);
+      box-shadow: 0 4px 10px rgba(32, 48, 74, 0.14);
+      position: relative;
+    }
+
+    .spell-swatch.active::after {
+      content: "";
+      position: absolute;
+      inset: -6px;
+      border-radius: 50%;
+      border: 2px solid rgba(32, 48, 74, 0.55);
+    }
+
+    .spelling-pencil-btn {
+      min-height: 44px;
+      padding: 10px 14px;
+      font-size: 0.78rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .spelling-eraser-btn {
+      width: 48px;
+      min-width: 48px;
+      padding: 0;
+    }
+
+    .spelling-eraser-btn svg {
+      width: 22px;
+      height: 22px;
+      display: block;
+      pointer-events: none;
+    }
+
+    .spelling-size-popup {
+      position: static;
+      z-index: auto;
+      min-width: 0;
+      width: 100%;
+      padding: 10px;
+      border-radius: 18px;
+    }
+
+    .spelling-size-popup .size-popup-row {
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .spelling-size-popup .stroke-style-btn {
+      width: 50px;
+      min-height: 58px;
+      border-radius: 15px;
+      gap: 6px;
+      padding-block: 8px 7px;
+    }
+
+    .spelling-size-popup .size-popup-btn {
+      width: 40px;
+      height: 40px;
+      flex-basis: 40px;
+    }
+
+    .spelling-size-popup .stroke-style-label {
+      font-size: 0.5rem;
     }
 
     .bank-card.collapsed .tray-launcher-stack,
@@ -759,6 +845,24 @@
       border: 0;
       background: transparent;
       box-shadow: none;
+    }
+
+    .spell-draw-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      display: block;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      touch-action: none;
+      background: transparent;
+      cursor: default;
+    }
+
+    .spell-draw-canvas.pen-mode {
+      pointer-events: auto;
+      cursor: crosshair;
     }
 
     .placed-tile,
@@ -1690,7 +1794,8 @@
     canvas,
     .spell-stage,
     .board-wrap,
-    .swatch {
+    .swatch,
+    .spell-swatch {
       user-select: none;
       -webkit-user-select: none;
       -webkit-tap-highlight-color: transparent;
@@ -4037,6 +4142,7 @@
         <div class="stack">
           <section class="builder-card">
             <div class="spell-stage" id="spellStage" aria-live="polite"></div>
+            <canvas class="spell-draw-canvas" id="spellDrawCanvas" aria-hidden="true"></canvas>
           </section>
 
           <section class="bank-card collapsed" id="spellTray">
@@ -4052,6 +4158,71 @@
                       <button class="ghost-btn" id="openBoardBtn" type="button">Open Screen Board</button>
                       <button class="ghost-btn" id="removeBtn" type="button">Remove Last</button>
                       <button class="action-btn" id="clearBtn" type="button">Clear All</button>
+                    </div>
+                    <div class="spelling-pencil-tools" id="spellingPencilTools">
+                      <div class="spelling-pencil-palette" id="spellingPaletteRow" aria-label="Spelling pencil colors">
+                        <button class="spell-swatch active" type="button" data-spelling-color="#101010" style="background:#101010" aria-label="Black spelling pencil"></button>
+                        <button class="spell-swatch" type="button" data-spelling-color="#ffffff" style="background:#ffffff" aria-label="White spelling pencil"></button>
+                        <button class="spell-swatch" type="button" data-spelling-color="#d4af37" style="background:#d4af37" aria-label="Golden yellow spelling pencil"></button>
+                      </div>
+                      <div class="spelling-pencil-actions">
+                        <button class="tool-btn spelling-pencil-btn" id="spellingPenModeBtn" type="button">Pencil: Off</button>
+                        <button class="tool-btn spelling-pencil-btn spelling-eraser-btn" id="spellingEraserBtn" type="button" aria-label="Spelling eraser off.">
+                          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <path d="M8.2 18.4h9.2c.5 0 1-.2 1.3-.6l2.2-2.2c.6-.6.6-1.6 0-2.2L13 5.7a1.55 1.55 0 0 0-2.2 0L3.1 13.4a1.55 1.55 0 0 0 0 2.2l2.2 2.2c.4.4.8.6 1.4.6h1.5Z" fill="#fff8df" stroke="#915800" stroke-width="1.4" stroke-linejoin="round"/>
+                            <path d="M10.1 8.6 16 14.5" stroke="#915800" stroke-width="1.4" stroke-linecap="round"/>
+                            <path d="M5.7 18.4h13.8" stroke="#915800" stroke-width="1.4" stroke-linecap="round"/>
+                          </svg>
+                        </button>
+                        <button class="ghost-btn spelling-pencil-btn" id="spellingStrokeBtn" type="button" aria-expanded="false">Stroke</button>
+                      </div>
+                      <div class="size-popup spelling-size-popup hidden" id="spellingToolSizePopup" role="group" aria-label="Spelling pencil stroke and size options" aria-hidden="true">
+                        <div class="size-popup-section size-popup-styles">
+                          <span class="size-popup-heading">Stroke</span>
+                          <div class="size-popup-row">
+                            <button class="stroke-style-btn" type="button" data-spelling-popup-style="brush" aria-label="Brush-like spelling pencil">
+                              <span class="stroke-style-sample brush" aria-hidden="true"></span>
+                              <span class="stroke-style-label">Brush</span>
+                            </button>
+                            <button class="stroke-style-btn" type="button" data-spelling-popup-style="pencil" aria-label="Pencil-like spelling pencil">
+                              <span class="stroke-style-sample pencil" aria-hidden="true"></span>
+                              <span class="stroke-style-label">Pencil</span>
+                            </button>
+                            <button class="stroke-style-btn" type="button" data-spelling-popup-style="charcoal" aria-label="Charcoal-like spelling pencil">
+                              <span class="stroke-style-sample charcoal" aria-hidden="true"></span>
+                              <span class="stroke-style-label">Charcoal</span>
+                            </button>
+                            <button class="stroke-style-btn" type="button" data-spelling-popup-style="calligraphy" aria-label="Calligraphy-like spelling pencil">
+                              <span class="stroke-style-sample calligraphy" aria-hidden="true"></span>
+                              <span class="stroke-style-label">Script</span>
+                            </button>
+                            <button class="stroke-style-btn" type="button" data-spelling-popup-style="airbrush" aria-label="Airbrush-like spelling pencil">
+                              <span class="stroke-style-sample airbrush" aria-hidden="true"></span>
+                              <span class="stroke-style-label">Air</span>
+                            </button>
+                          </div>
+                        </div>
+                        <div class="size-popup-section">
+                          <span class="size-popup-heading">Size</span>
+                          <div class="size-popup-row">
+                            <button class="size-popup-btn" type="button" data-spelling-popup-size="tiny" aria-label="Tiny spelling pencil size">
+                              <span class="size-popup-dot tiny"></span>
+                            </button>
+                            <button class="size-popup-btn" type="button" data-spelling-popup-size="small" aria-label="Small spelling pencil size">
+                              <span class="size-popup-dot small"></span>
+                            </button>
+                            <button class="size-popup-btn" type="button" data-spelling-popup-size="medium" aria-label="Medium spelling pencil size">
+                              <span class="size-popup-dot medium"></span>
+                            </button>
+                            <button class="size-popup-btn" type="button" data-spelling-popup-size="large" aria-label="Large spelling pencil size">
+                              <span class="size-popup-dot large"></span>
+                            </button>
+                            <button class="size-popup-btn" type="button" data-spelling-popup-size="xlarge" aria-label="Extra large spelling pencil size">
+                              <span class="size-popup-dot xlarge"></span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -4500,10 +4671,18 @@
       eraserSize: "medium",
       eraserOn: false,
       drawing: false,
+      drawingSurface: null,
       lastPoint: null,
       lastRawPoint: null,
       lastStrokeWidth: 0,
       currentStrokePointerType: "mouse",
+      spellingPenMode: false,
+      spellingSelectedColor: "#101010",
+      spellingPenStrokeStyle: "brush",
+      spellingPenSize: "medium",
+      spellingEraserSize: "medium",
+      spellingEraserOn: false,
+      spellingToolOptionsVisible: false,
       boardVisible: false,
       pointerSession: null,
       spellTrayExpanded: false,
@@ -4538,6 +4717,14 @@
     const spellingToolsControl = document.getElementById("spellingToolsControl");
     const spellingToolsLauncher = document.getElementById("spellingToolsLauncher");
     const spellingToolsPopup = document.getElementById("spellingToolsPopup");
+    const spellingPaletteRow = document.getElementById("spellingPaletteRow");
+    const spellingSwatches = Array.from(spellingPaletteRow.querySelectorAll("[data-spelling-color]"));
+    const spellingPenModeBtn = document.getElementById("spellingPenModeBtn");
+    const spellingEraserBtn = document.getElementById("spellingEraserBtn");
+    const spellingStrokeBtn = document.getElementById("spellingStrokeBtn");
+    const spellingToolSizePopup = document.getElementById("spellingToolSizePopup");
+    const spellingPopupStyleButtons = Array.from(spellingToolSizePopup.querySelectorAll("[data-spelling-popup-style]"));
+    const spellingPopupSizeButtons = Array.from(spellingToolSizePopup.querySelectorAll("[data-spelling-popup-size]"));
     const backgroundControl = document.getElementById("backgroundControl");
     const backgroundLauncher = document.getElementById("backgroundLauncher");
     const backgroundPopup = document.getElementById("backgroundPopup");
@@ -4656,6 +4843,8 @@
     const featureDieHistory = document.getElementById("featureDieHistory");
     const featureDieStatus = document.getElementById("featureDieStatus");
     const featureDiePips = Array.from(document.querySelectorAll("#featureDiePipLayer .feature-die-pip"));
+    const spellingCanvas = document.getElementById("spellDrawCanvas");
+    const spellingCtx = spellingCanvas.getContext("2d");
     const canvas = document.getElementById("drawCanvas");
     const ctx = canvas.getContext("2d");
     const LETTER_HEIGHT_RATIO = 1.5;
@@ -4839,6 +5028,8 @@
     let lastControlChooserTool = null;
     let lastControlChooserTarget = null;
     let lastControlChooserTime = 0;
+    let activeDrawCanvas = canvas;
+    let activeDrawCtx = ctx;
     let activityCameraStream = null;
     let activityCameraPurpose = "";
     let activityMediaRecorder = null;
@@ -9885,6 +10076,7 @@
         await drawPlacedItemToExport(exportSurface.ctx, item);
       }
 
+      exportSurface.ctx.drawImage(spellingCanvas, 0, 0, width, height);
       return exportSurface.canvas.toDataURL("image/jpeg", 0.84);
     }
 
@@ -10793,6 +10985,143 @@
       renderBoardAssetBank();
     }
 
+    function drawingSurfaceKey(surface = state.drawingSurface) {
+      return surface === "spell" ? "spell" : "board";
+    }
+
+    function setActiveDrawingSurface(surface) {
+      const normalizedSurface = drawingSurfaceKey(surface);
+      state.drawingSurface = normalizedSurface;
+      activeDrawCanvas = normalizedSurface === "spell" ? spellingCanvas : canvas;
+      activeDrawCtx = normalizedSurface === "spell" ? spellingCtx : ctx;
+    }
+
+    function drawingColor(surface = state.drawingSurface) {
+      return drawingSurfaceKey(surface) === "spell" ? state.spellingSelectedColor : state.selectedColor;
+    }
+
+    function drawingEraserOn(surface = state.drawingSurface) {
+      return drawingSurfaceKey(surface) === "spell" ? state.spellingEraserOn : state.eraserOn;
+    }
+
+    function drawingPenSize(surface = state.drawingSurface) {
+      return drawingSurfaceKey(surface) === "spell" ? state.spellingPenSize : state.penSize;
+    }
+
+    function drawingEraserSize(surface = state.drawingSurface) {
+      return drawingSurfaceKey(surface) === "spell" ? state.spellingEraserSize : state.eraserSize;
+    }
+
+    function updateSpellingInkSelectionUI() {
+      const activeColor = normalizeColorKey(state.spellingSelectedColor);
+      spellingSwatches.forEach((swatch) => {
+        swatch.classList.toggle("active", normalizeColorKey(swatch.dataset.spellingColor) === activeColor);
+      });
+    }
+
+    function setSpellingEraserMode(isOn) {
+      state.spellingEraserOn = Boolean(isOn);
+      spellingEraserBtn.classList.toggle("active", state.spellingEraserOn);
+      spellingEraserBtn.setAttribute(
+        "aria-label",
+        state.spellingEraserOn ? "Spelling eraser on." : "Spelling eraser off."
+      );
+      updateSpellingToolOptions();
+    }
+
+    function setSpellingActiveColor(color) {
+      const normalized = normalizeColorKey(color);
+      const allowedColors = ["#ffffff", "#101010", "#d4af37"];
+      if (!allowedColors.includes(normalized)) {
+        return;
+      }
+      state.spellingSelectedColor = normalized;
+      setSpellingEraserMode(false);
+      updateSpellingInkSelectionUI();
+    }
+
+    function setSpellingPenMode(isOn) {
+      state.spellingPenMode = Boolean(isOn);
+      spellingCanvas.classList.toggle("pen-mode", state.spellingPenMode);
+      spellingPenModeBtn.classList.toggle("active", state.spellingPenMode);
+      spellingPenModeBtn.textContent = state.spellingPenMode ? "Pencil: On" : "Pencil: Off";
+      spellingPenModeBtn.setAttribute(
+        "aria-label",
+        state.spellingPenMode
+          ? "Spelling pencil on. Draw anywhere on the spelling board."
+          : "Spelling pencil off. Move, resize, and rotate spelling items."
+      );
+
+      if (!state.spellingPenMode && state.drawingSurface === "spell") {
+        stopDrawing();
+      }
+    }
+
+    function currentSpellingToolSize(tool) {
+      return tool === "eraser" ? state.spellingEraserSize : state.spellingPenSize;
+    }
+
+    function setSpellingPenStrokeStyle(style) {
+      if (!PEN_STYLE_MAP[style]) {
+        return;
+      }
+
+      state.spellingPenStrokeStyle = style;
+      updateSpellingToolOptions();
+    }
+
+    function setSpellingToolSize(tool, size) {
+      const sizeMap = tool === "eraser" ? ERASER_STROKE_WIDTHS : PEN_STROKE_WIDTHS;
+      if (!sizeMap[size]) {
+        return;
+      }
+
+      if (tool === "eraser") {
+        state.spellingEraserSize = size;
+      } else {
+        state.spellingPenSize = size;
+      }
+      updateSpellingToolOptions();
+    }
+
+    function updateSpellingToolOptions() {
+      const activeTool = state.spellingEraserOn ? "eraser" : "pen";
+      const selectedSize = currentSpellingToolSize(activeTool);
+      const sizeLabelMap = {
+        tiny: "tiny",
+        small: "small",
+        medium: "medium",
+        large: "large",
+        xlarge: "extra large"
+      };
+      spellingToolSizePopup.classList.toggle("eraser-popup", activeTool === "eraser");
+      spellingPopupStyleButtons.forEach((button) => {
+        const style = button.dataset.spellingPopupStyle;
+        const isMatch = activeTool === "pen" && style === currentPenStrokeStyle("spell");
+        button.classList.toggle("active", isMatch);
+        button.setAttribute("aria-pressed", String(isMatch));
+      });
+      spellingPopupSizeButtons.forEach((button) => {
+        const size = button.dataset.spellingPopupSize;
+        const isMatch = size === selectedSize;
+        const sizeLabel = sizeLabelMap[size] || size;
+        button.classList.toggle("active", isMatch);
+        button.setAttribute("aria-pressed", String(isMatch));
+        button.setAttribute("aria-label", `${sizeLabel} ${activeTool === "eraser" ? "spelling eraser" : "spelling pencil"} size`);
+      });
+    }
+
+    function setSpellingToolOptionsVisible(visible) {
+      state.spellingToolOptionsVisible = Boolean(visible);
+      spellingToolSizePopup.classList.toggle("hidden", !state.spellingToolOptionsVisible);
+      spellingToolSizePopup.setAttribute("aria-hidden", String(!state.spellingToolOptionsVisible));
+      spellingStrokeBtn.classList.toggle("active", state.spellingToolOptionsVisible);
+      spellingStrokeBtn.setAttribute("aria-expanded", String(state.spellingToolOptionsVisible));
+      if (state.spellingToolOptionsVisible) {
+        updateSpellingToolOptions();
+      }
+    }
+
     function setBoardPenMode(isOn) {
       state.boardPenMode = Boolean(isOn);
       boardWrap.classList.toggle("pen-mode", state.boardPenMode);
@@ -10849,8 +11178,9 @@
       return tool === "eraser" ? state.eraserSize : state.penSize;
     }
 
-    function currentPenStrokeStyle() {
-      return PEN_STYLE_MAP[state.penStrokeStyle] ? state.penStrokeStyle : PEN_STYLE_DEFS[0].id;
+    function currentPenStrokeStyle(surface = "board") {
+      const style = drawingSurfaceKey(surface) === "spell" ? state.spellingPenStrokeStyle : state.penStrokeStyle;
+      return PEN_STYLE_MAP[style] ? style : PEN_STYLE_DEFS[0].id;
     }
 
     function setPenStrokeStyle(style) {
@@ -10954,6 +11284,9 @@
 
     function setSpellingToolsPanelVisible(visible) {
       state.spellingToolsPanelVisible = Boolean(visible);
+      if (!state.spellingToolsPanelVisible) {
+        setSpellingToolOptionsVisible(false);
+      }
       setAnimatedVisibility(spellingToolsPopup, state.spellingToolsPanelVisible);
       spellingToolsPopup.setAttribute("aria-hidden", String(!state.spellingToolsPanelVisible));
       spellingToolsLauncher.setAttribute("aria-expanded", String(state.spellingToolsPanelVisible));
@@ -11371,6 +11704,7 @@
 
     function clearSpelling() {
       state.placedItems = [];
+      clearSpellingInk();
       renderPlacedSpelling();
       setStatus("The spelling area is clear.");
     }
@@ -12211,37 +12545,45 @@
       event.preventDefault();
     }
 
-    function resizeCanvas() {
-      const rect = canvas.getBoundingClientRect();
+    function resizeDrawingCanvas(targetCanvas, targetCtx) {
+      const rect = targetCanvas.getBoundingClientRect();
       if (!rect.width || !rect.height) {
         return;
       }
 
       const previous = document.createElement("canvas");
-      previous.width = canvas.width;
-      previous.height = canvas.height;
+      previous.width = targetCanvas.width;
+      previous.height = targetCanvas.height;
 
-      if (canvas.width && canvas.height) {
-        previous.getContext("2d").drawImage(canvas, 0, 0);
+      if (targetCanvas.width && targetCanvas.height) {
+        previous.getContext("2d").drawImage(targetCanvas, 0, 0);
       }
 
       const ratio = window.devicePixelRatio || 1;
-      canvas.width = Math.max(1, Math.floor(rect.width * ratio));
-      canvas.height = Math.max(1, Math.floor(rect.height * ratio));
-      ctx.imageSmoothingEnabled = true;
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
+      targetCanvas.width = Math.max(1, Math.floor(rect.width * ratio));
+      targetCanvas.height = Math.max(1, Math.floor(rect.height * ratio));
+      targetCtx.imageSmoothingEnabled = true;
+      targetCtx.lineCap = "round";
+      targetCtx.lineJoin = "round";
 
       if (previous.width && previous.height) {
-        ctx.drawImage(previous, 0, 0, canvas.width, canvas.height);
+        targetCtx.drawImage(previous, 0, 0, targetCanvas.width, targetCanvas.height);
       }
     }
 
+    function resizeCanvas() {
+      resizeDrawingCanvas(canvas, ctx);
+    }
+
+    function resizeSpellingCanvas() {
+      resizeDrawingCanvas(spellingCanvas, spellingCtx);
+    }
+
     function pointFromEvent(event) {
-      const rect = canvas.getBoundingClientRect();
+      const rect = activeDrawCanvas.getBoundingClientRect();
       return {
-        x: (event.clientX - rect.left) * (canvas.width / rect.width),
-        y: (event.clientY - rect.top) * (canvas.height / rect.height),
+        x: (event.clientX - rect.left) * (activeDrawCanvas.width / rect.width),
+        y: (event.clientY - rect.top) * (activeDrawCanvas.height / rect.height),
         pressure: event.pressure || 0
       };
     }
@@ -12345,110 +12687,115 @@
     }
 
     function traceLine(from, to, options = {}) {
-      ctx.lineCap = options.lineCap || "round";
-      ctx.lineJoin = options.lineJoin || "round";
-      ctx.strokeStyle = options.strokeStyle || state.selectedColor;
-      ctx.lineWidth = options.lineWidth || 1;
-      ctx.beginPath();
-      ctx.moveTo(from.x, from.y);
-      ctx.lineTo(to.x, to.y);
-      ctx.stroke();
+      activeDrawCtx.lineCap = options.lineCap || "round";
+      activeDrawCtx.lineJoin = options.lineJoin || "round";
+      activeDrawCtx.strokeStyle = options.strokeStyle || drawingColor();
+      activeDrawCtx.lineWidth = options.lineWidth || 1;
+      activeDrawCtx.beginPath();
+      activeDrawCtx.moveTo(from.x, from.y);
+      activeDrawCtx.lineTo(to.x, to.y);
+      activeDrawCtx.stroke();
     }
 
     function traceQuadratic(from, control, to, options = {}) {
-      ctx.lineCap = options.lineCap || "round";
-      ctx.lineJoin = options.lineJoin || "round";
-      ctx.strokeStyle = options.strokeStyle || state.selectedColor;
-      ctx.lineWidth = options.lineWidth || 1;
-      ctx.beginPath();
-      ctx.moveTo(from.x, from.y);
-      ctx.quadraticCurveTo(control.x, control.y, to.x, to.y);
-      ctx.stroke();
+      activeDrawCtx.lineCap = options.lineCap || "round";
+      activeDrawCtx.lineJoin = options.lineJoin || "round";
+      activeDrawCtx.strokeStyle = options.strokeStyle || drawingColor();
+      activeDrawCtx.lineWidth = options.lineWidth || 1;
+      activeDrawCtx.beginPath();
+      activeDrawCtx.moveTo(from.x, from.y);
+      activeDrawCtx.quadraticCurveTo(control.x, control.y, to.x, to.y);
+      activeDrawCtx.stroke();
     }
 
     function fillCircle(x, y, radius, fillStyle, alpha = 1) {
-      ctx.save();
-      ctx.globalAlpha = alpha;
-      ctx.fillStyle = fillStyle;
-      ctx.beginPath();
-      ctx.arc(x, y, radius, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
+      activeDrawCtx.save();
+      activeDrawCtx.globalAlpha = alpha;
+      activeDrawCtx.fillStyle = fillStyle;
+      activeDrawCtx.beginPath();
+      activeDrawCtx.arc(x, y, radius, 0, Math.PI * 2);
+      activeDrawCtx.fill();
+      activeDrawCtx.restore();
     }
 
     function drawBrushSegment(from, to, lineWidth) {
-      ctx.save();
-      ctx.globalCompositeOperation = "source-over";
-      ctx.shadowColor = colorWithAlpha(state.selectedColor, 0.18);
-      ctx.shadowBlur = lineWidth * 0.4;
+      const color = drawingColor();
+      activeDrawCtx.save();
+      activeDrawCtx.globalCompositeOperation = "source-over";
+      activeDrawCtx.shadowColor = colorWithAlpha(color, 0.18);
+      activeDrawCtx.shadowBlur = lineWidth * 0.4;
       traceLine(from, to, {
         lineWidth: lineWidth * 1.65,
-        strokeStyle: colorWithAlpha(state.selectedColor, 0.22)
+        strokeStyle: colorWithAlpha(color, 0.22)
       });
       traceLine(from, to, {
         lineWidth: lineWidth * 1.12,
-        strokeStyle: colorWithAlpha(state.selectedColor, 0.42)
+        strokeStyle: colorWithAlpha(color, 0.42)
       });
       traceLine(from, to, {
         lineWidth: lineWidth * 0.78,
-        strokeStyle: colorWithAlpha(state.selectedColor, 0.94)
+        strokeStyle: colorWithAlpha(color, 0.94)
       });
-      ctx.restore();
+      activeDrawCtx.restore();
     }
 
     function drawBrushDot(point, dotWidth) {
-      fillCircle(point.x, point.y, dotWidth * 0.82, colorWithAlpha(state.selectedColor, 0.2));
-      fillCircle(point.x, point.y, dotWidth * 0.54, colorWithAlpha(state.selectedColor, 0.42));
-      fillCircle(point.x, point.y, dotWidth * 0.34, colorWithAlpha(state.selectedColor, 0.96));
+      const color = drawingColor();
+      fillCircle(point.x, point.y, dotWidth * 0.82, colorWithAlpha(color, 0.2));
+      fillCircle(point.x, point.y, dotWidth * 0.54, colorWithAlpha(color, 0.42));
+      fillCircle(point.x, point.y, dotWidth * 0.34, colorWithAlpha(color, 0.96));
     }
 
     function drawPencilSegment(from, to, lineWidth) {
       const metrics = segmentMetrics(from, to);
       const grainOffset = Math.max(0.55, lineWidth * 0.1);
+      const color = drawingColor();
 
-      ctx.save();
-      ctx.globalCompositeOperation = "source-over";
-      ctx.shadowColor = colorWithAlpha(state.selectedColor, 0.08);
-      ctx.shadowBlur = lineWidth * 0.22;
+      activeDrawCtx.save();
+      activeDrawCtx.globalCompositeOperation = "source-over";
+      activeDrawCtx.shadowColor = colorWithAlpha(color, 0.08);
+      activeDrawCtx.shadowBlur = lineWidth * 0.22;
       traceLine(from, to, {
         lineWidth: lineWidth * 0.82,
-        strokeStyle: colorWithAlpha(state.selectedColor, 0.82)
+        strokeStyle: colorWithAlpha(color, 0.82)
       });
       [-1, 1].forEach((factor) => {
         const offsetX = metrics.normalX * grainOffset * factor;
         const offsetY = metrics.normalY * grainOffset * factor;
         traceLine(offsetPoint(from, offsetX, offsetY), offsetPoint(to, offsetX, offsetY), {
           lineWidth: Math.max(1, lineWidth * 0.14),
-          strokeStyle: colorWithAlpha(state.selectedColor, 0.16)
+          strokeStyle: colorWithAlpha(color, 0.16)
         });
       });
-      ctx.restore();
+      activeDrawCtx.restore();
     }
 
     function drawPencilDot(point, dotWidth) {
-      fillCircle(point.x, point.y, dotWidth * 0.36, colorWithAlpha(state.selectedColor, 0.82));
-      fillCircle(point.x, point.y, dotWidth * 0.18, colorWithAlpha(state.selectedColor, 0.22));
+      const color = drawingColor();
+      fillCircle(point.x, point.y, dotWidth * 0.36, colorWithAlpha(color, 0.82));
+      fillCircle(point.x, point.y, dotWidth * 0.18, colorWithAlpha(color, 0.22));
     }
 
     function drawCharcoalSegment(from, to, lineWidth) {
       const metrics = segmentMetrics(from, to);
       const sideOffsets = [-0.44, -0.18, 0.2, 0.46];
+      const color = drawingColor();
 
-      ctx.save();
-      ctx.globalCompositeOperation = "source-over";
-      ctx.shadowColor = colorWithAlpha(state.selectedColor, 0.22);
-      ctx.shadowBlur = lineWidth * 0.8;
+      activeDrawCtx.save();
+      activeDrawCtx.globalCompositeOperation = "source-over";
+      activeDrawCtx.shadowColor = colorWithAlpha(color, 0.22);
+      activeDrawCtx.shadowBlur = lineWidth * 0.8;
       traceLine(from, to, {
         lineWidth: lineWidth * 1.95,
-        strokeStyle: colorWithAlpha(state.selectedColor, 0.13)
+        strokeStyle: colorWithAlpha(color, 0.13)
       });
       traceLine(from, to, {
         lineWidth: lineWidth * 1.12,
-        strokeStyle: colorWithAlpha(state.selectedColor, 0.36)
+        strokeStyle: colorWithAlpha(color, 0.36)
       });
       traceLine(from, to, {
         lineWidth: lineWidth * 0.78,
-        strokeStyle: colorWithAlpha(state.selectedColor, 0.86)
+        strokeStyle: colorWithAlpha(color, 0.86)
       });
 
       sideOffsets.forEach((factor, index) => {
@@ -12456,30 +12803,32 @@
         const offsetY = metrics.normalY * lineWidth * factor;
         traceLine(offsetPoint(from, offsetX, offsetY), offsetPoint(to, offsetX, offsetY), {
           lineWidth: Math.max(1, lineWidth * (0.18 + (index % 2) * 0.06)),
-          strokeStyle: colorWithAlpha(state.selectedColor, 0.12 + index * 0.03)
+          strokeStyle: colorWithAlpha(color, 0.12 + index * 0.03)
         });
       });
-      ctx.restore();
+      activeDrawCtx.restore();
     }
 
     function drawCharcoalDot(point, dotWidth) {
-      fillCircle(point.x, point.y, dotWidth * 0.7, colorWithAlpha(state.selectedColor, 0.12));
-      fillCircle(point.x, point.y, dotWidth * 0.42, colorWithAlpha(state.selectedColor, 0.48));
-      fillCircle(point.x, point.y, dotWidth * 0.24, colorWithAlpha(state.selectedColor, 0.9));
+      const color = drawingColor();
+      fillCircle(point.x, point.y, dotWidth * 0.7, colorWithAlpha(color, 0.12));
+      fillCircle(point.x, point.y, dotWidth * 0.42, colorWithAlpha(color, 0.48));
+      fillCircle(point.x, point.y, dotWidth * 0.24, colorWithAlpha(color, 0.9));
     }
 
     function drawCalligraphySegment(from, to, lineWidth) {
       const metrics = segmentMetrics(from, to);
       const nibInfluence = 0.68 + Math.abs(Math.cos(metrics.angle - Math.PI / 4)) * 0.78;
       const broadWidth = lineWidth * nibInfluence;
+      const color = drawingColor();
       const layers = [
         { offset: -broadWidth * 0.16, width: broadWidth * 0.58, alpha: 0.28 },
         { offset: 0, width: broadWidth * 0.84, alpha: 0.92 },
         { offset: broadWidth * 0.2, width: broadWidth * 0.26, alpha: 0.16 }
       ];
 
-      ctx.save();
-      ctx.globalCompositeOperation = "source-over";
+      activeDrawCtx.save();
+      activeDrawCtx.globalCompositeOperation = "source-over";
       layers.forEach((layer) => {
         const offsetX = metrics.normalX * layer.offset;
         const offsetY = metrics.normalY * layer.offset;
@@ -12487,84 +12836,89 @@
           lineWidth: Math.max(1, layer.width),
           lineCap: "butt",
           lineJoin: "miter",
-          strokeStyle: colorWithAlpha(state.selectedColor, layer.alpha)
+          strokeStyle: colorWithAlpha(color, layer.alpha)
         });
       });
-      ctx.restore();
+      activeDrawCtx.restore();
     }
 
     function drawCalligraphyDot(point, dotWidth) {
-      ctx.save();
-      ctx.translate(point.x, point.y);
-      ctx.rotate(-Math.PI / 7);
-      ctx.fillStyle = colorWithAlpha(state.selectedColor, 0.92);
-      ctx.beginPath();
-      ctx.ellipse(0, 0, dotWidth * 0.5, dotWidth * 0.22, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = colorWithAlpha(state.selectedColor, 0.2);
-      ctx.beginPath();
-      ctx.ellipse(dotWidth * 0.11, dotWidth * 0.16, dotWidth * 0.3, dotWidth * 0.12, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
+      const color = drawingColor();
+      activeDrawCtx.save();
+      activeDrawCtx.translate(point.x, point.y);
+      activeDrawCtx.rotate(-Math.PI / 7);
+      activeDrawCtx.fillStyle = colorWithAlpha(color, 0.92);
+      activeDrawCtx.beginPath();
+      activeDrawCtx.ellipse(0, 0, dotWidth * 0.5, dotWidth * 0.22, 0, 0, Math.PI * 2);
+      activeDrawCtx.fill();
+      activeDrawCtx.fillStyle = colorWithAlpha(color, 0.2);
+      activeDrawCtx.beginPath();
+      activeDrawCtx.ellipse(dotWidth * 0.11, dotWidth * 0.16, dotWidth * 0.3, dotWidth * 0.12, 0, 0, Math.PI * 2);
+      activeDrawCtx.fill();
+      activeDrawCtx.restore();
     }
 
     function drawAirbrushSegment(from, to, lineWidth) {
-      ctx.save();
-      ctx.globalCompositeOperation = "source-over";
-      ctx.shadowColor = colorWithAlpha(state.selectedColor, 0.34);
-      ctx.shadowBlur = lineWidth * 1.28;
+      const color = drawingColor();
+      activeDrawCtx.save();
+      activeDrawCtx.globalCompositeOperation = "source-over";
+      activeDrawCtx.shadowColor = colorWithAlpha(color, 0.34);
+      activeDrawCtx.shadowBlur = lineWidth * 1.28;
       traceLine(from, to, {
         lineWidth: lineWidth * 2.2,
-        strokeStyle: colorWithAlpha(state.selectedColor, 0.12)
+        strokeStyle: colorWithAlpha(color, 0.12)
       });
       traceLine(from, to, {
         lineWidth: lineWidth * 1.4,
-        strokeStyle: colorWithAlpha(state.selectedColor, 0.22)
+        strokeStyle: colorWithAlpha(color, 0.22)
       });
-      ctx.shadowBlur = lineWidth * 0.82;
+      activeDrawCtx.shadowBlur = lineWidth * 0.82;
       traceLine(from, to, {
         lineWidth: lineWidth * 0.62,
-        strokeStyle: colorWithAlpha(state.selectedColor, 0.32)
+        strokeStyle: colorWithAlpha(color, 0.32)
       });
-      ctx.restore();
+      activeDrawCtx.restore();
     }
 
     function drawAirbrushDot(point, dotWidth) {
-      fillCircle(point.x, point.y, dotWidth * 1.16, colorWithAlpha(state.selectedColor, 0.08));
-      fillCircle(point.x, point.y, dotWidth * 0.78, colorWithAlpha(state.selectedColor, 0.16));
-      fillCircle(point.x, point.y, dotWidth * 0.38, colorWithAlpha(state.selectedColor, 0.22));
+      const color = drawingColor();
+      fillCircle(point.x, point.y, dotWidth * 1.16, colorWithAlpha(color, 0.08));
+      fillCircle(point.x, point.y, dotWidth * 0.78, colorWithAlpha(color, 0.16));
+      fillCircle(point.x, point.y, dotWidth * 0.38, colorWithAlpha(color, 0.22));
     }
 
     function drawBrushCurve(from, control, to, lineWidth) {
       const lowLatency = state.currentStrokePointerType === "pen" || state.currentStrokePointerType === "touch";
-      ctx.save();
-      ctx.globalCompositeOperation = "source-over";
-      ctx.shadowColor = colorWithAlpha(state.selectedColor, 0.1);
-      ctx.shadowBlur = lineWidth * (lowLatency ? 0.08 : 0.22);
+      const color = drawingColor();
+      activeDrawCtx.save();
+      activeDrawCtx.globalCompositeOperation = "source-over";
+      activeDrawCtx.shadowColor = colorWithAlpha(color, 0.1);
+      activeDrawCtx.shadowBlur = lineWidth * (lowLatency ? 0.08 : 0.22);
       traceQuadratic(from, control, to, {
         lineWidth: lineWidth * (lowLatency ? 1.12 : 1.46),
-        strokeStyle: colorWithAlpha(state.selectedColor, lowLatency ? 0.22 : 0.18)
+        strokeStyle: colorWithAlpha(color, lowLatency ? 0.22 : 0.18)
       });
       traceQuadratic(from, control, to, {
         lineWidth: lineWidth * 0.98,
-        strokeStyle: colorWithAlpha(state.selectedColor, lowLatency ? 0.56 : 0.46)
+        strokeStyle: colorWithAlpha(color, lowLatency ? 0.56 : 0.46)
       });
       traceQuadratic(from, control, to, {
         lineWidth: lineWidth * (lowLatency ? 0.84 : 0.78),
-        strokeStyle: colorWithAlpha(state.selectedColor, 0.98)
+        strokeStyle: colorWithAlpha(color, 0.98)
       });
-      ctx.restore();
+      activeDrawCtx.restore();
     }
 
     function drawPencilCurve(from, control, to, lineWidth) {
       const metrics = segmentMetrics(from, to);
       const lowLatency = state.currentStrokePointerType === "pen" || state.currentStrokePointerType === "touch";
       const grainOffset = Math.max(0.34, lineWidth * (lowLatency ? 0.05 : 0.08));
-      ctx.save();
-      ctx.globalCompositeOperation = "source-over";
+      const color = drawingColor();
+      activeDrawCtx.save();
+      activeDrawCtx.globalCompositeOperation = "source-over";
       traceQuadratic(from, control, to, {
         lineWidth: lineWidth * 0.9,
-        strokeStyle: colorWithAlpha(state.selectedColor, 0.9)
+        strokeStyle: colorWithAlpha(color, 0.9)
       });
       (lowLatency ? [-1] : [-1, 1]).forEach((factor) => {
         const offsetX = metrics.normalX * grainOffset * factor;
@@ -12575,32 +12929,33 @@
           offsetPoint(to, offsetX, offsetY),
           {
             lineWidth: Math.max(1, lineWidth * 0.08),
-            strokeStyle: colorWithAlpha(state.selectedColor, 0.12)
+            strokeStyle: colorWithAlpha(color, 0.12)
           }
         );
       });
-      ctx.restore();
+      activeDrawCtx.restore();
     }
 
     function drawCharcoalCurve(from, control, to, lineWidth) {
       const metrics = segmentMetrics(from, to);
       const lowLatency = state.currentStrokePointerType === "pen" || state.currentStrokePointerType === "touch";
       const sideOffsets = lowLatency ? [-0.18, 0.18] : [-0.36, -0.14, 0.16, 0.38];
-      ctx.save();
-      ctx.globalCompositeOperation = "source-over";
-      ctx.shadowColor = colorWithAlpha(state.selectedColor, 0.12);
-      ctx.shadowBlur = lineWidth * (lowLatency ? 0.12 : 0.34);
+      const color = drawingColor();
+      activeDrawCtx.save();
+      activeDrawCtx.globalCompositeOperation = "source-over";
+      activeDrawCtx.shadowColor = colorWithAlpha(color, 0.12);
+      activeDrawCtx.shadowBlur = lineWidth * (lowLatency ? 0.12 : 0.34);
       traceQuadratic(from, control, to, {
         lineWidth: lineWidth * (lowLatency ? 1.32 : 1.72),
-        strokeStyle: colorWithAlpha(state.selectedColor, lowLatency ? 0.18 : 0.14)
+        strokeStyle: colorWithAlpha(color, lowLatency ? 0.18 : 0.14)
       });
       traceQuadratic(from, control, to, {
         lineWidth: lineWidth * 1.02,
-        strokeStyle: colorWithAlpha(state.selectedColor, lowLatency ? 0.44 : 0.34)
+        strokeStyle: colorWithAlpha(color, lowLatency ? 0.44 : 0.34)
       });
       traceQuadratic(from, control, to, {
         lineWidth: lineWidth * (lowLatency ? 0.82 : 0.76),
-        strokeStyle: colorWithAlpha(state.selectedColor, 0.94)
+        strokeStyle: colorWithAlpha(color, 0.94)
       });
       sideOffsets.forEach((factor, index) => {
         const offsetX = metrics.normalX * lineWidth * factor;
@@ -12611,11 +12966,11 @@
           offsetPoint(to, offsetX, offsetY),
           {
             lineWidth: Math.max(1, lineWidth * (0.08 + (index % 2) * 0.03)),
-            strokeStyle: colorWithAlpha(state.selectedColor, 0.08 + index * 0.025)
+            strokeStyle: colorWithAlpha(color, 0.08 + index * 0.025)
           }
         );
       });
-      ctx.restore();
+      activeDrawCtx.restore();
     }
 
     function drawCalligraphyCurve(from, control, to, lineWidth) {
@@ -12623,6 +12978,7 @@
       const lowLatency = state.currentStrokePointerType === "pen" || state.currentStrokePointerType === "touch";
       const nibInfluence = 0.68 + Math.abs(Math.cos(metrics.angle - Math.PI / 4)) * 0.78;
       const broadWidth = lineWidth * nibInfluence;
+      const color = drawingColor();
       const layers = lowLatency
         ? [
             { offset: -broadWidth * 0.08, width: broadWidth * 0.5, alpha: 0.22 },
@@ -12634,8 +12990,8 @@
             { offset: broadWidth * 0.2, width: broadWidth * 0.26, alpha: 0.16 }
           ];
 
-      ctx.save();
-      ctx.globalCompositeOperation = "source-over";
+      activeDrawCtx.save();
+      activeDrawCtx.globalCompositeOperation = "source-over";
       layers.forEach((layer) => {
         const offsetX = metrics.normalX * layer.offset;
         const offsetY = metrics.normalY * layer.offset;
@@ -12647,38 +13003,41 @@
             lineWidth: Math.max(1, layer.width),
             lineCap: lowLatency ? "round" : "square",
             lineJoin: lowLatency ? "round" : "miter",
-            strokeStyle: colorWithAlpha(state.selectedColor, layer.alpha)
+            strokeStyle: colorWithAlpha(color, layer.alpha)
           }
         );
       });
-      ctx.restore();
+      activeDrawCtx.restore();
     }
 
     function drawAirbrushCurve(from, control, to, lineWidth) {
       const lowLatency = state.currentStrokePointerType === "pen" || state.currentStrokePointerType === "touch";
-      ctx.save();
-      ctx.globalCompositeOperation = "source-over";
-      ctx.shadowColor = colorWithAlpha(state.selectedColor, 0.16);
-      ctx.shadowBlur = lineWidth * (lowLatency ? 0.18 : 0.56);
+      const color = drawingColor();
+      activeDrawCtx.save();
+      activeDrawCtx.globalCompositeOperation = "source-over";
+      activeDrawCtx.shadowColor = colorWithAlpha(color, 0.16);
+      activeDrawCtx.shadowBlur = lineWidth * (lowLatency ? 0.18 : 0.56);
       traceQuadratic(from, control, to, {
         lineWidth: lineWidth * (lowLatency ? 1.22 : 1.72),
-        strokeStyle: colorWithAlpha(state.selectedColor, lowLatency ? 0.18 : 0.12)
+        strokeStyle: colorWithAlpha(color, lowLatency ? 0.18 : 0.12)
       });
       traceQuadratic(from, control, to, {
         lineWidth: lineWidth * (lowLatency ? 0.88 : 1.16),
-        strokeStyle: colorWithAlpha(state.selectedColor, lowLatency ? 0.34 : 0.24)
+        strokeStyle: colorWithAlpha(color, lowLatency ? 0.34 : 0.24)
       });
       traceQuadratic(from, control, to, {
         lineWidth: lineWidth * (lowLatency ? 0.46 : 0.56),
-        strokeStyle: colorWithAlpha(state.selectedColor, lowLatency ? 0.2 : 0.28)
+        strokeStyle: colorWithAlpha(color, lowLatency ? 0.2 : 0.28)
       });
-      ctx.restore();
+      activeDrawCtx.restore();
     }
 
     function currentStrokeWidth() {
-      const sizeKey = state.eraserOn ? state.eraserSize : state.penSize;
-      const sizeMap = state.eraserOn ? ERASER_STROKE_WIDTHS : PEN_STROKE_WIDTHS;
-      const styleScale = state.eraserOn ? 1 : (PEN_STYLE_MAP[currentPenStrokeStyle()]?.widthScale || 1);
+      const surface = drawingSurfaceKey();
+      const eraserOn = drawingEraserOn(surface);
+      const sizeKey = eraserOn ? drawingEraserSize(surface) : drawingPenSize(surface);
+      const sizeMap = eraserOn ? ERASER_STROKE_WIDTHS : PEN_STROKE_WIDTHS;
+      const styleScale = eraserOn ? 1 : (PEN_STYLE_MAP[currentPenStrokeStyle(surface)]?.widthScale || 1);
       return sizeMap[sizeKey] * styleScale * ((window.devicePixelRatio || 1) * 0.95);
     }
 
@@ -12703,18 +13062,18 @@
         return;
       }
 
-      if (state.eraserOn) {
-        ctx.save();
-        ctx.globalCompositeOperation = "destination-out";
+      if (drawingEraserOn()) {
+        activeDrawCtx.save();
+        activeDrawCtx.globalCompositeOperation = "destination-out";
         traceQuadratic(from, control, to, {
           lineWidth,
           strokeStyle: "#000000"
         });
-        ctx.restore();
+        activeDrawCtx.restore();
         return;
       }
 
-      switch (currentPenStrokeStyle()) {
+      switch (currentPenStrokeStyle(state.drawingSurface)) {
         case "pencil":
           drawPencilCurve(from, control, to, lineWidth);
           return;
@@ -12734,22 +13093,22 @@
     }
 
     function drawSegment(from, to, lineWidth = currentStrokeWidth()) {
-      if (state.eraserOn) {
-        ctx.save();
-        ctx.globalCompositeOperation = "destination-out";
-        ctx.lineCap = "round";
-        ctx.lineJoin = "round";
-        ctx.strokeStyle = "#000000";
-        ctx.lineWidth = lineWidth;
-        ctx.beginPath();
-        ctx.moveTo(from.x, from.y);
-        ctx.lineTo(to.x, to.y);
-        ctx.stroke();
-        ctx.restore();
+      if (drawingEraserOn()) {
+        activeDrawCtx.save();
+        activeDrawCtx.globalCompositeOperation = "destination-out";
+        activeDrawCtx.lineCap = "round";
+        activeDrawCtx.lineJoin = "round";
+        activeDrawCtx.strokeStyle = "#000000";
+        activeDrawCtx.lineWidth = lineWidth;
+        activeDrawCtx.beginPath();
+        activeDrawCtx.moveTo(from.x, from.y);
+        activeDrawCtx.lineTo(to.x, to.y);
+        activeDrawCtx.stroke();
+        activeDrawCtx.restore();
         return;
       }
 
-      switch (currentPenStrokeStyle()) {
+      switch (currentPenStrokeStyle(state.drawingSurface)) {
         case "pencil":
           drawPencilSegment(from, to, lineWidth);
           return;
@@ -12769,18 +13128,18 @@
     }
 
     function drawDot(point, dotWidth = currentStrokeWidth()) {
-      if (state.eraserOn) {
-        ctx.save();
-        ctx.globalCompositeOperation = "destination-out";
-        ctx.fillStyle = "#000000";
-        ctx.beginPath();
-        ctx.arc(point.x, point.y, dotWidth / 2, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
+      if (drawingEraserOn()) {
+        activeDrawCtx.save();
+        activeDrawCtx.globalCompositeOperation = "destination-out";
+        activeDrawCtx.fillStyle = "#000000";
+        activeDrawCtx.beginPath();
+        activeDrawCtx.arc(point.x, point.y, dotWidth / 2, 0, Math.PI * 2);
+        activeDrawCtx.fill();
+        activeDrawCtx.restore();
         return;
       }
 
-      switch (currentPenStrokeStyle()) {
+      switch (currentPenStrokeStyle(state.drawingSurface)) {
         case "pencil":
           drawPencilDot(point, dotWidth);
           return;
@@ -12799,8 +13158,14 @@
       }
     }
 
-    function startDrawing(event) {
-      if (!state.boardVisible || !state.boardPenMode || state.pointerSession) {
+    function startDrawingOnSurface(surface, event) {
+      const normalizedSurface = drawingSurfaceKey(surface);
+      const isBoardSurface = normalizedSurface === "board";
+      if (
+        state.pointerSession ||
+        (isBoardSurface && (!state.boardVisible || !state.boardPenMode)) ||
+        (!isBoardSurface && !state.spellingPenMode)
+      ) {
         return;
       }
 
@@ -12808,26 +13173,43 @@
         return;
       }
 
-      if (event.target.closest("[data-feature-interactive]")) {
+      if (isBoardSurface && event.target.closest("[data-feature-interactive]")) {
         return;
       }
 
       event.preventDefault();
+      setActiveDrawingSurface(normalizedSurface);
       state.drawing = true;
       state.currentStrokePointerType = event.pointerType || "mouse";
       state.lastPoint = pointFromEvent(event);
       state.lastRawPoint = state.lastPoint;
       state.lastStrokeWidth = strokeWidthForEvent(event);
       drawDot(state.lastPoint, state.lastStrokeWidth);
-      boardWrap.setPointerCapture(event.pointerId);
+      (isBoardSurface ? boardWrap : spellingCanvas).setPointerCapture(event.pointerId);
     }
 
-    function continueDrawing(event) {
-      if (!state.drawing || !state.boardVisible || !state.boardPenMode) {
+    function startDrawing(event) {
+      startDrawingOnSurface("board", event);
+    }
+
+    function startSpellingDrawing(event) {
+      startDrawingOnSurface("spell", event);
+    }
+
+    function continueDrawingOnSurface(surface, event) {
+      const normalizedSurface = drawingSurfaceKey(surface);
+      const isBoardSurface = normalizedSurface === "board";
+      if (
+        !state.drawing ||
+        state.drawingSurface !== normalizedSurface ||
+        (isBoardSurface && (!state.boardVisible || !state.boardPenMode)) ||
+        (!isBoardSurface && !state.spellingPenMode)
+      ) {
         return;
       }
 
       event.preventDefault();
+      setActiveDrawingSurface(normalizedSurface);
       const pointerType = event.pointerType || state.currentStrokePointerType || "mouse";
       state.currentStrokePointerType = pointerType;
       const rawSamples = typeof event.getCoalescedEvents === "function"
@@ -12860,10 +13242,22 @@
       });
     }
 
+    function continueDrawing(event) {
+      continueDrawingOnSurface("board", event);
+    }
+
+    function continueSpellingDrawing(event) {
+      continueDrawingOnSurface("spell", event);
+    }
+
     function stopDrawing(event) {
       if (!state.drawing) {
         return;
       }
+
+      const surface = drawingSurfaceKey();
+      const captureElement = surface === "spell" ? spellingCanvas : boardWrap;
+      setActiveDrawingSurface(surface);
 
       if (state.lastPoint && state.lastRawPoint) {
         drawSmoothStrokeCurve(
@@ -12875,6 +13269,7 @@
       }
 
       state.drawing = false;
+      state.drawingSurface = null;
       state.lastPoint = null;
       state.lastRawPoint = null;
       state.lastStrokeWidth = 0;
@@ -12882,8 +13277,8 @@
 
       if (event && typeof event.pointerId === "number") {
         try {
-          if (boardWrap.hasPointerCapture(event.pointerId)) {
-            boardWrap.releasePointerCapture(event.pointerId);
+          if (captureElement.hasPointerCapture(event.pointerId)) {
+            captureElement.releasePointerCapture(event.pointerId);
           }
         } catch (error) {
           // Ignore release failures from browsers that auto-release capture.
@@ -12895,6 +13290,10 @@
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       state.boardItems = [];
       renderBoardStickers();
+    }
+
+    function clearSpellingInk() {
+      spellingCtx.clearRect(0, 0, spellingCanvas.width, spellingCanvas.height);
     }
 
     function normalizeGameAccessCode(value = "") {
@@ -13292,6 +13691,42 @@
       });
     });
 
+    spellingSwatches.forEach((swatch) => {
+      swatch.addEventListener("click", () => {
+        setSpellingActiveColor(swatch.dataset.spellingColor);
+        setSpellingPenMode(true);
+      });
+    });
+
+    spellingPenModeBtn.addEventListener("click", () => {
+      setSpellingPenMode(!state.spellingPenMode);
+    });
+
+    spellingEraserBtn.addEventListener("click", () => {
+      setSpellingPenMode(true);
+      setSpellingEraserMode(true);
+    });
+
+    spellingStrokeBtn.addEventListener("click", () => {
+      setSpellingToolOptionsVisible(!state.spellingToolOptionsVisible);
+    });
+
+    spellingPopupStyleButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        setSpellingEraserMode(false);
+        setSpellingPenStrokeStyle(button.dataset.spellingPopupStyle);
+        setSpellingPenMode(true);
+      });
+    });
+
+    spellingPopupSizeButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const activeTool = state.spellingEraserOn ? "eraser" : "pen";
+        setSpellingToolSize(activeTool, button.dataset.spellingPopupSize);
+        setSpellingPenMode(true);
+      });
+    });
+
     closeBoardBtn.addEventListener("click", closeBoardModal);
     closeActivityProductBtn.addEventListener("click", closeActivityProductModal);
     closeFeatureToolsBtn.addEventListener("click", closeFeatureToolsModal);
@@ -13452,6 +13887,11 @@
     activityCameraCaptureInput.addEventListener("change", handleActivityCameraCaptureChange);
     activityAudioCaptureInput.addEventListener("change", handleActivityAudioCaptureChange);
 
+    spellingCanvas.addEventListener("pointerdown", startSpellingDrawing);
+    spellingCanvas.addEventListener("pointermove", continueSpellingDrawing);
+    spellingCanvas.addEventListener("pointerup", stopDrawing);
+    spellingCanvas.addEventListener("pointerleave", stopDrawing);
+    spellingCanvas.addEventListener("pointercancel", stopDrawing);
     boardWrap.addEventListener("pointerdown", startDrawing);
     boardWrap.addEventListener("pointermove", continueDrawing);
     boardWrap.addEventListener("pointerup", stopDrawing);
@@ -13464,6 +13904,7 @@
     boardModal.addEventListener("touchmove", preventBoardZoomGesture, { passive: false });
 
     window.addEventListener("resize", () => {
+      resizeSpellingCanvas();
       normalizePlacedItems();
       renderPlacedSpelling();
       if (state.boardVisible) {
@@ -13491,6 +13932,7 @@
     renderLetterBank(lineLetterBank, "line");
     renderIconBank(iconBank, "spell");
     renderBoardAssetBank();
+    resizeSpellingCanvas();
     renderPlacedSpelling();
     renderBoardStickers();
     loadActivityProducts();
@@ -13508,6 +13950,13 @@
     setBackgroundWash(state.backgroundWash);
     setBoardBackgroundWash(state.boardBackgroundWash);
     setActiveColor(state.selectedColor);
+    setSpellingActiveColor(state.spellingSelectedColor);
+    setSpellingPenMode(state.spellingPenMode);
+    setSpellingEraserMode(state.spellingEraserOn);
+    setSpellingPenStrokeStyle(state.spellingPenStrokeStyle);
+    setSpellingToolSize("pen", state.spellingPenSize);
+    setSpellingToolSize("eraser", state.spellingEraserSize);
+    setSpellingToolOptionsVisible(false);
     setBoardPenMode(state.boardPenMode);
     setEraserMode(state.eraserOn);
     setPenStrokeStyle(state.penStrokeStyle);
