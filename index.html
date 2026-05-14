@@ -957,31 +957,92 @@
       filter: none;
     }
 
+    .media-item {
+      background: rgba(9, 12, 26, 0.64);
+      cursor: default;
+      touch-action: manipulation;
+      user-select: auto;
+      -webkit-user-select: auto;
+    }
+
     .media-item::before {
-      content: "▶";
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      z-index: 2;
-      display: grid;
-      place-items: center;
-      width: min(44%, 74px);
-      aspect-ratio: 1 / 1;
-      transform: translate(-50%, -50%);
-      border-radius: 999px;
-      background: rgba(12, 15, 30, 0.72);
-      color: #ffffff;
-      font-size: clamp(18px, 7vw, 42px);
-      font-weight: 900;
-      line-height: 1;
-      text-indent: 0.08em;
-      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.24);
+      content: none;
+    }
+
+    .media-item video,
+    .media-item .inline-media-poster {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+      filter: none;
+      border: 0;
+    }
+
+    .media-item video,
+    .media-item audio {
+      position: relative;
+      z-index: 3;
+      pointer-events: auto;
+      touch-action: manipulation;
+      user-select: auto;
+      -webkit-user-select: auto;
+    }
+
+    .media-item .inline-media-poster {
       pointer-events: none;
     }
 
-    .media-item.audio-item::before {
-      content: "♪";
-      text-indent: 0;
+    .media-item audio {
+      position: absolute;
+      left: 8px;
+      right: 8px;
+      bottom: 8px;
+      width: calc(100% - 16px);
+      max-width: calc(100% - 16px);
+      min-height: 32px;
+    }
+
+    .inline-media-play-toggle {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      z-index: 4;
+      display: inline-grid;
+      place-items: center;
+      width: min(42%, 76px);
+      aspect-ratio: 1 / 1;
+      transform: translate(-50%, -50%);
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.72);
+      background: rgba(12, 15, 30, 0.72);
+      color: #ffffff;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.26);
+      font-size: clamp(18px, 7vw, 38px);
+      font-weight: 900;
+      line-height: 1;
+      text-indent: 0.08em;
+      cursor: pointer;
+      pointer-events: auto;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .media-item.playing .inline-media-play-toggle {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.92);
+      transition: opacity 0.18s ease, transform 0.18s ease;
+    }
+
+    .media-item.playing:hover .inline-media-play-toggle,
+    .media-item.playing:focus-within .inline-media-play-toggle {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .board-wrap.pen-mode .board-sticker.media-item {
+      pointer-events: auto;
+      cursor: default;
     }
 
     .space-chip {
@@ -11168,6 +11229,79 @@
       return rotateHandle;
     }
 
+    function stopInlineMediaControlEvent(event) {
+      event.stopPropagation();
+    }
+
+    function updateInlineMediaPlayButton(media, button, container) {
+      const playing = Boolean(media && !media.paused && !media.ended);
+      container.classList.toggle("playing", playing);
+      button.textContent = playing ? "❚❚" : "▶";
+      button.setAttribute("aria-label", playing ? "Pause pasted video." : "Play pasted video.");
+    }
+
+    function createInlineBoardMediaElement(item) {
+      const mediaType = item && item.mediaType === "audio" ? "audio" : "video";
+      const media = document.createElement(mediaType);
+      media.className = `inline-media-control ${mediaType === "audio" ? "inline-audio-control" : "inline-video-control"}`;
+      media.src = item.dataUrl || "";
+      media.controls = true;
+      media.preload = "metadata";
+      media.draggable = false;
+      media.dataset.activityMediaControl = "true";
+      media.setAttribute("aria-label", item.label || (mediaType === "audio" ? "Activity Product audio" : "Activity Product video"));
+      if (mediaType === "video") {
+        media.poster = item.posterDataUrl || item.src || "";
+        media.playsInline = true;
+        media.setAttribute("playsinline", "true");
+        media.setAttribute("webkit-playsinline", "true");
+      }
+      media.addEventListener("pointerdown", stopInlineMediaControlEvent);
+      media.addEventListener("touchstart", stopInlineMediaControlEvent, { passive: true });
+      media.addEventListener("click", stopInlineMediaControlEvent);
+      return media;
+    }
+
+    function appendInlineBoardMedia(container, item) {
+      if (item.mediaType === "audio") {
+        const poster = document.createElement("img");
+        poster.className = "inline-media-poster";
+        poster.src = item.posterDataUrl || item.src;
+        poster.alt = item.label;
+        poster.draggable = false;
+        container.appendChild(poster);
+      }
+      const media = createInlineBoardMediaElement(item);
+      container.appendChild(media);
+      if (item.mediaType === "video") {
+        const playButton = document.createElement("button");
+        playButton.type = "button";
+        playButton.className = "inline-media-play-toggle";
+        playButton.dataset.activityMediaControl = "true";
+        updateInlineMediaPlayButton(media, playButton, container);
+        playButton.addEventListener("pointerdown", stopInlineMediaControlEvent);
+        playButton.addEventListener("touchstart", stopInlineMediaControlEvent, { passive: true });
+        playButton.addEventListener("click", async (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          try {
+            if (media.paused || media.ended) {
+              await media.play();
+            } else {
+              media.pause();
+            }
+          } catch (error) {
+            // The browser can reject playback until the user taps again.
+          }
+          updateInlineMediaPlayButton(media, playButton, container);
+        });
+        media.addEventListener("play", () => updateInlineMediaPlayButton(media, playButton, container));
+        media.addEventListener("pause", () => updateInlineMediaPlayButton(media, playButton, container));
+        media.addEventListener("ended", () => updateInlineMediaPlayButton(media, playButton, container));
+        container.appendChild(playButton);
+      }
+    }
+
     function renderPlacedSpelling() {
       spellStage.innerHTML = "";
 
@@ -11194,7 +11328,9 @@
             tile.className = "placed-feature";
             applyPlacedStyles(tile, item);
             tile.appendChild(buildFeatureSurfaceWidget(item));
-          } else if (item.kind === "icon" || item.kind === "photo" || item.kind === "media") {
+          } else if (item.kind === "media") {
+            appendInlineBoardMedia(tile, item);
+          } else if (item.kind === "icon" || item.kind === "photo") {
             const image = document.createElement("img");
             image.src = item.src;
             image.alt = item.label;
@@ -12020,6 +12156,7 @@
         setStatus("Choose a video or voice recording first.", "warn");
         return;
       }
+      setSpellingPenMode(false);
 
       const aspectRatio = activityProductMediaAspectRatio(product);
       const item = {
@@ -12110,6 +12247,10 @@
 
     function startSurfaceItemGesture(surface, event, element, options = {}) {
       if (surface === "board" && state.boardPenMode) {
+        return;
+      }
+
+      if (event.target.closest("[data-activity-media-control]")) {
         return;
       }
 
@@ -12206,7 +12347,7 @@
       }
 
       const minSize = session.surface === "board"
-        ? item.kind === "photo"
+        ? item.kind === "photo" || item.kind === "media"
           ? MIN_PHOTO_SIZE
           : MIN_ICON_SIZE
         : minTileSize(item.kind);
@@ -12238,6 +12379,10 @@
     }
 
     function handleSpellStagePointerDown(event) {
+      if (event.target.closest("[data-activity-media-control]")) {
+        return;
+      }
+
       const dieButton = event.target.closest("[data-feature-action='roll-die']");
       if (dieButton) {
         const dieTile = event.target.closest(".placed-feature");
@@ -12702,6 +12847,8 @@
 
           if (item.kind === "feature") {
             sticker.appendChild(buildFeatureSurfaceWidget(item));
+          } else if (item.kind === "media") {
+            appendInlineBoardMedia(sticker, item);
           } else {
             const image = document.createElement("img");
             image.src = boardStickerSource(item);
@@ -12779,6 +12926,7 @@
         setStatus("Choose a video or voice recording first.", "warn");
         return;
       }
+      setBoardPenMode(false);
 
       const aspectRatio = activityProductMediaAspectRatio(product);
       const item = {
@@ -12817,6 +12965,10 @@
 
     function handleBoardStickerLayerPointerDown(event) {
       if (state.boardPenMode) {
+        return;
+      }
+
+      if (event.target.closest("[data-activity-media-control]")) {
         return;
       }
 
@@ -13611,6 +13763,10 @@
       }
 
       if (!isPrimaryPointerInput(event)) {
+        return;
+      }
+
+      if (event.target.closest("[data-activity-media-control]")) {
         return;
       }
 
