@@ -957,6 +957,33 @@
       filter: none;
     }
 
+    .media-item::before {
+      content: "▶";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      z-index: 2;
+      display: grid;
+      place-items: center;
+      width: min(44%, 74px);
+      aspect-ratio: 1 / 1;
+      transform: translate(-50%, -50%);
+      border-radius: 999px;
+      background: rgba(12, 15, 30, 0.72);
+      color: #ffffff;
+      font-size: clamp(18px, 7vw, 42px);
+      font-weight: 900;
+      line-height: 1;
+      text-indent: 0.08em;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.24);
+      pointer-events: none;
+    }
+
+    .media-item.audio-item::before {
+      content: "♪";
+      text-indent: 0;
+    }
+
     .space-chip {
       background: linear-gradient(180deg, rgba(233, 246, 255, 0.92), rgba(217, 239, 255, 0.88));
       color: rgba(32, 48, 74, 0.68);
@@ -4471,8 +4498,9 @@
           <button class="ghost-btn" id="activityCameraBtn" type="button">Open Camera</button>
           <button class="ghost-btn" id="activitySwitchCameraBtn" type="button">Switch Camera</button>
           <button class="action-btn" id="activityTakePhotoBtn" type="button">Take Photo</button>
+          <button class="action-btn" id="activityTakeVideoBtn" type="button">Record Video</button>
           <button class="ghost-btn" id="activityVoiceBtn" type="button">Record Voice</button>
-          <button class="ghost-btn" id="activityChooseVoiceBtn" type="button">Choose Voice File</button>
+          <button class="ghost-btn" id="activityChooseVoiceBtn" type="button">Choose A File (MP4/Voice)</button>
         </div>
         <section class="activity-live-controls" aria-labelledby="activityFirebaseTitle">
           <div class="activity-live-head">
@@ -4486,19 +4514,19 @@
         </section>
         <p class="activity-status" id="activityStatus"></p>
         <input class="activity-file-input" id="activityPhotoInput" type="file" accept="image/*">
-        <input class="activity-file-input" id="activityCameraCaptureInput" type="file" accept="image/*" capture="environment">
-        <input class="activity-file-input" id="activityAudioCaptureInput" type="file" accept="audio/*">
+        <input class="activity-file-input" id="activityCameraCaptureInput" type="file" accept="image/*,video/*" capture="environment">
+        <input class="activity-file-input" id="activityAudioCaptureInput" type="file" accept="audio/*,video/mp4,video/webm,video/*">
       </section>
       <section class="activity-repository-panel">
         <div class="activity-repository-head">
           <h3 class="activity-repository-title">Repositories</h3>
-          <p class="activity-repository-note">Use the Product Repository for screenshots, camera photos, and voice recordings. Use the Upload Photo Repository to paste gallery photos onto the current board.</p>
+          <p class="activity-repository-note">Use the Product Repository for screenshots, camera photos, videos, and voice recordings. Use the Upload Photo Repository to paste gallery photos onto the current board.</p>
         </div>
         <div class="activity-repository-stack">
           <section class="activity-repository-section">
             <div class="activity-repository-subhead">
               <h4 class="activity-repository-title">Product Repository</h4>
-              <p class="activity-repository-note">Saved screenshots, camera photos, and voice recordings stay here on this device.</p>
+              <p class="activity-repository-note">Saved screenshots, camera photos, videos, and voice recordings stay here on this device.</p>
             </div>
             <div class="activity-repository-grid" id="activityRepository"></div>
           </section>
@@ -4784,6 +4812,7 @@
     const activityCameraBtn = document.getElementById("activityCameraBtn");
     const activitySwitchCameraBtn = document.getElementById("activitySwitchCameraBtn");
     const activityTakePhotoBtn = document.getElementById("activityTakePhotoBtn");
+    const activityTakeVideoBtn = document.getElementById("activityTakeVideoBtn");
     const activityVoiceBtn = document.getElementById("activityVoiceBtn");
     const activityChooseVoiceBtn = document.getElementById("activityChooseVoiceBtn");
     const activityLiveServerInput = document.getElementById("activityLiveServerInput");
@@ -5760,7 +5789,7 @@
     }
 
     function boardStickerSource(item) {
-      if (item && item.kind === "photo") {
+      if (item && (item.kind === "photo" || item.kind === "media")) {
         return item.src;
       }
 
@@ -7109,6 +7138,58 @@
       });
     }
 
+    function normalizeActivityMediaAttachment(entry) {
+      if (!entry || typeof entry !== "object") {
+        return null;
+      }
+
+      const dataUrl = typeof entry.dataUrl === "string" ? entry.dataUrl : "";
+      const source = typeof entry.source === "string" ? entry.source : "";
+      const mimeType = typeof entry.mimeType === "string" && entry.mimeType.trim()
+        ? entry.mimeType.trim().toLowerCase()
+        : dataUrlMimeType(dataUrl);
+      const mediaType = normalizeActivityMediaType(entry.mediaType || entry.kind || mimeType, dataUrl, source);
+      if (!dataUrl || (mediaType !== "audio" && mediaType !== "video")) {
+        return null;
+      }
+
+      const label = typeof entry.label === "string" && entry.label.trim()
+        ? entry.label.trim()
+        : activityDefaultProductLabel(mediaType);
+      const folderName = typeof entry.folderName === "string" && entry.folderName.trim()
+        ? entry.folderName.trim()
+        : activityMediaFolderName(mediaType);
+      const folderCode = typeof entry.folderCode === "string" && entry.folderCode.trim()
+        ? entry.folderCode.trim()
+        : activityMediaFolderCode(mediaType);
+      const posterDataUrl = typeof entry.posterDataUrl === "string" && entry.posterDataUrl
+        ? entry.posterDataUrl
+        : activityPreviewPosterDataUrl({ label, folderName }, mediaType);
+
+      return {
+        id: typeof entry.id === "string" && entry.id ? entry.id : createActivityProductId(),
+        source,
+        label,
+        createdAt: typeof entry.createdAt === "string" ? entry.createdAt : new Date().toISOString(),
+        dataUrl,
+        mediaType,
+        mimeType,
+        posterDataUrl,
+        folderName,
+        folderCode
+      };
+    }
+
+    function normalizeActivityMediaAttachments(entries) {
+      if (!Array.isArray(entries)) {
+        return [];
+      }
+      return entries
+        .map(normalizeActivityMediaAttachment)
+        .filter(Boolean)
+        .slice(0, 6);
+    }
+
     function normalizeActivityProduct(entry) {
       const source = typeof entry.source === "string" ? entry.source : "spell";
       const dataUrl = typeof entry.dataUrl === "string" ? entry.dataUrl : "";
@@ -7140,7 +7221,9 @@
         posterDataUrl,
         folderName,
         folderCode,
-        filterStyle: normalizeActivityFilterStyle(entry.filterStyle || entry.aiStyle)
+        filterStyle: normalizeActivityFilterStyle(entry.filterStyle || entry.aiStyle),
+        boardScreenshotDataUrl: typeof entry.boardScreenshotDataUrl === "string" ? entry.boardScreenshotDataUrl : "",
+        mediaAttachments: normalizeActivityMediaAttachments(entry.mediaAttachments)
       };
     }
 
@@ -7592,15 +7675,27 @@
 
     async function createLiveActivitySubmissionPayload(product) {
       const playerId = getLiveActivityPlayerId();
+      const mediaType = normalizeActivityMediaType(product.mediaType, product.dataUrl, product.source);
+      const mediaAttachments = await Promise.all(
+        normalizeActivityMediaAttachments(product.mediaAttachments).map(async (attachment) => ({
+          ...attachment,
+          dataUrl: await buildLiveActivityDataUrl(attachment.dataUrl, `${product.id || "attachment"}-${attachment.id}`)
+        }))
+      );
+      const boardScreenshotDataUrl = product.boardScreenshotDataUrl
+        ? await buildLiveActivityDataUrl(product.boardScreenshotDataUrl, `${product.id || "product"}-board-screenshot`)
+        : "";
       return {
         originProductId: product.id,
         source: product.source,
         label: product.label,
         createdAt: product.createdAt,
         dataUrl: await buildLiveActivityDataUrl(product.dataUrl, product.id),
-        mediaType: normalizeActivityMediaType(product.mediaType, product.dataUrl, product.source),
+        mediaType,
         mimeType: product.mimeType || dataUrlMimeType(product.dataUrl),
         posterDataUrl: product.posterDataUrl || "",
+        boardScreenshotDataUrl,
+        mediaAttachments,
         folderName: product.folderName || "",
         folderCode: product.folderCode || "",
         filterStyle: product.filterStyle,
@@ -7756,6 +7851,8 @@
         mediaType,
         mimeType: normalizedProduct.mimeType || dataUrlMimeType(dataUrl),
         posterDataUrl: normalizedProduct.posterDataUrl || "",
+        boardScreenshotDataUrl: normalizedProduct.boardScreenshotDataUrl || "",
+        mediaAttachments: normalizeActivityMediaAttachments(normalizedProduct.mediaAttachments),
         folderName: normalizedProduct.folderName || "",
         folderCode: normalizedProduct.folderCode || "",
         filterStyle: normalizedProduct.filterStyle || "",
@@ -8576,10 +8673,12 @@
       const hasCameraApi = Boolean(navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === "function");
       const canUseCameraFallback = activityCameraCaptureSupported();
       const canRecordVoice = activityVoiceCaptureSupported();
+      const canRecordVideo = activityVideoCaptureSupported();
       const surfaceLabel = activitySourceLabel(state.activityProductSurface);
       const controlsLocked = activityControlsBusy();
       const recordingAudio = activityRecordingKind === "audio";
-      const recordingAny = recordingAudio;
+      const recordingVideo = activityRecordingKind === "video";
+      const recordingAny = recordingAudio || recordingVideo;
       const selectedProductReady = state.activitySelectionMode === "product" && Boolean(currentActivityProduct()) && !recordingAny;
       const photoCameraReady = Boolean(activityCameraStream) && activityCameraPurpose === "photo";
 
@@ -8587,12 +8686,15 @@
       activityCaptureBtn.textContent = `Save ${surfaceLabel} Screenshot`;
       activityUploadPhotoBtn.textContent = "Upload Photo";
       activityCameraBtn.textContent = photoCameraReady ? "Close Camera" : "Open Camera";
+      activityTakeVideoBtn.textContent = recordingVideo ? "Stop Video" : "Record Video";
       activityVoiceBtn.textContent = recordingAudio ? "Stop Voice" : "Record Voice";
+      activityChooseVoiceBtn.textContent = "Choose A File (MP4/Voice)";
       activityCaptureBtn.disabled = controlsLocked || recordingAny;
       activityUploadPhotoBtn.disabled = controlsLocked || recordingAny;
       activityCameraBtn.disabled = controlsLocked || recordingAny || (!hasCameraApi && !canUseCameraFallback);
       activitySwitchCameraBtn.disabled = controlsLocked || recordingAny || (!hasCameraApi && !canUseCameraFallback);
       activityTakePhotoBtn.disabled = !photoCameraReady || controlsLocked || recordingAny;
+      activityTakeVideoBtn.disabled = recordingVideo ? false : controlsLocked || !canRecordVideo;
       activityVoiceBtn.disabled = recordingAudio ? false : controlsLocked || !canRecordVoice;
       activityChooseVoiceBtn.disabled = controlsLocked || recordingAny || !activityAudioCaptureInput;
       if (activitySendLiveBtn) {
@@ -8621,6 +8723,7 @@
       const entry = currentActivityPreviewEntry();
       const showingCamera = Boolean(activityCameraStream);
       const audioRecordingActive = activityRecordingKind === "audio";
+      const videoRecordingActive = activityRecordingKind === "video";
 
       resetActivityPreviewMedia();
 
@@ -8636,8 +8739,14 @@
         return;
       }
 
+      if (videoRecordingActive) {
+        activityPreviewEmpty.textContent = "Video recording in progress. Tap Record Video again to stop and save it in Activity Product.";
+        activityPreviewEmpty.classList.remove("hidden");
+        return;
+      }
+
       if (!entry) {
-        activityPreviewEmpty.textContent = "Save a screenshot, take a photo, upload one from your gallery, record voice, or choose a voice file to build your activity product repositories.";
+        activityPreviewEmpty.textContent = "Save a screenshot, take a photo, record video, upload a photo, record voice, or choose an MP4/video/voice file to build your activity product repositories.";
         activityPreviewEmpty.classList.remove("hidden");
         return;
       }
@@ -8666,7 +8775,7 @@
       if (!state.activityProducts.length) {
         const emptyState = document.createElement("div");
         emptyState.className = "activity-empty-repository";
-        emptyState.textContent = "Saved screenshots, camera photos, and voice recordings will appear here.";
+        emptyState.textContent = "Saved screenshots, camera photos, videos, and voice recordings will appear here.";
         activityRepository.appendChild(emptyState);
       } else {
         state.activityProducts.forEach((product) => {
@@ -8717,6 +8826,21 @@
 
           const actions = document.createElement("div");
           actions.className = "activity-product-actions";
+          const productMediaType = normalizeActivityMediaType(product.mediaType, product.dataUrl, product.source);
+
+          if (productMediaType === "audio" || productMediaType === "video") {
+            const pasteBtn = document.createElement("button");
+            pasteBtn.type = "button";
+            pasteBtn.className = "ghost-btn activity-product-action paste";
+            pasteBtn.textContent = "Paste";
+            pasteBtn.setAttribute("aria-label", `Paste ${product.label} onto the current ${activitySourceLabel(state.activityProductSurface)} board.`);
+            pasteBtn.disabled = controlsLocked;
+            pasteBtn.addEventListener("click", (event) => {
+              event.stopPropagation();
+              pasteActivityProductToCurrentSurface(product.id);
+            });
+            actions.appendChild(pasteBtn);
+          }
 
           const saveBtn = document.createElement("button");
           saveBtn.type = "button";
@@ -8917,6 +9041,39 @@
       return Number.isFinite(ratio) && ratio > 0 ? clamp(ratio, 0.35, 3.5) : 4 / 3;
     }
 
+    function activityProductMediaAspectRatio(product) {
+      const ratio = Number(product && product.aspectRatio);
+      return Number.isFinite(ratio) && ratio > 0 ? clamp(ratio, 0.35, 3.5) : 16 / 9;
+    }
+
+    function activityProductMediaPosterSource(product) {
+      return activityProductThumbnailSrc(product) || createActivityMediaPosterDataUrl({
+        mediaType: normalizeActivityMediaType(product && product.mediaType, product && product.dataUrl, product && product.source),
+        title: product && product.label ? product.label : "",
+        subtitle: product && product.mediaType === "audio" ? "Voice Recording" : "Video Recording"
+      });
+    }
+
+    function activityProductToMediaAttachment(product) {
+      const normalizedProduct = normalizeActivityProduct(product || {});
+      const mediaType = normalizeActivityMediaType(normalizedProduct.mediaType, normalizedProduct.dataUrl, normalizedProduct.source);
+      if (!normalizedProduct.dataUrl || (mediaType !== "audio" && mediaType !== "video")) {
+        return null;
+      }
+      return normalizeActivityMediaAttachment({
+        id: normalizedProduct.id,
+        source: normalizedProduct.source,
+        label: normalizedProduct.label,
+        createdAt: normalizedProduct.createdAt,
+        dataUrl: normalizedProduct.dataUrl,
+        mediaType,
+        mimeType: normalizedProduct.mimeType,
+        posterDataUrl: activityProductMediaPosterSource(normalizedProduct),
+        folderName: normalizedProduct.folderName,
+        folderCode: normalizedProduct.folderCode
+      });
+    }
+
     function activityPhotoLabelFromName(fileName = "") {
       const cleanName = String(fileName || "")
         .replace(/\.[^.]+$/, "")
@@ -8954,6 +9111,10 @@
 
     function activityVoiceCaptureSupported() {
       return activityInlineMediaRecordingSupported() || Boolean(activityAudioCaptureInput);
+    }
+
+    function activityVideoCaptureSupported() {
+      return activityInlineMediaRecordingSupported() || activityCameraCaptureSupported() || Boolean(activityAudioCaptureInput);
     }
 
     function pickSupportedActivityRecorderMimeType(kind = "audio") {
@@ -9038,7 +9199,7 @@
     function activityAudioMimeTypeFromFileName(fileName = "") {
       const normalized = String(fileName || "").trim().toLowerCase();
       if (normalized.endsWith(".mp3")) return "audio/mpeg";
-      if (normalized.endsWith(".m4a") || normalized.endsWith(".mp4")) return "audio/mp4";
+      if (normalized.endsWith(".m4a")) return "audio/mp4";
       if (normalized.endsWith(".wav")) return "audio/wav";
       if (normalized.endsWith(".webm")) return "audio/webm";
       if (normalized.endsWith(".ogg") || normalized.endsWith(".oga")) return "audio/ogg";
@@ -9047,12 +9208,32 @@
       return "";
     }
 
+    function activityVideoMimeTypeFromFileName(fileName = "") {
+      const normalized = String(fileName || "").trim().toLowerCase();
+      if (normalized.endsWith(".mp4") || normalized.endsWith(".m4v")) return "video/mp4";
+      if (normalized.endsWith(".webm")) return "video/webm";
+      if (normalized.endsWith(".mov") || normalized.endsWith(".qt")) return "video/quicktime";
+      if (normalized.endsWith(".avi")) return "video/x-msvideo";
+      return "";
+    }
+
+    function activityMediaKindFromFile(file) {
+      const fileType = String(file && file.type || "").trim().toLowerCase();
+      if (fileType.startsWith("video/")) return "video";
+      if (fileType.startsWith("audio/")) return "audio";
+      if (activityVideoMimeTypeFromFileName(file && file.name)) return "video";
+      if (activityAudioMimeTypeFromFileName(file && file.name)) return "audio";
+      return "";
+    }
+
     async function normalizeActivityCapturedMediaFile(file, kind = "audio") {
       const mediaType = kind === "video" ? "video" : "audio";
       const expectedPrefix = `${mediaType}/`;
       const fileType = String(file && file.type || "").trim().toLowerCase();
-      const fileNameMimeType = mediaType === "audio" ? activityAudioMimeTypeFromFileName(file && file.name) : "";
-      const isExpectedMediaFile = fileType.startsWith(expectedPrefix) || (mediaType === "audio" && Boolean(fileNameMimeType));
+      const fileNameMimeType = mediaType === "audio"
+        ? activityAudioMimeTypeFromFileName(file && file.name)
+        : activityVideoMimeTypeFromFileName(file && file.name);
+      const isExpectedMediaFile = fileType.startsWith(expectedPrefix) || Boolean(fileNameMimeType);
       if (!file || !isExpectedMediaFile) {
         throw new Error(mediaType === "video"
           ? "Capture a video from the device camera."
@@ -9066,7 +9247,7 @@
           : "Unable to read the selected voice recording."
       );
       const resolvedMimeType = fileType || dataUrlMimeType(dataUrl) || fileNameMimeType;
-      if (mediaType === "audio" && fileNameMimeType && !String(dataUrl || "").startsWith(`data:${fileNameMimeType}`)) {
+      if (fileNameMimeType && !String(dataUrl || "").startsWith(`data:${fileNameMimeType}`)) {
         dataUrl = String(dataUrl || "").replace(/^data:[^;,]*/i, `data:${fileNameMimeType}`);
       }
 
@@ -9195,7 +9376,7 @@
       }
       syncActivityCameraCaptureInput();
       activityCameraCaptureInput.click();
-      setActivityStatus(`Opening ${state.activityCameraFacingMode === "user" ? "front" : "back"} camera...`);
+      setActivityStatus(`Opening ${state.activityCameraFacingMode === "user" ? "front" : "back"} camera for photo or video...`);
       return true;
     }
 
@@ -9205,7 +9386,7 @@
       }
       activityAudioCaptureInput.value = "";
       activityAudioCaptureInput.click();
-      setActivityStatus("Choose a voice file or record one from this device.");
+      setActivityStatus("Choose an MP4 video or voice recording from this device.");
       return true;
     }
 
@@ -9388,6 +9569,58 @@
       await startActivityVoiceRecording();
     }
 
+    async function startActivityVideoRecording() {
+      if (activityRecordingInProgress() || activityControlsBusy()) {
+        return;
+      }
+
+      if (activityMediaCaptureFallbackPreferred() || !activityInlineMediaRecordingSupported()) {
+        if (!openActivityCameraCapturePicker()) {
+          setActivityStatus("Video recording needs camera access in this app.", "warn");
+        }
+        return;
+      }
+
+      setActivityStatus("Starting video recording...");
+      try {
+        if (activityCameraStream) {
+          await stopActivityCamera();
+        }
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: {
+              ideal: state.activityCameraFacingMode
+            }
+          },
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          }
+        });
+        await beginActivityRecording({
+          kind: "video",
+          stream
+        });
+        setActivityStatus("Video recording started. Tap Record Video again to stop.", "good");
+      } catch (error) {
+        if (!openActivityCameraCapturePicker({ force: true })) {
+          setActivityStatus("Unable to start video recording right now.", "bad");
+        }
+      }
+    }
+
+    async function toggleActivityVideoRecording() {
+      if (activityRecordingKind === "video") {
+        await stopActivityRecording();
+        return;
+      }
+      if (activityRecordingInProgress()) {
+        return;
+      }
+      await startActivityVideoRecording();
+    }
+
     async function handleActivityPhotoFileChange(event) {
       const input = event.target;
       const file = input && input.files ? input.files[0] : null;
@@ -9424,25 +9657,36 @@
       }
 
       setActivityBusy("camera", true);
-      setActivityStatus("Saving camera photo...");
+      const mediaKind = activityMediaKindFromFile(file);
+      setActivityStatus(mediaKind === "video" ? "Saving camera video..." : "Saving camera photo...");
       try {
-        const normalizedEntry = await normalizeActivityUploadPhotoFile(file);
-        const persisted = saveActivityProduct({
-          id: createActivityProductId(),
-          source: "camera",
-          label: `${state.activityCameraFacingMode === "user" ? "Front" : "Back"} Camera Photo`,
-          createdAt: normalizedEntry.createdAt,
-          dataUrl: normalizedEntry.dataUrl,
-          filterStyle: ""
-        });
+        let persisted = false;
+        if (mediaKind === "video") {
+          const product = await normalizeActivityCapturedMediaFile(file, "video");
+          persisted = saveActivityProduct({
+            ...product,
+            source: "video",
+            label: `${state.activityCameraFacingMode === "user" ? "Front" : "Back"} Camera Video`
+          });
+        } else {
+          const normalizedEntry = await normalizeActivityUploadPhotoFile(file);
+          persisted = saveActivityProduct({
+            id: createActivityProductId(),
+            source: "camera",
+            label: `${state.activityCameraFacingMode === "user" ? "Front" : "Back"} Camera Photo`,
+            createdAt: normalizedEntry.createdAt,
+            dataUrl: normalizedEntry.dataUrl,
+            filterStyle: ""
+          });
+        }
         setActivityStatus(
           persisted
-            ? "Photo saved in Activity Product."
-            : "Photo saved, but the repository is full on this device.",
+            ? `${mediaKind === "video" ? "Video" : "Photo"} saved in Activity Product.`
+            : `${mediaKind === "video" ? "Video" : "Photo"} saved, but the repository is full on this device.`,
           persisted ? "good" : "warn"
         );
       } catch (error) {
-        setActivityStatus("Unable to take a photo right now.", "bad");
+        setActivityStatus(mediaKind === "video" ? "Unable to save that video right now." : "Unable to take a photo right now.", "bad");
       } finally {
         if (input) {
           input.value = "";
@@ -9459,18 +9703,22 @@
       }
 
       setActivityBusy("record", true);
-      setActivityStatus("Saving voice recording...");
+      const mediaKind = activityMediaKindFromFile(file);
+      setActivityStatus(mediaKind === "video" ? "Saving video file..." : "Saving voice recording...");
       try {
-        const product = await normalizeActivityCapturedMediaFile(file, "audio");
+        if (!mediaKind) {
+          throw new Error("Choose an MP4/video file or a voice recording.");
+        }
+        const product = await normalizeActivityCapturedMediaFile(file, mediaKind);
         const persisted = saveActivityProduct(product);
         setActivityStatus(
           persisted
-            ? "Voice recording saved in Activity Product."
-            : "Voice recording saved, but the repository is full on this device.",
+            ? `${mediaKind === "video" ? "Video" : "Voice recording"} saved in Activity Product.`
+            : `${mediaKind === "video" ? "Video" : "Voice recording"} saved, but the repository is full on this device.`,
           persisted ? "good" : "warn"
         );
       } catch (error) {
-        setActivityStatus("Unable to save that voice recording right now.", "bad");
+        setActivityStatus("Unable to save that video or voice recording right now.", "bad");
       } finally {
         if (input) {
           input.value = "";
@@ -9498,6 +9746,31 @@
         await closeActivityProductModal();
       } catch (error) {
         setActivityStatus("Unable to paste that uploaded photo onto the board right now.", "bad");
+      } finally {
+        setActivityBusy("paste", false);
+      }
+    }
+
+    async function pasteActivityProductToCurrentSurface(productId) {
+      if (activityControlsBusy()) {
+        return;
+      }
+      const product = state.activityProducts.find((entry) => entry.id === productId);
+      const mediaType = normalizeActivityMediaType(product && product.mediaType, product && product.dataUrl, product && product.source);
+      if (!product || (mediaType !== "audio" && mediaType !== "video")) {
+        return;
+      }
+
+      setActivityBusy("paste", true);
+      try {
+        if (state.activityProductSurface === "board") {
+          createBoardMediaProduct(product);
+        } else {
+          createPlacedMediaProduct(product);
+        }
+        await closeActivityProductModal();
+      } catch (error) {
+        setActivityStatus("Unable to paste that media onto the board right now.", "bad");
       } finally {
         setActivityBusy("paste", false);
       }
@@ -9808,7 +10081,7 @@
 
     async function closeActivityProductModal() {
       if (activityRecordingInProgress()) {
-        setActivityStatus("Stop the current voice recording first.", "warn");
+        setActivityStatus("Stop the current recording first.", "warn");
         return;
       }
       await stopActivityCamera();
@@ -9951,6 +10224,21 @@
       targetCtx.closePath();
     }
 
+    function drawMediaOverlay(targetCtx, item, width, height) {
+      const radius = Math.max(16, Math.min(width, height) * 0.18);
+      targetCtx.save();
+      targetCtx.fillStyle = "rgba(12, 15, 30, 0.72)";
+      targetCtx.beginPath();
+      targetCtx.arc(0, 0, radius, 0, Math.PI * 2);
+      targetCtx.fill();
+      targetCtx.fillStyle = "#ffffff";
+      targetCtx.textAlign = "center";
+      targetCtx.textBaseline = "middle";
+      targetCtx.font = `900 ${Math.max(20, radius * 1.08)}px "Avenir Next Rounded", "Trebuchet MS", sans-serif`;
+      targetCtx.fillText(item.mediaType === "audio" ? "♪" : "▶", item.mediaType === "audio" ? 0 : radius * 0.08, radius * 0.03);
+      targetCtx.restore();
+    }
+
     async function drawSpellingBackdrop(targetCtx, width, height) {
       targetCtx.fillStyle = "#070b1a";
       targetCtx.fillRect(0, 0, width, height);
@@ -10019,15 +10307,18 @@
         return;
       }
 
-      const source = item.kind === "photo"
+      const source = item.kind === "photo" || item.kind === "media"
         ? item.src
         : item.kind === "icon"
           ? item.src
           : imagePathForCharacter(item.char, item.letterVariant);
       const image = await loadImageAsset(source);
       targetCtx.shadowColor = "rgba(48, 53, 84, 0.18)";
-      targetCtx.shadowBlur = item.kind === "photo" ? 10 : item.kind === "icon" ? 14 : 18;
+      targetCtx.shadowBlur = item.kind === "photo" || item.kind === "media" ? 10 : item.kind === "icon" ? 14 : 18;
       targetCtx.drawImage(image, -width / 2, -height / 2, width, height);
+      if (item.kind === "media") {
+        drawMediaOverlay(targetCtx, item, width, height);
+      }
       targetCtx.restore();
     }
 
@@ -10062,6 +10353,9 @@
       targetCtx.translate(item.x + width / 2, item.y + height / 2);
       targetCtx.rotate(((item.rotation || 0) * Math.PI) / 180);
       targetCtx.drawImage(image, -width / 2, -height / 2, width, height);
+      if (item.kind === "media") {
+        drawMediaOverlay(targetCtx, item, width, height);
+      }
       targetCtx.restore();
     }
 
@@ -10101,6 +10395,71 @@
       return exportSurface.canvas.toDataURL("image/jpeg", 0.84);
     }
 
+    function surfaceMediaAttachments(surface = state.activityProductSurface) {
+      const items = surface === "board" ? state.boardItems : state.placedItems;
+      const seen = new Set();
+      return (Array.isArray(items) ? items : [])
+        .filter((item) => item && item.kind === "media" && item.dataUrl)
+        .map((item) => normalizeActivityMediaAttachment({
+          id: String(item.sourceProductId || item.id || ""),
+          source: item.source || "pasted-media",
+          label: item.label || activityDefaultProductLabel(item.mediaType),
+          createdAt: item.createdAt || new Date().toISOString(),
+          dataUrl: item.dataUrl,
+          mediaType: item.mediaType,
+          mimeType: item.mimeType || dataUrlMimeType(item.dataUrl),
+          posterDataUrl: item.posterDataUrl || item.src,
+          folderName: item.folderName || activityMediaFolderName(item.mediaType),
+          folderCode: item.folderCode || activityMediaFolderCode(item.mediaType)
+        }))
+        .filter((attachment) => {
+          if (!attachment) {
+            return false;
+          }
+          const key = `${attachment.id}|${attachment.dataUrl}`;
+          if (seen.has(key)) {
+            return false;
+          }
+          seen.add(key);
+          return true;
+        });
+    }
+
+    function createScreenshotActivityProduct(dataUrl, surface = state.activityProductSurface) {
+      const surfaceLabel = activitySourceLabel(surface);
+      const mediaAttachments = surfaceMediaAttachments(surface);
+      const createdAt = new Date().toISOString();
+      if (mediaAttachments.length) {
+        const primaryMedia = mediaAttachments[0];
+        return {
+          id: createActivityProductId(),
+          source: surface,
+          label: `${surfaceLabel} ${activityMediaBadgeLabel(primaryMedia.mediaType)} Capture`,
+          createdAt,
+          dataUrl: primaryMedia.dataUrl,
+          mediaType: primaryMedia.mediaType,
+          mimeType: primaryMedia.mimeType || dataUrlMimeType(primaryMedia.dataUrl),
+          posterDataUrl: dataUrl,
+          boardScreenshotDataUrl: dataUrl,
+          mediaAttachments,
+          folderName: primaryMedia.folderName,
+          folderCode: primaryMedia.folderCode,
+          filterStyle: ""
+        };
+      }
+
+      return {
+        id: createActivityProductId(),
+        source: surface,
+        label: `${surfaceLabel} Screenshot`,
+        createdAt,
+        dataUrl,
+        mediaType: "image",
+        mimeType: dataUrlMimeType(dataUrl) || "image/jpeg",
+        filterStyle: ""
+      };
+    }
+
     async function handleActivityScreenshotSave() {
       if (activityControlsBusy()) {
         return;
@@ -10113,18 +10472,12 @@
           ? await captureBoardProduct()
           : await captureSpellingProduct();
 
-        const persisted = saveActivityProduct({
-          id: createActivityProductId(),
-          source: state.activityProductSurface,
-          label: `${activitySourceLabel(state.activityProductSurface)} Screenshot`,
-          createdAt: new Date().toISOString(),
-          dataUrl,
-          filterStyle: ""
-        });
+        const product = createScreenshotActivityProduct(dataUrl, state.activityProductSurface);
+        const persisted = saveActivityProduct(product);
         setActivityStatus(
           persisted
-            ? "Screenshot saved in Activity Product."
-            : "Screenshot saved, but the repository is full on this device.",
+            ? `${normalizeActivityMediaType(product.mediaType, product.dataUrl, product.source) === "image" ? "Screenshot" : "Playable media capture"} saved in Activity Product.`
+            : `${normalizeActivityMediaType(product.mediaType, product.dataUrl, product.source) === "image" ? "Screenshot" : "Playable media capture"} saved, but the repository is full on this device.`,
           persisted ? "good" : "warn"
         );
       } catch (error) {
@@ -10168,7 +10521,7 @@
         await activityCamera.play();
         renderActivityPreview();
         updateActivityControlState();
-        setActivityStatus(`${state.activityCameraFacingMode === "user" ? "Front" : "Back"} camera ready.`, "good");
+        setActivityStatus(`${state.activityCameraFacingMode === "user" ? "Front" : "Back"} camera ready. Choose Take Photo or Record Video.`, "good");
       } catch (error) {
         if (!openActivityCameraCapturePicker({ force: true })) {
           setActivityStatus("Camera access was blocked or no matching camera is available.", "bad");
@@ -10314,7 +10667,7 @@
           : featureSurfaceDimensions(item.toolId).stageHeightRatio;
       }
 
-      if (item.kind === "photo") {
+      if (item.kind === "photo" || item.kind === "media") {
         return Number.isFinite(item.heightRatio) && item.heightRatio > 0 ? item.heightRatio : 0.75;
       }
 
@@ -10607,7 +10960,7 @@
       if (kind === "feature") {
         return 120;
       }
-      if (kind === "photo") {
+      if (kind === "photo" || kind === "media") {
         return MIN_PHOTO_SIZE;
       }
       if (kind === "icon") {
@@ -10645,7 +10998,7 @@
         if (kind === "feature") {
           return 240;
         }
-        if (kind === "photo") {
+        if (kind === "photo" || kind === "media") {
           return 176;
         }
         if (kind === "icon") {
@@ -10658,13 +11011,13 @@
         ? Math.min(rect.width * 0.18, rect.height * 0.24, 164)
         : kind === "feature"
           ? Math.min(rect.width * 0.28, (rect.height * 0.42) / Math.max(0.45, heightRatioForItem(probeItem)), 360)
-        : kind === "photo"
+        : kind === "photo" || kind === "media"
           ? Math.min(rect.width * 0.34, (rect.height * 0.34) / Math.max(0.28, heightRatioForItem(probeItem)), 300)
         : kind === "icon"
           ? Math.min(rect.width * 0.16, rect.height * 0.24, 170)
           : Math.min(rect.width * 0.19, rect.height * 0.38, 186);
 
-      return clamp(Math.round(candidate), minTileSize(kind), kind === "space" ? 180 : kind === "photo" ? 320 : kind === "feature" ? 420 : 220);
+      return clamp(Math.round(candidate), minTileSize(kind), kind === "space" ? 180 : (kind === "photo" || kind === "media") ? 320 : kind === "feature" ? 420 : 220);
     }
 
     function maxTileSize(kindOrItem = "letter") {
@@ -10792,8 +11145,8 @@
       resizeHandle.dataset.itemId = item.id;
       const label = item.kind === "space"
         ? "space tile"
-        : item.kind === "photo"
-          ? `${item.label} photo`
+        : item.kind === "photo" || item.kind === "media"
+          ? `${item.label} ${item.kind === "media" ? "media" : "photo"}`
         : item.kind === "icon"
           ? `${item.label} sticker`
           : `${item.char} tile`;
@@ -10806,8 +11159,8 @@
       rotateHandle.type = "button";
       rotateHandle.className = "rotate-handle";
       rotateHandle.dataset.itemId = item.id;
-      const label = item.kind === "photo"
-        ? `${item.label} photo`
+      const label = item.kind === "photo" || item.kind === "media"
+        ? `${item.label} ${item.kind === "media" ? "media" : "photo"}`
         : item.kind === "icon"
         ? `${item.label} sticker`
         : `${item.char} tile`;
@@ -10826,8 +11179,8 @@
             ? "space-chip"
             : item.kind === "icon"
               ? "placed-icon"
-              : item.kind === "photo"
-                ? "placed-photo"
+              : item.kind === "photo" || item.kind === "media"
+                ? `placed-photo${item.kind === "media" ? ` media-item ${item.mediaType === "audio" ? "audio-item" : "video-item"}` : ""}`
                 : "placed-tile";
           if (item.kind === "letter" && item.letterVariant === "line") {
             tile.classList.add("line-letter-tile");
@@ -10841,7 +11194,7 @@
             tile.className = "placed-feature";
             applyPlacedStyles(tile, item);
             tile.appendChild(buildFeatureSurfaceWidget(item));
-          } else if (item.kind === "icon" || item.kind === "photo") {
+          } else if (item.kind === "icon" || item.kind === "photo" || item.kind === "media") {
             const image = document.createElement("img");
             image.src = item.src;
             image.alt = item.label;
@@ -11656,6 +12009,52 @@
       setStatus(`${item.label} pasted onto the spelling board.`, "good");
     }
 
+    function createPlacedMediaProduct(product, clientPoint = null) {
+      if (state.placedItems.length >= 36) {
+        setStatus("This spelling area is full. Clear or remove something before pasting media.", "warn");
+        return;
+      }
+
+      const attachment = activityProductToMediaAttachment(product);
+      if (!attachment) {
+        setStatus("Choose a video or voice recording first.", "warn");
+        return;
+      }
+
+      const aspectRatio = activityProductMediaAspectRatio(product);
+      const item = {
+        id: state.nextItemId,
+        kind: "media",
+        mediaType: attachment.mediaType,
+        label: attachment.label || activityDefaultProductLabel(attachment.mediaType),
+        src: attachment.posterDataUrl,
+        dataUrl: attachment.dataUrl,
+        mimeType: attachment.mimeType,
+        posterDataUrl: attachment.posterDataUrl,
+        sourceProductId: attachment.id,
+        source: attachment.source,
+        folderName: attachment.folderName,
+        folderCode: attachment.folderCode,
+        createdAt: attachment.createdAt,
+        heightRatio: 1 / aspectRatio,
+        size: defaultTileSize({ kind: "media", heightRatio: 1 / aspectRatio }),
+        x: 0,
+        y: 0,
+        rotation: 0,
+        zIndex: state.nextZIndex += 1
+      };
+      const position = clientPoint
+        ? centeredItemPosition(item, clientPoint.clientX, clientPoint.clientY, item.size)
+        : nextAutoPlacement(item, item.size);
+      item.x = position.x;
+      item.y = position.y;
+      state.placedItems.push(item);
+      state.nextItemId += 1;
+      renderPlacedSpelling();
+      animatePlacedItemEntry("stage", item.id);
+      setStatus(`${item.label} pasted onto the spelling board.`, "good");
+    }
+
     function addSpace() {
       if (state.placedItems.length >= 30) {
         setStatus("This spelling board holds up to 30 characters at a time.", "warn");
@@ -11695,7 +12094,7 @@
         return;
       }
 
-      if (removedItem.kind === "icon" || removedItem.kind === "photo") {
+      if (removedItem.kind === "icon" || removedItem.kind === "photo" || removedItem.kind === "media") {
         setStatus(`${removedItem.label} removed.`);
       } else {
         setStatus("Last item removed.");
@@ -12090,12 +12489,12 @@
     }
 
     function boardItemWidth(item, nextSize = item.size) {
-      const minSize = item && item.kind === "photo" ? MIN_PHOTO_SIZE : MIN_ICON_SIZE;
+      const minSize = item && (item.kind === "photo" || item.kind === "media") ? MIN_PHOTO_SIZE : MIN_ICON_SIZE;
       return Math.max(minSize, Math.round(nextSize * boardItemWidthRatio(item)));
     }
 
     function boardItemHeight(item, nextSize = item.size) {
-      const minSize = item && item.kind === "photo" ? MIN_PHOTO_SIZE : MIN_ICON_SIZE;
+      const minSize = item && (item.kind === "photo" || item.kind === "media") ? MIN_PHOTO_SIZE : MIN_ICON_SIZE;
       return Math.max(minSize, Math.round(nextSize));
     }
 
@@ -12188,15 +12587,15 @@
     function defaultBoardStickerSize(item = { kind: "icon", widthRatio: 1 }) {
       const rect = boardRect();
       if (!rect.width || !rect.height) {
-        return item.kind === "photo" ? 176 : item.kind === "feature" ? 220 : 132;
+        return item.kind === "photo" || item.kind === "media" ? 176 : item.kind === "feature" ? 220 : 132;
       }
 
-      const candidate = item.kind === "photo"
+      const candidate = item.kind === "photo" || item.kind === "media"
         ? Math.min(rect.height * 0.34, (rect.width * 0.42) / boardItemWidthRatio(item), 260)
         : item.kind === "feature"
           ? Math.min(rect.height * 0.46, (rect.width * 0.42) / boardItemWidthRatio(item), 320)
           : Math.min(rect.width * 0.18, rect.height * 0.28, 240);
-      return clamp(Math.round(candidate), item.kind === "photo" ? MIN_PHOTO_SIZE : item.kind === "feature" ? 120 : MIN_ICON_SIZE, 420);
+      return clamp(Math.round(candidate), item.kind === "photo" || item.kind === "media" ? MIN_PHOTO_SIZE : item.kind === "feature" ? 120 : MIN_ICON_SIZE, 420);
     }
 
     function maxBoardStickerSize(item = { widthRatio: 1 }) {
@@ -12208,7 +12607,7 @@
       const widthRatio = boardItemWidthRatio(item);
       return clamp(
         Math.floor(Math.min((rect.width - 12) / widthRatio, rect.height - 12, MAX_BOARD_ICON_SIZE)),
-        item.kind === "photo" ? MIN_PHOTO_SIZE : item.kind === "feature" ? 120 : MIN_ICON_SIZE,
+        item.kind === "photo" || item.kind === "media" ? MIN_PHOTO_SIZE : item.kind === "feature" ? 120 : MIN_ICON_SIZE,
         MAX_BOARD_ICON_SIZE
       );
     }
@@ -12296,7 +12695,7 @@
         .sort((a, b) => a.zIndex - b.zIndex)
         .forEach((item) => {
           const sticker = document.createElement("div");
-          sticker.className = `board-sticker${item.colorable ? " colorable" : ""}${item.kind === "photo" ? " photo" : ""}${item.kind === "feature" ? " feature-widget-item" : ""}`;
+          sticker.className = `board-sticker${item.colorable ? " colorable" : ""}${item.kind === "photo" || item.kind === "media" ? " photo" : ""}${item.kind === "media" ? ` media-item ${item.mediaType === "audio" ? "audio-item" : "video-item"}` : ""}${item.kind === "feature" ? " feature-widget-item" : ""}`;
           sticker.dataset.itemId = item.id;
           sticker.dataset.colorable = item.colorable ? "true" : "false";
           applyBoardItemStyles(sticker, item);
@@ -12374,6 +12773,48 @@
       animatePlacedItemEntry("board", item.id);
     }
 
+    function createBoardMediaProduct(product, clientPoint = null) {
+      const attachment = activityProductToMediaAttachment(product);
+      if (!attachment) {
+        setStatus("Choose a video or voice recording first.", "warn");
+        return;
+      }
+
+      const aspectRatio = activityProductMediaAspectRatio(product);
+      const item = {
+        id: state.nextBoardItemId,
+        kind: "media",
+        mediaType: attachment.mediaType,
+        label: attachment.label || activityDefaultProductLabel(attachment.mediaType),
+        src: attachment.posterDataUrl,
+        dataUrl: attachment.dataUrl,
+        mimeType: attachment.mimeType,
+        posterDataUrl: attachment.posterDataUrl,
+        sourceProductId: attachment.id,
+        source: attachment.source,
+        folderName: attachment.folderName,
+        folderCode: attachment.folderCode,
+        createdAt: attachment.createdAt,
+        colorable: false,
+        widthRatio: aspectRatio,
+        tintColor: null,
+        size: defaultBoardStickerSize({ kind: "media", widthRatio: aspectRatio }),
+        x: 0,
+        y: 0,
+        rotation: 0,
+        zIndex: state.nextBoardZIndex += 1
+      };
+      const position = clientPoint
+        ? centeredBoardItemPosition(item, clientPoint.clientX, clientPoint.clientY, item.size)
+        : nextBoardPlacement(item, item.size);
+      item.x = position.x;
+      item.y = position.y;
+      state.boardItems.push(item);
+      state.nextBoardItemId += 1;
+      renderBoardStickers();
+      animatePlacedItemEntry("board", item.id);
+    }
+
     function handleBoardStickerLayerPointerDown(event) {
       if (state.boardPenMode) {
         return;
@@ -12408,7 +12849,7 @@
         item.widthRatio = boardItemWidthRatio(item);
         item.size = clamp(
           item.size || defaultBoardStickerSize(item),
-          item.kind === "photo" ? MIN_PHOTO_SIZE : item.kind === "feature" ? 120 : MIN_ICON_SIZE,
+          item.kind === "photo" || item.kind === "media" ? MIN_PHOTO_SIZE : item.kind === "feature" ? 120 : MIN_ICON_SIZE,
           maxBoardStickerSize(item)
         );
         item.rotation = normalizeRotation(item.rotation || 0);
@@ -13801,6 +14242,7 @@
     activityCameraBtn.addEventListener("click", toggleActivityCamera);
     activitySwitchCameraBtn.addEventListener("click", switchActivityCamera);
     activityTakePhotoBtn.addEventListener("click", captureActivityPhoto);
+    activityTakeVideoBtn.addEventListener("click", toggleActivityVideoRecording);
     activityVoiceBtn.addEventListener("click", toggleActivityVoiceRecording);
     activityChooseVoiceBtn.addEventListener("click", () => openActivityAudioCapturePicker({ force: true }));
     if (activitySendLiveBtn) {
