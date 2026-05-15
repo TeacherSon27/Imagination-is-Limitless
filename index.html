@@ -1028,6 +1028,65 @@
       -webkit-tap-highlight-color: transparent;
     }
 
+    .inline-media-move-handle,
+    .inline-media-resize-handle {
+      position: absolute;
+      z-index: 6;
+      border: 1px solid rgba(255, 255, 255, 0.68);
+      background: rgba(12, 15, 30, 0.7);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
+      pointer-events: auto;
+      touch-action: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .inline-media-move-handle {
+      top: 8px;
+      left: 50%;
+      width: min(42%, 96px);
+      height: 26px;
+      min-width: 54px;
+      transform: translateX(-50%);
+      border-radius: 999px;
+      cursor: grab;
+    }
+
+    .inline-media-move-handle::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 38px;
+      height: 12px;
+      transform: translate(-50%, -50%);
+      background:
+        linear-gradient(#ffffff, #ffffff) 0 0 / 100% 2px no-repeat,
+        linear-gradient(#ffffff, #ffffff) 0 5px / 100% 2px no-repeat,
+        linear-gradient(#ffffff, #ffffff) 0 10px / 100% 2px no-repeat;
+      opacity: 0.92;
+    }
+
+    .inline-media-resize-handle {
+      right: 7px;
+      bottom: 7px;
+      width: 34px;
+      height: 34px;
+      border-radius: 11px;
+      cursor: nwse-resize;
+    }
+
+    .inline-media-resize-handle::before {
+      content: "";
+      position: absolute;
+      right: 8px;
+      bottom: 8px;
+      width: 16px;
+      height: 16px;
+      border-right: 3px solid #ffffff;
+      border-bottom: 3px solid #ffffff;
+      opacity: 0.92;
+    }
+
     .media-item.playing .inline-media-play-toggle {
       opacity: 0;
       transform: translate(-50%, -50%) scale(0.92);
@@ -11300,6 +11359,21 @@
         media.addEventListener("ended", () => updateInlineMediaPlayButton(media, playButton, container));
         container.appendChild(playButton);
       }
+
+      const moveHandle = document.createElement("button");
+      moveHandle.type = "button";
+      moveHandle.className = "inline-media-move-handle";
+      moveHandle.dataset.mediaGestureZone = "move";
+      moveHandle.setAttribute("aria-label", `Move ${item.label || "pasted media"}.`);
+      container.appendChild(moveHandle);
+
+      const resizeHandle = document.createElement("button");
+      resizeHandle.type = "button";
+      resizeHandle.className = "inline-media-resize-handle";
+      resizeHandle.dataset.mediaGestureZone = "resize";
+      resizeHandle.dataset.mediaResizeHandle = "true";
+      resizeHandle.setAttribute("aria-label", `Resize ${item.label || "pasted media"}.`);
+      container.appendChild(resizeHandle);
     }
 
     function renderPlacedSpelling() {
@@ -12246,7 +12320,8 @@
     }
 
     function startSurfaceItemGesture(surface, event, element, options = {}) {
-      if (surface === "board" && state.boardPenMode) {
+      const mediaGestureZone = event.target.closest("[data-media-gesture-zone]");
+      if (surface === "board" && state.boardPenMode && !mediaGestureZone) {
         return;
       }
 
@@ -12266,7 +12341,8 @@
       event.preventDefault();
       element.classList.add("moving");
       applySurfaceItemStyles(surface, element, item);
-      const startsInResizeZone = pointerStartsInResizeZone(surface, item, event.clientX, event.clientY);
+      const forceResize = Boolean(event.target.closest("[data-media-resize-handle]"));
+      const startsInResizeZone = forceResize || pointerStartsInResizeZone(surface, item, event.clientX, event.clientY);
       const session = {
         type: "gesture-item",
         pointerType: event.pointerType || "mouse",
@@ -12295,7 +12371,7 @@
       };
       state.pointerSession = session;
       tryCaptureSessionPointer(session);
-      if (startsInResizeZone && item.kind === "feature" && item.toolId === "calculator") {
+      if (forceResize || (startsInResizeZone && item.kind === "feature" && item.toolId === "calculator")) {
         beginGestureResize(session);
       } else {
         scheduleGestureRotate(session);
