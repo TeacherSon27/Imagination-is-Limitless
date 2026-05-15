@@ -5237,8 +5237,10 @@
     let googleDriveIdentityLoaded = false;
     let googleDriveAuthPromise = null;
     let googleDriveSelectedFolder = null;
+    let firebaseActivityAppPromise = null;
     let firebaseActivityDbPromise = null;
     let firebaseActivityFirestoreModulePromise = null;
+    let firebaseActivityStorageModulePromise = null;
 
     function getLetterVariant(variantId = "classic") {
       return LETTER_VARIANTS[variantId] || LETTER_VARIANTS.classic;
@@ -7924,15 +7926,38 @@
       return firebaseActivityFirestoreModulePromise;
     }
 
+    async function firebaseActivityStorageModules() {
+      if (!firebaseActivityStorageModulePromise) {
+        firebaseActivityStorageModulePromise = import(`https://www.gstatic.com/firebasejs/${FIREBASE_SDK_VERSION}/firebase-storage.js`)
+          .catch((error) => {
+            firebaseActivityStorageModulePromise = null;
+            throw error;
+          });
+      }
+      return firebaseActivityStorageModulePromise;
+    }
+
+    async function firebaseActivityApp() {
+      if (!firebaseActivityAppPromise) {
+        firebaseActivityAppPromise = (async () => {
+          const { initializeApp, getApps } = await import(`https://www.gstatic.com/firebasejs/${FIREBASE_SDK_VERSION}/firebase-app.js`);
+          const existingApp = getApps().find((app) => app.name === FIREBASE_ACTIVITY_APP_NAME);
+          return existingApp || initializeApp(FIREBASE_ACTIVITY_CONFIG, FIREBASE_ACTIVITY_APP_NAME);
+        })().catch((error) => {
+          firebaseActivityAppPromise = null;
+          throw error;
+        });
+      }
+      return firebaseActivityAppPromise;
+    }
+
     async function firebaseActivityDatabase() {
       if (!firebaseActivityDbPromise) {
         firebaseActivityDbPromise = (async () => {
-          const [{ initializeApp, getApps }, { getFirestore }] = await Promise.all([
-            import(`https://www.gstatic.com/firebasejs/${FIREBASE_SDK_VERSION}/firebase-app.js`),
+          const [app, { getFirestore }] = await Promise.all([
+            firebaseActivityApp(),
             firebaseActivityFirestoreModules()
           ]);
-          const existingApp = getApps().find((app) => app.name === FIREBASE_ACTIVITY_APP_NAME);
-          const app = existingApp || initializeApp(FIREBASE_ACTIVITY_CONFIG, FIREBASE_ACTIVITY_APP_NAME);
           return getFirestore(app);
         })().catch((error) => {
           firebaseActivityDbPromise = null;
@@ -7942,40 +7967,164 @@
       return firebaseActivityDbPromise;
     }
 
-    async function createFirebaseActivitySubmissionPayload(product) {
+    async function firebaseActivityStorage() {
+      const [app, { getStorage }] = await Promise.all([
+        firebaseActivityApp(),
+        firebaseActivityStorageModules()
+      ]);
+      return getStorage(app);
+    }
+
+    function firebaseStorageSafeSegment(value = "") {
+      return String(value || "")
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9._-]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .slice(0, 64) || "activity-product";
+    }
+
+    function firebaseStorageExtensionForMedia(mimeType = "", mediaType = "") {
+      const extension = extensionFromMimeType(mimeType);
+      if (extension && extension !== "bin") {
+        return extension;
+      }
+      return mediaType === "audio" ? "webm" : "mp4";
+    }
+
+    async function uploadFirebaseActivityMedia({
+      roomCode = "",
+      productId = "",
+      label = "",
+      dataUrl = "",
+      mediaType = "video",
+      mimeType = ""
+    } = {}) {
+      const blob = dataUrlToBlob(dataUrl);
+      const resolvedMimeType = mimeType || blob.type || dataUrlMimeType(dataUrl) || (mediaType === "audio" ? "audio/webm" : "video/mp4");
+      const extension = firebaseStorageExtensionForMedia(resolvedMimeType, mediaType);
+      const safeRoom = firebaseStorageSafeSegment(roomCode || "room");
+      const safeProduct = firebaseStorageSafeSegment(productId || createActivityProductId());
+      const safeLabel = firebaseStorageSafeSegment(label || activityDefaultProductLabel(mediaType));
+      const storagePath = `classrooms/${safeRoom}/activity-products/${safeProduct}/${Date.now()}-${safeLabel}.${extension}`;
+      const [storage, { ref, uploadBytesResumable, getDownloadURL }] = await Promise.all([
+        firebaseActivityStorage(),
+        firebaseActivityStorageModules()
+      ]);
+      const mediaRef = ref(storage, storagePath);
+      const uploadTask = uploadBytesResumable(mediaRef, blob, { contentType: resolvedMimeType });
+      await new Promise((resolve, reject) => {
+        uploadTask.on("state_changed", null, reject, () => resolve(uploadTask.snapshot));
+      });
+      const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+      return {
+        downloadURL,
+        storagePath,
+        storageBucket: FIREBASE_ACTIVITY_CONFIG.storageBucket,
+        storageContentType: resolvedMimeType,
+        storageSize: blob.size
+      };
+    }
+
+    async function prepareFirebaseMediaRecord(record, {
+      roomCode = "",
+      productId = "",
+      required = false
+    } = {}) {
+      const mediaType = normalizeActivityMediaType(record.mediaType, record.dataUrl, record.source);
+      const dataUrl = typeof record.dataUrl === "string" ? record.dataUrl : "";
+      if ((mediaType !== "audio" && mediaType !== "video") || !dataUrl || !dataUrl.startsWith("data:")) {
+        return record;
+      }
+
+      try {
+        const storageInfo = await uploadFirebaseActivityMedia({
+          roomCode,
+          productId,
+          label: record.label,
+          dataUrl,
+          mediaType,
+          mimeType: record.mimeType || dataUrlMimeType(dataUrl)
+        });
+        return {
+          ...record,
+          dataUrl: "",
+          downloadURL: storageInfo.downloadURL,
+          mediaUrl: storageInfo.downloadURL,
+          storagePath: storageInfo.storagePath,
+          storageBucket: storageInfo.storageBucket,
+          storageContentType: storageInfo.storageContentType,
+          storageSize: storageInfo.storageSize
+        };
+      } catch (error) {
+        if (!required && dataUrl.length <= FIREBASE_ACTIVITY_MAX_DATA_URL_LENGTH) {
+          return record;
+        }
+        throw new Error("This video is too large for Firestore and could not upload to Firebase Storage. Check Firebase Storage rules, then try again.");
+      }
+    }
+
+    async function createFirebaseActivitySubmissionPayload(product, roomCodeValue = "") {
       const normalizedProduct = normalizeActivityProduct(product);
       const mediaType = normalizeActivityMediaType(
         normalizedProduct.mediaType,
         normalizedProduct.dataUrl,
         normalizedProduct.source
       );
-      const dataUrl = mediaType === "image"
+      const roomCode = normalizeFirebaseRoomCode(roomCodeValue);
+      let preparedProduct = normalizedProduct;
+      let dataUrl = mediaType === "image"
         ? await buildLiveActivityDataUrl(normalizedProduct.dataUrl, "", {
             maxImageEdge: FIREBASE_ACTIVITY_MAX_IMAGE_EDGE,
             maxLength: FIREBASE_ACTIVITY_MAX_DATA_URL_LENGTH
           })
         : normalizedProduct.dataUrl;
+      if (mediaType === "audio" || mediaType === "video") {
+        preparedProduct = await prepareFirebaseMediaRecord(normalizedProduct, {
+          roomCode,
+          productId: normalizedProduct.id,
+          required: String(dataUrl || "").length > FIREBASE_ACTIVITY_MAX_DATA_URL_LENGTH
+        });
+        dataUrl = preparedProduct.dataUrl || "";
+      }
 
       if (String(dataUrl || "").length > FIREBASE_ACTIVITY_MAX_DATA_URL_LENGTH) {
-        throw new Error("This Activity Product is too large for Firebase. Try sending a screenshot or smaller image.");
+        throw new Error("This Activity Product is too large for Firebase. Try sending a smaller image, or check Firebase Storage rules for video uploads.");
       }
+
+      const mediaAttachments = await Promise.all(
+        normalizeActivityMediaAttachments(normalizedProduct.mediaAttachments).map((attachment) => {
+          const attachmentType = normalizeActivityMediaType(attachment.mediaType, attachment.dataUrl, attachment.source);
+          return prepareFirebaseMediaRecord(attachment, {
+            roomCode,
+            productId: `${normalizedProduct.id}-${attachment.id}`,
+            required: (attachmentType === "audio" || attachmentType === "video") && String(attachment.dataUrl || "").length > FIREBASE_ACTIVITY_MAX_DATA_URL_LENGTH
+          });
+        })
+      );
 
       const playerId = getLiveActivityPlayerId();
       return {
         originProductId: normalizedProduct.id,
-        source: normalizedProduct.source,
-        label: normalizedProduct.label,
-        createdAt: normalizedProduct.createdAt,
+        source: preparedProduct.source,
+        label: preparedProduct.label,
+        createdAt: preparedProduct.createdAt,
         submittedAt: new Date().toISOString(),
         dataUrl,
         mediaType,
-        mimeType: normalizedProduct.mimeType || dataUrlMimeType(dataUrl),
-        posterDataUrl: normalizedProduct.posterDataUrl || "",
-        boardScreenshotDataUrl: normalizedProduct.boardScreenshotDataUrl || "",
-        mediaAttachments: normalizeActivityMediaAttachments(normalizedProduct.mediaAttachments),
-        folderName: normalizedProduct.folderName || "",
-        folderCode: normalizedProduct.folderCode || "",
-        filterStyle: normalizedProduct.filterStyle || "",
+        mimeType: preparedProduct.mimeType || dataUrlMimeType(dataUrl) || preparedProduct.storageContentType || "",
+        downloadURL: preparedProduct.downloadURL || "",
+        mediaUrl: preparedProduct.mediaUrl || preparedProduct.downloadURL || "",
+        storagePath: preparedProduct.storagePath || "",
+        storageBucket: preparedProduct.storageBucket || "",
+        storageContentType: preparedProduct.storageContentType || "",
+        storageSize: Number(preparedProduct.storageSize) || 0,
+        posterDataUrl: preparedProduct.posterDataUrl || "",
+        boardScreenshotDataUrl: preparedProduct.boardScreenshotDataUrl || "",
+        mediaAttachments,
+        folderName: preparedProduct.folderName || "",
+        folderCode: preparedProduct.folderCode || "",
+        filterStyle: preparedProduct.filterStyle || "",
         submittedBy: {
           id: playerId,
           label: liveActivityPlayerLabel(playerId)
@@ -7997,7 +8146,7 @@
         firebaseActivityDatabase(),
         firebaseActivityFirestoreModules()
       ]);
-      const payload = await createFirebaseActivitySubmissionPayload(product);
+      const payload = await createFirebaseActivitySubmissionPayload(product, roomCode);
       await addDoc(collection(db, "classrooms", roomCode, "activityProducts"), {
         ...payload,
         timestamp: serverTimestamp()
@@ -8011,7 +8160,10 @@
         return "Firebase could not load. Check the internet connection, then try again.";
       }
       if (/permission|insufficient/i.test(message)) {
-        return "Firebase rejected the send. Check that the Firestore rules are published and the room code matches the dashboard.";
+        return "Firebase rejected the send. Check that the Firestore and Firebase Storage rules are published and the room code matches the dashboard.";
+      }
+      if (/storage|upload/i.test(message)) {
+        return "The AP media could not upload to Firebase Storage. Check Firebase Storage rules, then try again.";
       }
       return message || "Firebase send failed.";
     }
