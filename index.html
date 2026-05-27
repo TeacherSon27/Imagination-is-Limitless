@@ -15020,19 +15020,56 @@
     });
 
   </script>
-  html,
-body{
-    overscroll-behavior:none;
-    touch-action:none;
-    overflow:hidden;
+  <script>
 
-    -webkit-user-select:none;
-    -webkit-touch-callout:none;
+/* Prevent Safari gesture exits */
 
-    position:fixed;
-    inset:0;
-    width:100%;
-    height:100%;
+document.addEventListener(
+  'touchmove',
+  function(e){
+      e.preventDefault();
+  },
+  { passive:false }
+);
+
+/* Lock viewport */
+
+function lockViewport(){
+
+    document.documentElement.style.height =
+        window.innerHeight + 'px';
+
+    document.body.style.height =
+        window.innerHeight + 'px';
 }
+
+window.addEventListener('resize', lockViewport);
+window.addEventListener('orientationchange', lockViewport);
+
+lockViewport();
+
+/* Detect standalone */
+
+console.log(
+  'Standalone:',
+  window.matchMedia('(display-mode: standalone)').matches ||
+  window.navigator.standalone
+);
+
+/* Register service worker */
+
+if('serviceWorker' in navigator){
+
+    window.addEventListener('load', ()=>{
+
+        navigator.serviceWorker
+            .register('./sw.js')
+            .catch(console.error);
+
+    });
+
+}
+
+</script>
 </body>
 </html>
