@@ -3,6 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#070b1a">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Spell Scribble">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" sizes="192x192" href="icon-192.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
   <title>Spell &amp; Scribble Studio</title>
   <style>
     :root {
@@ -31,10 +41,16 @@
     html,
     body {
       margin: 0;
+      width: 100%;
+      height: 100%;
       min-height: 100%;
+      overflow: hidden;
+      overscroll-behavior: none;
     }
 
     body {
+      position: fixed;
+      inset: 0;
       font-family: "Avenir Next Rounded", "Trebuchet MS", "Gill Sans", sans-serif;
       color: var(--ink);
       background:
@@ -44,7 +60,28 @@
         var(--spell-background-image) center center / cover no-repeat;
       background-color: #070b1a;
       overflow: hidden;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
       -webkit-tap-highlight-color: transparent;
+    }
+
+    .fullscreen-touch-guard {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 2147483647;
+      height: max(22px, env(safe-area-inset-bottom, 0px));
+      pointer-events: none;
+      touch-action: none;
+      background: transparent;
+    }
+
+    html.is-ios-fullscreen-locked .fullscreen-touch-guard,
+    html.is-standalone-webapp .fullscreen-touch-guard {
+      pointer-events: auto;
     }
 
     .spell-background-wash {
@@ -4283,6 +4320,7 @@
   </style>
 </head>
 <body>
+  <div class="fullscreen-touch-guard" id="fullscreenTouchGuard" aria-hidden="true"></div>
   <div class="spell-background-wash" id="spellBackgroundWash" aria-hidden="true"></div>
   <div class="app">
     <main class="layout">
@@ -4854,7 +4892,9 @@
       selectedActivityProductId: null,
       selectedActivityPhotoId: null,
       activitySelectionMode: "product",
-      activityCameraFacingMode: "environment"
+      activityCameraFacingMode: "environment",
+      keepFullscreenOnIpad: false,
+      fullscreenRecoveryPending: false
     };
 
     const coverScreen = document.getElementById("coverScreen");
@@ -4893,6 +4933,7 @@
     const builtWord = document.getElementById("builtWord");
     const statusText = document.getElementById("statusText");
     const fullscreenBtn = document.getElementById("fullscreenBtn");
+    const fullscreenTouchGuard = document.getElementById("fullscreenTouchGuard");
     const openBoardBtn = document.getElementById("openBoardBtn");
     const removeBtn = document.getElementById("removeBtn");
     const clearBtn = document.getElementById("clearBtn");
@@ -13438,20 +13479,175 @@
       });
     }
 
-    async function toggleFullscreen() {
+    function isLikelyIOSDevice() {
+      return /iPad|iPhone|iPod/.test(navigator.platform) ||
+        (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    }
+
+    function displayModeMatches(mode) {
+      return typeof window.matchMedia === "function" && window.matchMedia(`(display-mode: ${mode})`).matches;
+    }
+
+    function isStandaloneWebApp() {
+      return window.navigator.standalone === true ||
+        displayModeMatches("fullscreen") ||
+        displayModeMatches("standalone");
+    }
+
+    function appFullscreenElement() {
+      return document.fullscreenElement || document.webkitFullscreenElement || null;
+    }
+
+    function updateFullscreenClasses() {
+      const standalone = isStandaloneWebApp();
+      document.documentElement.classList.toggle("is-standalone-webapp", standalone);
+      document.documentElement.classList.toggle(
+        "is-ios-fullscreen-locked",
+        Boolean(state.keepFullscreenOnIpad && isLikelyIOSDevice() && !standalone)
+      );
+    }
+
+    function requestAppFullscreen() {
+      const target = document.documentElement;
+      const request = target.requestFullscreen || target.webkitRequestFullscreen || target.msRequestFullscreen;
+
+      if (!request) {
+        return Promise.reject(new Error("Fullscreen is not available in this browser."));
+      }
+
       try {
-        if (!document.fullscreenElement) {
-          await document.documentElement.requestFullscreen();
-        } else {
-          await document.exitFullscreen();
-        }
+        return Promise.resolve(request.call(target, { navigationUI: "hide" }));
       } catch (error) {
-        setStatus("Fullscreen is not available in this browser.", "warn");
+        return Promise.resolve(request.call(target));
       }
     }
 
+    function exitAppFullscreen() {
+      const exit = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
+
+      if (!exit || !appFullscreenElement()) {
+        return Promise.resolve();
+      }
+
+      return Promise.resolve(exit.call(document));
+    }
+
+    async function enterAppFullscreen({ remember = true, quiet = false } = {}) {
+      if (remember) {
+        state.keepFullscreenOnIpad = true;
+      }
+
+      updateFullscreenClasses();
+
+      if (isStandaloneWebApp() || appFullscreenElement()) {
+        state.fullscreenRecoveryPending = false;
+        updateFullscreenLabel();
+        return true;
+      }
+
+      try {
+        await requestAppFullscreen();
+        state.fullscreenRecoveryPending = false;
+        updateFullscreenClasses();
+        updateFullscreenLabel();
+        return true;
+      } catch (error) {
+        if (!quiet) {
+          setStatus("Fullscreen is not available in this browser.", "warn");
+        }
+        updateFullscreenClasses();
+        updateFullscreenLabel();
+        return false;
+      }
+    }
+
+    async function toggleFullscreen() {
+      if (isStandaloneWebApp()) {
+        state.keepFullscreenOnIpad = true;
+        state.fullscreenRecoveryPending = false;
+        updateFullscreenClasses();
+        updateFullscreenLabel();
+        setStatus("Fullscreen is already active from the Home Screen.", "good");
+        return;
+      }
+
+      if (appFullscreenElement()) {
+        state.keepFullscreenOnIpad = false;
+        state.fullscreenRecoveryPending = false;
+        updateFullscreenClasses();
+        try {
+          await exitAppFullscreen();
+        } catch (error) {
+          setStatus("Unable to exit fullscreen in this browser.", "warn");
+        }
+        updateFullscreenLabel();
+        return;
+      }
+
+      enterAppFullscreen({ remember: true });
+    }
+
+    function handleFullscreenChange() {
+      if (appFullscreenElement() || isStandaloneWebApp()) {
+        state.fullscreenRecoveryPending = false;
+      } else if (state.keepFullscreenOnIpad && isLikelyIOSDevice()) {
+        state.fullscreenRecoveryPending = true;
+      }
+
+      updateFullscreenClasses();
+      updateFullscreenLabel();
+    }
+
     function updateFullscreenLabel() {
-      fullscreenBtn.textContent = document.fullscreenElement ? "Exit Fullscreen" : "Fullscreen";
+      const fullscreenActive = Boolean(appFullscreenElement()) || isStandaloneWebApp();
+      fullscreenBtn.textContent = fullscreenActive ? "Fullscreen On" : "Fullscreen";
+      fullscreenBtn.setAttribute("aria-pressed", String(fullscreenActive));
+    }
+
+    function recoverFullscreenFromUserGesture(event) {
+      if (!state.keepFullscreenOnIpad || !state.fullscreenRecoveryPending || appFullscreenElement() || isStandaloneWebApp()) {
+        return;
+      }
+
+      if (event.target.closest?.("input, textarea, select, [contenteditable='true']")) {
+        return;
+      }
+
+      enterAppFullscreen({ remember: true, quiet: true });
+    }
+
+    function absorbBottomFullscreenTouch(event) {
+      if (!isLikelyIOSDevice() || (!state.keepFullscreenOnIpad && !isStandaloneWebApp())) {
+        return;
+      }
+
+      if (event.cancelable) {
+        event.preventDefault();
+      }
+
+      event.stopPropagation();
+
+      if (state.fullscreenRecoveryPending || (!appFullscreenElement() && !isStandaloneWebApp() && state.keepFullscreenOnIpad)) {
+        enterAppFullscreen({ remember: true, quiet: true });
+      }
+    }
+
+    function registerAppServiceWorker() {
+      if (!("serviceWorker" in navigator)) {
+        return;
+      }
+
+      const canRegister = location.protocol === "https:" ||
+        location.hostname === "localhost" ||
+        location.hostname === "127.0.0.1";
+
+      if (!canRegister) {
+        return;
+      }
+
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("service-worker.js").catch(() => {});
+      });
     }
 
     function openCodeModal() {
@@ -14613,7 +14809,13 @@
       setSpellingToolsPanelVisible(false);
       toggleFullscreen();
     });
-    document.addEventListener("fullscreenchange", updateFullscreenLabel);
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+    document.addEventListener("pointerdown", recoverFullscreenFromUserGesture, true);
+    document.addEventListener("touchstart", recoverFullscreenFromUserGesture, { capture: true, passive: true });
+    ["pointerdown", "pointermove", "touchstart", "touchmove"].forEach((eventName) => {
+      fullscreenTouchGuard.addEventListener(eventName, absorbBottomFullscreenTouch, { passive: false });
+    });
     document.addEventListener("keydown", handleKeyboardShortcuts);
     spellStage.addEventListener("pointerdown", handleSpellStagePointerDown);
     spellStage.addEventListener("click", handleFeatureSurfaceClick);
@@ -14950,7 +15152,17 @@
         flushPendingLiveActivityProducts();
       }
     });
+    if (typeof window.matchMedia === "function") {
+      ["fullscreen", "standalone"].forEach((mode) => {
+        const query = window.matchMedia(`(display-mode: ${mode})`);
+        query.addEventListener?.("change", () => {
+          updateFullscreenClasses();
+          updateFullscreenLabel();
+        });
+      });
+    }
 
+    registerAppServiceWorker();
     renderFeaturePopupChoices(spellFeaturePopupGrid, "spell");
     renderFeaturePopupChoices(boardFeaturePopupGrid, "board");
     renderFeatureNav();
@@ -14992,6 +15204,7 @@
     updateFeatureTimerUI();
     updateFeatureDieUI();
     selectFeatureTool(state.selectedFeatureTool);
+    updateFullscreenClasses();
     updateFullscreenLabel();
     setGameAccessUnlocked(false);
     setCoverAccessMessage("Enter the access code to unlock the game.");
