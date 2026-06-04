@@ -1,4 +1,4 @@
-const CACHE_NAME = "spell-scribble-pwa-v1";
+const CACHE_NAME = "spell-scribble-pwa-v7";
 const APP_SHELL = [
   "./",
   "./index.html",

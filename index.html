@@ -4664,7 +4664,8 @@
         <section class="activity-live-controls" aria-labelledby="activityFirebaseTitle">
           <div class="activity-live-head">
             <p class="activity-live-title" id="activityFirebaseTitle">Firebase Classroom</p>
-            <p class="activity-live-note">Enter the room code from the Teacher Dashboard, then send the selected Activity Product through Firestore.</p>
+            <p class="activity-live-note">Enter the room code from Teacher FLOAT, then send the selected Activity Product through Firestore.</p>
+            <p class="activity-live-note" id="activityFirebaseProfileLabel">Firebase project: Teacher FLOAT</p>
           </div>
           <div class="activity-live-row">
             <input class="activity-live-input" id="activityFirebaseRoomInput" type="text" inputmode="text" maxlength="10" autocomplete="off" placeholder="ROOM CODE" aria-label="Firebase classroom room code">
@@ -4982,6 +4983,7 @@
     const activitySendLiveBtn = document.getElementById("activitySendLiveBtn");
     const activityFirebaseRoomInput = document.getElementById("activityFirebaseRoomInput");
     const activitySendFirebaseBtn = document.getElementById("activitySendFirebaseBtn");
+    const activityFirebaseProfileLabel = document.getElementById("activityFirebaseProfileLabel");
     const activityGoogleClientIdInput = document.getElementById("activityGoogleClientIdInput");
     const activityGoogleApiKeyInput = document.getElementById("activityGoogleApiKeyInput");
     const activityGoogleAppIdInput = document.getElementById("activityGoogleAppIdInput");
@@ -5072,18 +5074,28 @@
     const LIVE_ACTIVITY_MAX_IMAGE_EDGE = 1800;
     const LIVE_ACTIVITY_MAX_DATA_URL_LENGTH = 2_400_000;
     const FIREBASE_ACTIVITY_ROOM_STORAGE_KEY = "spell-scribble-firebase-room-code-v1";
+    const FIREBASE_ACTIVITY_PROFILE_STORAGE_KEY = "spell-scribble-firebase-profile-v1";
     const FIREBASE_ACTIVITY_MAX_IMAGE_EDGE = 1200;
     const FIREBASE_ACTIVITY_MAX_DATA_URL_LENGTH = 760_000;
+    const FIREBASE_STORAGE_MAX_UPLOAD_RETRY_MS = 30_000;
+    const FIREBASE_STORAGE_MAX_OPERATION_RETRY_MS = 10_000;
+    const FIREBASE_STORAGE_MAX_UPLOAD_BYTES = 300 * 1024 * 1024;
     const FIREBASE_SDK_VERSION = "10.12.0";
-    const FIREBASE_ACTIVITY_APP_NAME = "spell-scribble-teacher-dashboard-sender";
-    const FIREBASE_ACTIVITY_CONFIG = Object.freeze({
-      apiKey: "AIzaSyBFP-qPcQmi16nas6K5sVG4v3vjV-5zA2M",
-      authDomain: "teacher-dashboard-953d6.firebaseapp.com",
-      projectId: "teacher-dashboard-953d6",
-      storageBucket: "teacher-dashboard-953d6.firebasestorage.app",
-      messagingSenderId: "523904637360",
-      appId: "1:523904637360:web:d170b058b5afbcd0709e75",
-      measurementId: "G-PIZX61TGSL"
+    const FIREBASE_ACTIVITY_APP_NAME_PREFIX = "spell-scribble-teacher-dashboard-sender";
+    const FIREBASE_ACTIVITY_LINK_PARAM = "tfb";
+    const FIREBASE_ACTIVITY_ROOM_LINK_PARAM = "room";
+    const DEFAULT_FIREBASE_ACTIVITY_PROFILE = Object.freeze({
+      id: "default-teacherfloat123-aae8c",
+      name: "Teacher FLOAT",
+      config: {
+        apiKey: "AIzaSyCJWN0h0Q8gmHPs-ZzJOfLNrnvr5PmYHEc",
+        authDomain: "teacherfloat123-aae8c.firebaseapp.com",
+        projectId: "teacherfloat123-aae8c",
+        storageBucket: "teacherfloat123-aae8c.firebasestorage.app",
+        messagingSenderId: "540245450341",
+        appId: "1:540245450341:web:6b5df017db698de43e308c",
+        measurementId: "G-7S83WZN8SS"
+      }
     });
     const GOOGLE_DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file";
     const GOOGLE_DRIVE_CONFIG_STORAGE_KEY = "spell-scribble-google-drive-config-v1";
@@ -5239,6 +5251,11 @@
     const pendingLetterPlacementTimers = new WeakMap();
     const liveActivityPendingProducts = new Map();
     const liveActivityPayloadCache = new Map();
+    const inlineActivityMediaObjectUrls = {
+      stage: new Set(),
+      board: new Set()
+    };
+    const activityProductObjectUrls = new Map();
     let liveActivityFlushTimer = null;
     let liveActivityFlushInFlight = false;
     let embeddedExportAssetsPromise = null;
@@ -5289,6 +5306,7 @@
     let firebaseActivityDbPromise = null;
     let firebaseActivityFirestoreModulePromise = null;
     let firebaseActivityStorageModulePromise = null;
+    let firebaseActivityProfile = null;
 
     function getLetterVariant(variantId = "classic") {
       return LETTER_VARIANTS[variantId] || LETTER_VARIANTS.classic;
@@ -7356,6 +7374,7 @@
         mediaType,
         mimeType,
         posterDataUrl,
+        localMediaUrl: typeof entry.localMediaUrl === "string" && entry.localMediaUrl.startsWith("blob:") ? entry.localMediaUrl : "",
         folderName,
         folderCode
       };
@@ -7411,6 +7430,7 @@
         mediaType,
         mimeType,
         posterDataUrl,
+        localMediaUrl: typeof entry.localMediaUrl === "string" && entry.localMediaUrl.startsWith("blob:") ? entry.localMediaUrl : "",
         folderName,
         folderCode,
         filterStyle: normalizeActivityFilterStyle(entry.filterStyle || entry.aiStyle),
@@ -7524,6 +7544,68 @@
       return new Blob([bytes], { type: mimeType });
     }
 
+    function createActivityProductObjectUrl(blob) {
+      if (!blob || typeof URL === "undefined" || typeof URL.createObjectURL !== "function") {
+        return "";
+      }
+      try {
+        return URL.createObjectURL(blob);
+      } catch (error) {
+        return "";
+      }
+    }
+
+    function rememberActivityProductObjectUrl(productId, objectUrl = "") {
+      const id = String(productId || "").trim();
+      const url = String(objectUrl || "").trim();
+      if (!id || !url) {
+        return "";
+      }
+
+      const previousUrl = activityProductObjectUrls.get(id);
+      if (previousUrl && previousUrl !== url) {
+        try {
+          URL.revokeObjectURL(previousUrl);
+        } catch (error) {
+          // Ignore cleanup failures from browsers that already released the URL.
+        }
+      }
+      activityProductObjectUrls.set(id, url);
+      return url;
+    }
+
+    function releaseActivityProductObjectUrl(productId) {
+      const id = String(productId || "").trim();
+      const url = id ? activityProductObjectUrls.get(id) : "";
+      if (!url) {
+        return;
+      }
+      try {
+        URL.revokeObjectURL(url);
+      } catch (error) {
+        // Ignore cleanup failures from browsers that already released the URL.
+      }
+      activityProductObjectUrls.delete(id);
+    }
+
+    function activityProductLocalMediaUrl(productOrItem) {
+      if (!productOrItem || typeof productOrItem !== "object") {
+        return "";
+      }
+      const localMediaUrl = typeof productOrItem.localMediaUrl === "string" && productOrItem.localMediaUrl.startsWith("blob:")
+        ? productOrItem.localMediaUrl
+        : "";
+      if (localMediaUrl) {
+        return localMediaUrl;
+      }
+      const sourceId = String(productOrItem.sourceProductId || productOrItem.id || "").trim();
+      return sourceId ? activityProductObjectUrls.get(sourceId) || "" : "";
+    }
+
+    function activityProductPlayableSource(productOrItem) {
+      return activityProductLocalMediaUrl(productOrItem) || String(productOrItem && productOrItem.dataUrl || "");
+    }
+
     function currentActivityProduct() {
       return state.activityProducts.find((product) => product.id === state.selectedActivityProductId) || null;
     }
@@ -7589,7 +7671,8 @@
 
     function persistActivityProducts() {
       try {
-        localStorage.setItem(ACTIVITY_PRODUCT_STORAGE_KEY, JSON.stringify(state.activityProducts));
+        const persistedProducts = state.activityProducts.map(({ localMediaUrl, ...product }) => product);
+        localStorage.setItem(ACTIVITY_PRODUCT_STORAGE_KEY, JSON.stringify(persistedProducts));
         return true;
       } catch (error) {
         return false;
@@ -7985,6 +8068,141 @@
       return normalized;
     }
 
+    function normalizeFirebaseActivityConfig(config = {}) {
+      const projectId = String(config.projectId || "").trim();
+      const normalized = {
+        apiKey: String(config.apiKey || "").trim(),
+        authDomain: String(config.authDomain || (projectId ? `${projectId}.firebaseapp.com` : "")).trim(),
+        projectId,
+        storageBucket: String(config.storageBucket || (projectId ? `${projectId}.firebasestorage.app` : "")).trim(),
+        messagingSenderId: String(config.messagingSenderId || "").trim(),
+        appId: String(config.appId || "").trim()
+      };
+      const measurementId = String(config.measurementId || "").trim();
+      if (measurementId) normalized.measurementId = measurementId;
+      return normalized;
+    }
+
+    function firebaseActivityConfigIsUsable(config = {}) {
+      const normalized = normalizeFirebaseActivityConfig(config);
+      return Boolean(normalized.apiKey && normalized.projectId && normalized.appId && normalized.authDomain && normalized.storageBucket);
+    }
+
+    function defaultFirebaseActivityProfile() {
+      return {
+        id: DEFAULT_FIREBASE_ACTIVITY_PROFILE.id,
+        name: DEFAULT_FIREBASE_ACTIVITY_PROFILE.name,
+        config: normalizeFirebaseActivityConfig(DEFAULT_FIREBASE_ACTIVITY_PROFILE.config),
+        isDefault: true
+      };
+    }
+
+    function decodeBase64UrlToText(value = "") {
+      const normalized = String(value || "").replace(/-/g, "+").replace(/_/g, "/");
+      const padded = normalized + "=".repeat((4 - normalized.length % 4) % 4);
+      const binary = atob(padded);
+      const bytes = new Uint8Array(binary.length);
+      for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
+      return new TextDecoder().decode(bytes);
+    }
+
+    function normalizeFirebaseActivityProfile(profile = {}) {
+      const source = profile.config || profile;
+      const config = normalizeFirebaseActivityConfig(source);
+      if (!firebaseActivityConfigIsUsable(config)) return null;
+      return {
+        id: String(profile.id || `firebase-${config.projectId}`).trim(),
+        name: String(profile.name || config.projectId || "Firebase Project").trim(),
+        config,
+        isDefault: profile.isDefault === true
+      };
+    }
+
+    function readStoredFirebaseActivityProfile() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(FIREBASE_ACTIVITY_PROFILE_STORAGE_KEY) || "null");
+        return normalizeFirebaseActivityProfile(parsed) || defaultFirebaseActivityProfile();
+      } catch (_error) {
+        return defaultFirebaseActivityProfile();
+      }
+    }
+
+    function persistFirebaseActivityProfile(profile) {
+      try {
+        if (!profile || profile.isDefault) {
+          localStorage.removeItem(FIREBASE_ACTIVITY_PROFILE_STORAGE_KEY);
+          return;
+        }
+        localStorage.setItem(FIREBASE_ACTIVITY_PROFILE_STORAGE_KEY, JSON.stringify(profile));
+      } catch (_error) {}
+    }
+
+    function setFirebaseActivityProfile(profile, { persist = true } = {}) {
+      const normalized = normalizeFirebaseActivityProfile(profile) || defaultFirebaseActivityProfile();
+      const previousProjectId = firebaseActivityProfile && firebaseActivityProfile.config && firebaseActivityProfile.config.projectId;
+      firebaseActivityProfile = normalized;
+      if (persist) persistFirebaseActivityProfile(normalized);
+      if (previousProjectId && previousProjectId !== normalized.config.projectId) {
+        firebaseActivityAppPromise = null;
+        firebaseActivityDbPromise = null;
+      }
+      updateFirebaseActivityProfileLabel();
+      return firebaseActivityProfile;
+    }
+
+    function firebaseActivityAppName() {
+      const profile = firebaseActivityProfile || defaultFirebaseActivityProfile();
+      const key = String(profile.config.projectId || profile.id || "default")
+        .toLowerCase()
+        .replace(/[^a-z0-9-]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .slice(0, 80) || "default";
+      return `${FIREBASE_ACTIVITY_APP_NAME_PREFIX}-${key}`;
+    }
+
+    function updateFirebaseActivityProfileLabel() {
+      if (!activityFirebaseProfileLabel) return;
+      const profile = firebaseActivityProfile || defaultFirebaseActivityProfile();
+      activityFirebaseProfileLabel.textContent = `Firebase project: ${profile.name || profile.config.projectId}`;
+    }
+
+    function decodeFirebaseActivityProfileParam(value = "") {
+      try {
+        const parsed = JSON.parse(decodeBase64UrlToText(value));
+        return normalizeFirebaseActivityProfile({
+          id: parsed.id || `firebase-${parsed.config?.projectId || "project"}`,
+          name: parsed.name,
+          config: parsed.config || parsed
+        });
+      } catch (_error) {
+        return null;
+      }
+    }
+
+    function applyFirebaseLaunchParams() {
+      let params = null;
+      try {
+        params = new URLSearchParams(window.location.search || "");
+      } catch (_error) {
+        params = null;
+      }
+      if (!params) {
+        setFirebaseActivityProfile(readStoredFirebaseActivityProfile(), { persist: false });
+        return;
+      }
+      const encodedProfile = params.get(FIREBASE_ACTIVITY_LINK_PARAM);
+      const profile = encodedProfile ? decodeFirebaseActivityProfileParam(encodedProfile) : null;
+      if (profile) {
+        setFirebaseActivityProfile(profile, { persist: true });
+      } else {
+        setFirebaseActivityProfile(readStoredFirebaseActivityProfile(), { persist: false });
+      }
+      const linkedRoom = params.get(FIREBASE_ACTIVITY_ROOM_LINK_PARAM) || params.get("firebaseRoom") || params.get("r");
+      if (linkedRoom) {
+        setFirebaseRoomCode(linkedRoom, { persist: true });
+      }
+    }
+
     async function firebaseActivityFirestoreModules() {
       if (!firebaseActivityFirestoreModulePromise) {
         firebaseActivityFirestoreModulePromise = import(`https://www.gstatic.com/firebasejs/${FIREBASE_SDK_VERSION}/firebase-firestore.js`)
@@ -8011,8 +8229,10 @@
       if (!firebaseActivityAppPromise) {
         firebaseActivityAppPromise = (async () => {
           const { initializeApp, getApps } = await import(`https://www.gstatic.com/firebasejs/${FIREBASE_SDK_VERSION}/firebase-app.js`);
-          const existingApp = getApps().find((app) => app.name === FIREBASE_ACTIVITY_APP_NAME);
-          return existingApp || initializeApp(FIREBASE_ACTIVITY_CONFIG, FIREBASE_ACTIVITY_APP_NAME);
+          const profile = firebaseActivityProfile || setFirebaseActivityProfile(readStoredFirebaseActivityProfile(), { persist: false });
+          const appName = firebaseActivityAppName();
+          const existingApp = getApps().find((app) => app.name === appName);
+          return existingApp || initializeApp(profile.config, appName);
         })().catch((error) => {
           firebaseActivityAppPromise = null;
           throw error;
@@ -8042,7 +8262,10 @@
         firebaseActivityApp(),
         firebaseActivityStorageModules()
       ]);
-      return getStorage(app);
+      const storage = getStorage(app);
+      storage.maxUploadRetryTime = FIREBASE_STORAGE_MAX_UPLOAD_RETRY_MS;
+      storage.maxOperationRetryTime = FIREBASE_STORAGE_MAX_OPERATION_RETRY_MS;
+      return storage;
     }
 
     function firebaseStorageSafeSegment(value = "") {
@@ -8067,6 +8290,88 @@
       return mediaType === "audio" ? "webm" : mediaType === "image" ? "png" : "mp4";
     }
 
+    function formatFirebaseFileSize(bytes = 0) {
+      const size = Math.max(0, Number(bytes) || 0);
+      if (size >= 1024 * 1024) {
+        return `${(size / (1024 * 1024)).toFixed(size >= 10 * 1024 * 1024 ? 0 : 1)} MB`;
+      }
+      if (size >= 1024) {
+        return `${(size / 1024).toFixed(0)} KB`;
+      }
+      return `${size} bytes`;
+    }
+
+    function firebaseStorageUploadErrorMessage(error, mediaType = "video") {
+      const code = String(error && error.code ? error.code : "").toLowerCase();
+      const message = String(error && error.message ? error.message : "");
+      const label = mediaType === "audio" ? "voice recording" : mediaType === "image" ? "picture" : "video";
+      if (/larger than firebase storage upload limit/i.test(message)) {
+        return message;
+      }
+      if (/unauthorized|unauthenticated|permission|insufficient/i.test(`${code} ${message}`)) {
+        return `Firebase Storage rejected this AP ${label}. Check that the Storage rules are published and that Teacher FLOAT has created the same live room code.`;
+      }
+      if (/quota|bucket-not-found|project-not-found|invalid-default-bucket|no-default-bucket/i.test(`${code} ${message}`)) {
+        return `Firebase Storage is not ready for this project. Check the Storage bucket, Blaze billing, and project configuration, then try again.`;
+      }
+      if (/retry-limit-exceeded|network|offline|timeout/i.test(`${code} ${message}`)) {
+        return `Firebase Storage upload did not finish. Check the internet connection or try a shorter AP ${label}.`;
+      }
+      return `This AP ${label} could not upload to Firebase Storage. Check Storage rules, then try again.`;
+    }
+
+    function firebaseActivityRecordNeedsStorage(record = {}) {
+      const mediaType = normalizeActivityMediaType(record.mediaType, record.dataUrl, record.source);
+      const dataUrl = typeof record.dataUrl === "string" ? record.dataUrl : "";
+      if (mediaType === "audio" || mediaType === "video") {
+        return true;
+      }
+      return mediaType === "image" && dataUrl.length > FIREBASE_ACTIVITY_MAX_DATA_URL_LENGTH;
+    }
+
+    function firebaseActivityProductNeedsStorage(product = {}) {
+      const normalizedProduct = normalizeActivityProduct(product || {});
+      if (firebaseActivityRecordNeedsStorage(normalizedProduct)) {
+        return true;
+      }
+      return normalizeActivityMediaAttachments(normalizedProduct.mediaAttachments)
+        .some(firebaseActivityRecordNeedsStorage);
+    }
+
+    async function readFirebaseActivityRoomSnapshot(db, firestoreModule, collectionName, roomCode) {
+      const { doc, getDoc } = firestoreModule;
+      try {
+        return await getDoc(doc(db, collectionName, roomCode));
+      } catch (error) {
+        const checkError = new Error("Firebase could not verify this classroom. Check that the Firestore rules are published, then try again.");
+        checkError.code = error && error.code ? error.code : "";
+        checkError.cause = error;
+        throw checkError;
+      }
+    }
+
+    function firebaseRoomSnapshotIsActive(snapshot) {
+      return Boolean(snapshot && snapshot.exists && snapshot.exists() && snapshot.data && snapshot.data().active === true);
+    }
+
+    async function verifyFirebaseActivityClassroomReady(db, firestoreModule, roomCode, {
+      storageRequired = false
+    } = {}) {
+      const classroomSnapshot = await readFirebaseActivityRoomSnapshot(db, firestoreModule, "classrooms", roomCode);
+      if (!firebaseRoomSnapshotIsActive(classroomSnapshot)) {
+        throw new Error(`Firebase classroom ${roomCode} is not live yet. Open Teacher FLOAT, create this room, then send the AP again.`);
+      }
+
+      if (!storageRequired) {
+        return;
+      }
+
+      const storageRoomSnapshot = await readFirebaseActivityRoomSnapshot(db, firestoreModule, "classroomStorageRooms", roomCode);
+      if (!firebaseRoomSnapshotIsActive(storageRoomSnapshot)) {
+        throw new Error(`Firebase Storage room ${roomCode} is not ready yet. Open Teacher FLOAT, create this room again, then send the AP again.`);
+      }
+    }
+
     async function uploadFirebaseActivityMedia({
       roomCode = "",
       productId = "",
@@ -8076,6 +8381,9 @@
       mimeType = ""
     } = {}) {
       const blob = dataUrlToBlob(dataUrl);
+      if (blob.size > FIREBASE_STORAGE_MAX_UPLOAD_BYTES) {
+        throw new Error(`This AP ${mediaType === "audio" ? "voice recording" : mediaType === "image" ? "picture" : "video"} is ${formatFirebaseFileSize(blob.size)}, which is larger than Firebase Storage upload limit (${formatFirebaseFileSize(FIREBASE_STORAGE_MAX_UPLOAD_BYTES)}) set in the current rules. Record a shorter AP or increase the Storage rules limit.`);
+      }
       const resolvedMimeType = mimeType || blob.type || dataUrlMimeType(dataUrl) || (mediaType === "audio" ? "audio/webm" : "video/mp4");
       const extension = firebaseStorageExtensionForMedia(resolvedMimeType, mediaType);
       const safeRoom = firebaseStorageRoomCodeSegment(roomCode);
@@ -8095,7 +8403,7 @@
       return {
         downloadURL,
         storagePath,
-        storageBucket: FIREBASE_ACTIVITY_CONFIG.storageBucket,
+        storageBucket: (firebaseActivityProfile || defaultFirebaseActivityProfile()).config.storageBucket,
         storageContentType: resolvedMimeType,
         storageSize: blob.size
       };
@@ -8135,7 +8443,7 @@
         if (!required && dataUrl.length <= FIREBASE_ACTIVITY_MAX_DATA_URL_LENGTH) {
           return record;
         }
-        throw new Error("This Activity Product media is too large for Firestore and could not upload to Firebase Storage. Check Firebase Storage rules, then try again.");
+        throw new Error(firebaseStorageUploadErrorMessage(error, mediaType));
       }
     }
 
@@ -8222,13 +8530,17 @@
 
       const roomCode = setFirebaseRoomCode(roomCodeValue);
       if (!firebaseRoomCodeValid(roomCode)) {
-        throw new Error("Enter the Teacher Dashboard room code. It must be 4 to 10 letters or numbers.");
+        throw new Error("Enter the Teacher FLOAT room code. It must be 4 to 10 letters or numbers.");
       }
 
-      const [db, { collection, addDoc, serverTimestamp }] = await Promise.all([
+      const [db, firestoreModule] = await Promise.all([
         firebaseActivityDatabase(),
         firebaseActivityFirestoreModules()
       ]);
+      const { collection, addDoc, serverTimestamp } = firestoreModule;
+      await verifyFirebaseActivityClassroomReady(db, firestoreModule, roomCode, {
+        storageRequired: firebaseActivityProductNeedsStorage(product)
+      });
       const payload = await createFirebaseActivitySubmissionPayload(product, roomCode);
       await addDoc(collection(db, "classrooms", roomCode, "activityProducts"), {
         ...payload,
@@ -8243,10 +8555,13 @@
         return "Firebase could not load. Check the internet connection, then try again.";
       }
       if (/permission|insufficient/i.test(message)) {
-        return "Firebase rejected the send. Check that the Firestore and Firebase Storage rules are published and the room code matches the dashboard.";
+        return "Firebase rejected the send. Check that the Firestore and Firebase Storage rules are published and the room code matches Teacher FLOAT.";
+      }
+      if (/classroom|room|verify/i.test(message)) {
+        return message;
       }
       if (/storage|upload/i.test(message)) {
-        return "The AP media could not upload to Firebase Storage. Check Firebase Storage rules, then try again.";
+        return message;
       }
       return message || "Firebase send failed.";
     }
@@ -8852,7 +9167,7 @@
 
       const roomCode = setFirebaseRoomCode(activityFirebaseRoomInput ? activityFirebaseRoomInput.value : getStoredFirebaseRoomCode());
       if (!firebaseRoomCodeValid(roomCode)) {
-        setActivityStatus("Enter the Teacher Dashboard room code. It must be 4 to 10 letters or numbers.", "warn");
+        setActivityStatus("Enter the Teacher FLOAT room code. It must be 4 to 10 letters or numbers.", "warn");
         return;
       }
 
@@ -9108,13 +9423,13 @@
 
       const mediaType = normalizeActivityMediaType(entry.mediaType, entry.dataUrl, entry.source);
       if (mediaType === "video") {
-        activityPreviewVideo.src = entry.dataUrl;
+        activityPreviewVideo.src = activityProductPlayableSource(entry);
         activityPreviewVideo.className = "activity-preview-video";
       } else {
         activityPreviewImage.src = mediaType === "audio" ? activityProductThumbnailSrc(entry) : entry.dataUrl;
         activityPreviewImage.className = "activity-preview-image";
         if (mediaType === "audio") {
-          activityPreviewAudio.src = entry.dataUrl;
+          activityPreviewAudio.src = activityProductPlayableSource(entry);
           activityPreviewAudio.className = "activity-preview-audio";
         }
       }
@@ -9331,6 +9646,8 @@
 
     function saveActivityProduct(entry) {
       const normalizedEntry = normalizeActivityProduct(entry);
+      const localMediaUrl = rememberActivityProductObjectUrl(normalizedEntry.id, normalizedEntry.localMediaUrl);
+      normalizedEntry.localMediaUrl = localMediaUrl;
       state.activityProducts = [
         normalizedEntry,
         ...state.activityProducts.filter((product) => product.id !== normalizedEntry.id)
@@ -9351,6 +9668,7 @@
       }
 
       state.activityProducts = state.activityProducts.filter((entry) => entry.id !== productId);
+      releaseActivityProductObjectUrl(productId);
       if (state.selectedActivityProductId === productId) {
         state.selectedActivityProductId = state.activityProducts[0] ? state.activityProducts[0].id : null;
       }
@@ -9421,6 +9739,7 @@
         label: normalizedProduct.label,
         createdAt: normalizedProduct.createdAt,
         dataUrl: normalizedProduct.dataUrl,
+        localMediaUrl: activityProductLocalMediaUrl(normalizedProduct),
         mediaType,
         mimeType: normalizedProduct.mimeType,
         posterDataUrl: activityProductMediaPosterSource(normalizedProduct),
@@ -9628,7 +9947,8 @@
       dataUrl = "",
       mimeType = "",
       createdAt = new Date().toISOString(),
-      posterDataUrl = ""
+      posterDataUrl = "",
+      localMediaUrl = ""
     } = {}) {
       const mediaType = kind === "video" ? "video" : "audio";
       return {
@@ -9637,6 +9957,7 @@
         label: activityDefaultProductLabel(mediaType),
         createdAt,
         dataUrl,
+        localMediaUrl,
         mediaType,
         mimeType: mimeType || dataUrlMimeType(dataUrl),
         posterDataUrl: posterDataUrl || activityPreviewPosterDataUrl({
@@ -9712,6 +10033,7 @@
         dataUrl,
         mimeType: resolvedMimeType,
         createdAt: new Date().toISOString(),
+        localMediaUrl: createActivityProductObjectUrl(mediaBlob),
         posterDataUrl: activityPreviewPosterDataUrl({
           label: activityDefaultProductLabel(mediaType),
           folderName: activityMediaFolderName(mediaType)
@@ -9948,6 +10270,7 @@
           dataUrl,
           mimeType: blob.type || fallbackMimeType,
           createdAt: new Date().toISOString(),
+          localMediaUrl: createActivityProductObjectUrl(blob),
           posterDataUrl: kind === "video" ? posterDataUrl : ""
         });
         const persisted = saveActivityProduct(product);
@@ -10652,7 +10975,7 @@
     function explainLiveSendError(error) {
       const message = error && error.message ? String(error.message) : "";
       if (/body is too large|too large/i.test(message)) {
-        return "This Activity Product is still too large for live sending. Try saving the screenshot again or use a smaller photo.";
+        return "This Activity Product is too large for direct Teacher FLOAT sending. Use an AP video under 300 MB, or send it through Firebase Storage.";
       }
       if (/mixed content|insecure/i.test(message)) {
         return "Open the gameplay from the same live classroom URL as the Teacher Website so Safari can send Activity Products safely.";
@@ -11684,6 +12007,65 @@
       event.stopPropagation();
     }
 
+    function releaseInlineActivityMediaObjectUrls(surface = "stage") {
+      const urls = inlineActivityMediaObjectUrls[surface];
+      if (!urls) {
+        return;
+      }
+      urls.forEach((url) => {
+        try {
+          URL.revokeObjectURL(url);
+        } catch (error) {
+          // Ignore cleanup failures from browsers that already released the URL.
+        }
+      });
+      urls.clear();
+    }
+
+    function inlineActivityMediaSource(item, surface = "stage") {
+      const localMediaUrl = activityProductLocalMediaUrl(item);
+      if (localMediaUrl) {
+        return localMediaUrl;
+      }
+
+      const dataUrl = typeof item.dataUrl === "string" ? item.dataUrl : "";
+      if (!dataUrl || !dataUrl.startsWith("data:") || typeof URL === "undefined" || typeof URL.createObjectURL !== "function") {
+        return dataUrl;
+      }
+
+      try {
+        const objectUrl = URL.createObjectURL(dataUrlToBlob(dataUrl));
+        if (inlineActivityMediaObjectUrls[surface]) {
+          inlineActivityMediaObjectUrls[surface].add(objectUrl);
+        }
+        return objectUrl;
+      } catch (error) {
+        return dataUrl;
+      }
+    }
+
+    async function playInlineActivityMedia(media) {
+      if (!media) {
+        return false;
+      }
+
+      try {
+        if (media.ended) {
+          media.currentTime = 0;
+        }
+        await media.play();
+        return true;
+      } catch (error) {
+        try {
+          media.load();
+          await media.play();
+          return true;
+        } catch (_retryError) {
+          return false;
+        }
+      }
+    }
+
     function updateInlineMediaPlayButton(media, button, container) {
       const playing = Boolean(media && !media.paused && !media.ended);
       container.classList.toggle("playing", playing);
@@ -11691,11 +12073,11 @@
       button.setAttribute("aria-label", playing ? "Pause pasted video." : "Play pasted video.");
     }
 
-    function createInlineBoardMediaElement(item) {
+    function createInlineBoardMediaElement(item, surface = "stage") {
       const mediaType = item && item.mediaType === "audio" ? "audio" : "video";
       const media = document.createElement(mediaType);
       media.className = `inline-media-control ${mediaType === "audio" ? "inline-audio-control" : "inline-video-control"}`;
-      media.src = item.dataUrl || "";
+      media.src = inlineActivityMediaSource(item, surface);
       media.controls = true;
       media.preload = "metadata";
       media.draggable = false;
@@ -11713,7 +12095,7 @@
       return media;
     }
 
-    function appendInlineBoardMedia(container, item) {
+    function appendInlineBoardMedia(container, item, surface = "stage") {
       if (item.mediaType === "audio") {
         const poster = document.createElement("img");
         poster.className = "inline-media-poster";
@@ -11722,7 +12104,7 @@
         poster.draggable = false;
         container.appendChild(poster);
       }
-      const media = createInlineBoardMediaElement(item);
+      const media = createInlineBoardMediaElement(item, surface);
       container.appendChild(media);
       if (item.mediaType === "video") {
         const playButton = document.createElement("button");
@@ -11737,7 +12119,7 @@
           event.stopPropagation();
           try {
             if (media.paused || media.ended) {
-              await media.play();
+              await playInlineActivityMedia(media);
             } else {
               media.pause();
             }
@@ -11769,6 +12151,7 @@
     }
 
     function renderPlacedSpelling() {
+      releaseInlineActivityMediaObjectUrls("stage");
       spellStage.innerHTML = "";
 
       [...state.placedItems]
@@ -11795,7 +12178,7 @@
             applyPlacedStyles(tile, item);
             tile.appendChild(buildFeatureSurfaceWidget(item));
           } else if (item.kind === "media") {
-            appendInlineBoardMedia(tile, item);
+            appendInlineBoardMedia(tile, item, "stage");
           } else if (item.kind === "icon" || item.kind === "photo") {
             const image = document.createElement("img");
             image.src = item.src;
@@ -12632,6 +13015,7 @@
         label: attachment.label || activityDefaultProductLabel(attachment.mediaType),
         src: attachment.posterDataUrl,
         dataUrl: attachment.dataUrl,
+        localMediaUrl: attachment.localMediaUrl,
         mimeType: attachment.mimeType,
         posterDataUrl: attachment.posterDataUrl,
         sourceProductId: attachment.id,
@@ -13302,6 +13686,7 @@
     }
 
     function renderBoardStickers() {
+      releaseInlineActivityMediaObjectUrls("board");
       boardStickerLayer.innerHTML = "";
 
       [...state.boardItems]
@@ -13316,7 +13701,7 @@
           if (item.kind === "feature") {
             sticker.appendChild(buildFeatureSurfaceWidget(item));
           } else if (item.kind === "media") {
-            appendInlineBoardMedia(sticker, item);
+            appendInlineBoardMedia(sticker, item, "board");
           } else {
             const image = document.createElement("img");
             image.src = boardStickerSource(item);
@@ -13404,6 +13789,7 @@
         label: attachment.label || activityDefaultProductLabel(attachment.mediaType),
         src: attachment.posterDataUrl,
         dataUrl: attachment.dataUrl,
+        localMediaUrl: attachment.localMediaUrl,
         mimeType: attachment.mimeType,
         posterDataUrl: attachment.posterDataUrl,
         sourceProductId: attachment.id,
@@ -15176,6 +15562,7 @@
     loadActivityProducts();
     loadActivityPhotos();
     renderActivityProductRepository();
+    applyFirebaseLaunchParams();
     setFirebaseRoomCode(getStoredFirebaseRoomCode(), { persist: false });
     syncActivityCameraCaptureInput();
     setSpellingToolsPanelVisible(false);
