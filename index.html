@@ -4734,7 +4734,7 @@
             <select class="activity-live-select" id="activityFirebaseProjectSelect" aria-label="Firebase project"></select>
             <button class="ghost-btn activity-live-compact-btn" id="activityResetFirebaseProfileBtn" type="button">Default</button>
           </div>
-          <textarea class="activity-live-textarea" id="activityFirebaseProfileInput" rows="2" spellcheck="false" autocomplete="off" placeholder="PASTE TEACHER PROJECT LINK OR FIREBASE WEB CONFIG" aria-label="Teacher Firebase project link or Firebase web config"></textarea>
+          <textarea class="activity-live-textarea" id="activityFirebaseProfileInput" rows="2" spellcheck="false" autocomplete="off" placeholder="PASTE TEACHER JOIN CODE, LINK, OR FIREBASE WEB CONFIG" aria-label="Teacher Firebase join code, project link, or Firebase web config"></textarea>
           <div class="activity-live-actions">
             <button class="ghost-btn" id="activityImportFirebaseProfileBtn" type="button">Use Project</button>
           </div>
@@ -5160,6 +5160,8 @@
     const FIREBASE_ACTIVITY_APP_NAME_PREFIX = "spell-scribble-teacher-dashboard-sender";
     const FIREBASE_ACTIVITY_LINK_PARAM = "tfb";
     const FIREBASE_ACTIVITY_ROOM_LINK_PARAM = "room";
+    const FIREBASE_ACTIVITY_JOIN_LINK_PARAM = "join";
+    const FIREBASE_ACTIVITY_REGISTRY_COLLECTION = "studentFirebaseLinks";
     const DEFAULT_FIREBASE_ACTIVITY_PROFILE = Object.freeze({
       id: "default-teacherfloat123-aae8c",
       name: "Teacher FLOAT",
@@ -5380,6 +5382,8 @@
     let googleDriveSelectedFolder = null;
     let firebaseActivityAppPromise = null;
     let firebaseActivityDbPromise = null;
+    let firebaseActivityRegistryAppPromise = null;
+    let firebaseActivityRegistryDbPromise = null;
     let firebaseActivityFirestoreModulePromise = null;
     let firebaseActivityStorageModulePromise = null;
     let firebaseActivityProfile = null;
@@ -8359,24 +8363,50 @@
       }
     }
 
-    function firebaseActivityProfileParamFromText(value = "") {
+    function firebaseActivityLaunchParamsFromText(value = "") {
       const text = String(value || "").trim();
-      if (!text) return "";
+      const launch = {
+        profileParam: "",
+        roomCode: "",
+        joinCode: ""
+      };
+      if (!text) return launch;
+      const readParams = (params) => {
+        if (!params) return;
+        launch.profileParam = launch.profileParam || params.get(FIREBASE_ACTIVITY_LINK_PARAM) || "";
+        launch.roomCode = launch.roomCode || params.get(FIREBASE_ACTIVITY_ROOM_LINK_PARAM) || params.get("firebaseRoom") || params.get("r") || "";
+        launch.joinCode = launch.joinCode || params.get(FIREBASE_ACTIVITY_JOIN_LINK_PARAM) || params.get("firebaseJoin") || params.get("code") || "";
+      };
       try {
         const url = new URL(text, window.location.href);
-        const linkedProfile = url.searchParams.get(FIREBASE_ACTIVITY_LINK_PARAM);
-        if (linkedProfile) return linkedProfile;
+        readParams(url.searchParams);
       } catch (_error) {}
       try {
         const paramsText = text.includes("?") ? text.slice(text.indexOf("?") + 1) : text;
-        const params = new URLSearchParams(paramsText);
-        const linkedProfile = params.get(FIREBASE_ACTIVITY_LINK_PARAM);
-        if (linkedProfile) return linkedProfile;
+        readParams(new URLSearchParams(paramsText));
       } catch (_error) {}
-      const match = text.match(/(?:^|[?&])tfb=([^&#\s]+)/);
-      if (match && match[1]) return decodeURIComponent(match[1]);
-      if (/^[A-Za-z0-9_-]{24,}$/.test(text)) return text;
-      return "";
+      const profileMatch = text.match(/(?:^|[?&#\s])tfb=([^&#\s]+)/);
+      if (!launch.profileParam && profileMatch && profileMatch[1]) {
+        launch.profileParam = decodeURIComponent(profileMatch[1]);
+      }
+      const roomMatch = text.match(/(?:^|[?&#\s])(?:room|firebaseRoom|r)=([A-Za-z0-9]{4,10})/);
+      if (!launch.roomCode && roomMatch && roomMatch[1]) {
+        launch.roomCode = roomMatch[1];
+      }
+      const joinMatch = text.match(/(?:^|[?&#\s])(?:join|firebaseJoin|code)=([A-Za-z0-9]{4,10})/);
+      if (!launch.joinCode && joinMatch && joinMatch[1]) {
+        launch.joinCode = joinMatch[1];
+      }
+      if (!launch.profileParam && /^[A-Za-z0-9_-]{24,}$/.test(text)) {
+        launch.profileParam = text;
+      }
+      launch.roomCode = normalizeFirebaseRoomCode(launch.roomCode);
+      launch.joinCode = normalizeFirebaseRoomCode(launch.joinCode || (!launch.profileParam && !launch.roomCode && /^[A-Za-z0-9]{4,10}$/.test(text) ? text : ""));
+      return launch;
+    }
+
+    function firebaseActivityProfileParamFromText(value = "") {
+      return firebaseActivityLaunchParamsFromText(value).profileParam;
     }
 
     function extractFirstObjectLiteralText(value = "") {
@@ -8443,7 +8473,7 @@
     function parseFirebaseActivityProfileInput(value = "") {
       const text = String(value || "").trim();
       if (!text) return null;
-      const linkedParam = firebaseActivityProfileParamFromText(text);
+      const linkedParam = firebaseActivityLaunchParamsFromText(text).profileParam;
       if (linkedParam) {
         const linkedProfile = decodeFirebaseActivityProfileParam(linkedParam);
         if (linkedProfile) return linkedProfile;
@@ -8459,6 +8489,15 @@
         name: parsed.name || firebaseActivityProjectNameFromConfig(normalizedConfig),
         config: normalizedConfig
       });
+    }
+
+    function parseFirebaseActivityLaunchInput(value = "") {
+      const launch = firebaseActivityLaunchParamsFromText(value);
+      return {
+        profile: parseFirebaseActivityProfileInput(value),
+        roomCode: launch.roomCode,
+        joinCode: launch.joinCode
+      };
     }
 
     function applyFirebaseLaunchParams() {
@@ -8482,6 +8521,19 @@
       const linkedRoom = params.get(FIREBASE_ACTIVITY_ROOM_LINK_PARAM) || params.get("firebaseRoom") || params.get("r");
       if (linkedRoom) {
         setFirebaseRoomCode(linkedRoom, { persist: true });
+      }
+      const joinCode = params.get(FIREBASE_ACTIVITY_JOIN_LINK_PARAM) || params.get("firebaseJoin") || params.get("code");
+      if (joinCode) {
+        const normalizedJoinCode = normalizeFirebaseRoomCode(joinCode);
+        resolveFirebaseActivityJoinCode(normalizedJoinCode)
+          .then((resolved) => {
+            setFirebaseActivityProfile(resolved.profile, { persist: true });
+            setFirebaseRoomCode(resolved.roomCode, { persist: true });
+            setActivityStatus(`Teacher FLOAT join code ${normalizedJoinCode} loaded.`, "good");
+          })
+          .catch((error) => {
+            setActivityStatus(error.message || `Could not load Teacher FLOAT join code ${normalizedJoinCode}.`, "bad");
+          });
       }
     }
 
@@ -8537,6 +8589,93 @@
         });
       }
       return firebaseActivityDbPromise;
+    }
+
+    async function firebaseActivityRegistryApp() {
+      if (!firebaseActivityRegistryAppPromise) {
+        firebaseActivityRegistryAppPromise = (async () => {
+          const { initializeApp, getApps } = await import(`https://www.gstatic.com/firebasejs/${FIREBASE_SDK_VERSION}/firebase-app.js`);
+          const appName = `${FIREBASE_ACTIVITY_APP_NAME_PREFIX}-student-link-registry`;
+          const existingApp = getApps().find((app) => app.name === appName);
+          return existingApp || initializeApp(DEFAULT_FIREBASE_ACTIVITY_PROFILE.config, appName);
+        })().catch((error) => {
+          firebaseActivityRegistryAppPromise = null;
+          throw error;
+        });
+      }
+      return firebaseActivityRegistryAppPromise;
+    }
+
+    async function firebaseActivityRegistryDatabase() {
+      if (!firebaseActivityRegistryDbPromise) {
+        firebaseActivityRegistryDbPromise = (async () => {
+          const [app, { getFirestore }] = await Promise.all([
+            firebaseActivityRegistryApp(),
+            firebaseActivityFirestoreModules()
+          ]);
+          return getFirestore(app);
+        })().catch((error) => {
+          firebaseActivityRegistryDbPromise = null;
+          throw error;
+        });
+      }
+      return firebaseActivityRegistryDbPromise;
+    }
+
+    function normalizeFirebaseActivityRegistryLaunch(data = {}, fallbackCode = "") {
+      const source = data && typeof data === "object" ? data : {};
+      const nested = source.studentFirebaseLink && typeof source.studentFirebaseLink === "object"
+        ? source.studentFirebaseLink
+        : source;
+      if (nested.active === false) return null;
+      const profileSource = nested.profile || nested.studentFirebaseProfile || nested.firebaseProfile || nested.config || nested;
+      const profile = normalizeFirebaseActivityProfile({
+        id: profileSource.id || nested.id || `firebase-${profileSource.config?.projectId || profileSource.projectId || "project"}`,
+        name: profileSource.name || nested.profileName || nested.name,
+        config: profileSource.config || profileSource
+      });
+      if (!profile) return null;
+      const roomCode = normalizeFirebaseRoomCode(nested.roomCode || source.roomCode || fallbackCode);
+      if (!firebaseRoomCodeValid(roomCode)) return null;
+      return { profile, roomCode };
+    }
+
+    async function resolveFirebaseActivityJoinCode(joinCodeValue = "") {
+      const joinCode = normalizeFirebaseRoomCode(joinCodeValue);
+      if (!firebaseRoomCodeValid(joinCode)) {
+        throw new Error("Enter a Teacher FLOAT join code with 4 to 10 letters or numbers.");
+      }
+
+      const [db, firestoreModule] = await Promise.all([
+        firebaseActivityRegistryDatabase(),
+        firebaseActivityFirestoreModules()
+      ]);
+      const { doc, getDoc } = firestoreModule;
+      let lastError = null;
+      try {
+        const registrySnapshot = await getDoc(doc(db, FIREBASE_ACTIVITY_REGISTRY_COLLECTION, joinCode));
+        if (registrySnapshot && registrySnapshot.exists && registrySnapshot.exists()) {
+          const resolved = normalizeFirebaseActivityRegistryLaunch(registrySnapshot.data(), joinCode);
+          if (resolved) return resolved;
+        }
+      } catch (error) {
+        lastError = error;
+      }
+
+      try {
+        const classroomSnapshot = await getDoc(doc(db, "classrooms", joinCode));
+        if (classroomSnapshot && classroomSnapshot.exists && classroomSnapshot.exists()) {
+          const resolved = normalizeFirebaseActivityRegistryLaunch(classroomSnapshot.data(), joinCode);
+          if (resolved) return resolved;
+        }
+      } catch (error) {
+        lastError = error;
+      }
+
+      const permissionHint = lastError && /permission|insufficient|denied/i.test(`${lastError.code || ""} ${lastError.message || ""}`)
+        ? " Firebase rules may need to allow student join-code lookup."
+        : "";
+      throw new Error(`Teacher FLOAT join code ${joinCode} is not ready yet. Ask the teacher to copy the join code from Teacher FLOAT again.${permissionHint}`);
     }
 
     async function firebaseActivityStorage() {
@@ -9448,16 +9587,30 @@
       setActivityStatus(`Firebase project selected: ${profile.name || profile.config.projectId}.`, "good");
     }
 
-    function handleImportFirebaseActivityProfile() {
+    async function handleImportFirebaseActivityProfile() {
       if (!activityFirebaseProfileInput) return;
-      const profile = parseFirebaseActivityProfileInput(activityFirebaseProfileInput.value);
-      if (!profile) {
-        setActivityStatus("Paste a Teacher project link or Firebase web config with apiKey, projectId, appId, authDomain, and storageBucket.", "warn");
+      const launch = parseFirebaseActivityLaunchInput(activityFirebaseProfileInput.value);
+      if (!launch.profile && launch.joinCode) {
+        setActivityStatus(`Looking up Teacher FLOAT join code ${launch.joinCode}...`);
+        try {
+          const resolved = await resolveFirebaseActivityJoinCode(launch.joinCode);
+          launch.profile = resolved.profile;
+          launch.roomCode = resolved.roomCode;
+        } catch (error) {
+          setActivityStatus(error.message || "Could not look up this Teacher FLOAT join code.", "bad");
+          return;
+        }
+      }
+      if (!launch.profile) {
+        setActivityStatus("Paste a Teacher join code, Teacher project link, or Firebase web config with apiKey, projectId, appId, authDomain, and storageBucket.", "warn");
         return;
       }
-      const selectedProfile = setFirebaseActivityProfile(profile, { persist: true });
+      const selectedProfile = setFirebaseActivityProfile(launch.profile, { persist: true });
+      if (launch.roomCode) {
+        setFirebaseRoomCode(launch.roomCode, { persist: true });
+      }
       activityFirebaseProfileInput.value = "";
-      setActivityStatus(`Firebase project saved: ${selectedProfile.name || selectedProfile.config.projectId}.`, "good");
+      setActivityStatus(`Firebase project saved: ${selectedProfile.name || selectedProfile.config.projectId}${launch.roomCode ? `, room ${launch.roomCode}` : ""}.`, "good");
     }
 
     function handleResetFirebaseActivityProfile() {
