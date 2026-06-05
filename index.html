@@ -122,7 +122,9 @@
     }
 
     button,
-    input {
+    input,
+    select,
+    textarea {
       font: inherit;
       -webkit-focus-ring-color: transparent;
     }
@@ -3368,7 +3370,21 @@
       gap: 8px;
     }
 
-    .activity-live-input {
+    .activity-live-profile-row,
+    .activity-live-actions {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: stretch;
+    }
+
+    .activity-live-actions {
+      grid-template-columns: 1fr;
+    }
+
+    .activity-live-input,
+    .activity-live-select,
+    .activity-live-textarea {
       width: 100%;
       min-width: 0;
       padding: 12px 14px;
@@ -3377,9 +3393,50 @@
       background: rgba(255, 255, 255, 0.92);
       color: #4b3620;
       font-weight: 800;
+      line-height: 1.25;
       box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.82),
         0 8px 16px rgba(120, 79, 0, 0.06);
+    }
+
+    .activity-live-select {
+      appearance: none;
+      padding-right: 38px;
+      background:
+        linear-gradient(45deg, transparent 50%, #6a4300 50%) right 19px center / 7px 7px no-repeat,
+        linear-gradient(135deg, #6a4300 50%, transparent 50%) right 14px center / 7px 7px no-repeat,
+        rgba(255, 255, 255, 0.92);
+    }
+
+    .activity-live-textarea {
+      min-height: 58px;
+      resize: vertical;
+      user-select: text;
+      -webkit-user-select: text;
+    }
+
+    .activity-live-compact-btn {
+      min-width: 86px;
+      min-height: 46px;
+      padding: 10px 14px;
+      font-size: 0.76rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .activity-live-actions .ghost-btn,
+    .activity-live-row .action-btn {
+      width: 100%;
+      min-height: 48px;
+      padding: 12px 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: 0.78rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      white-space: normal;
     }
 
     .activity-drive-controls {
@@ -3542,6 +3599,11 @@
     }
 
     .activity-live-input:disabled,
+    .activity-live-select:disabled,
+    .activity-live-textarea:disabled,
+    .activity-live-actions .ghost-btn:disabled,
+    .activity-live-row .action-btn:disabled,
+    .activity-live-compact-btn:disabled,
     .activity-drive-actions .action-btn:disabled,
     .activity-drive-actions .ghost-btn:disabled {
       opacity: 0.54;
@@ -4268,7 +4330,8 @@
       }
 
       .activity-drive-grid,
-      .activity-drive-actions {
+      .activity-drive-actions,
+      .activity-live-profile-row {
         grid-template-columns: 1fr;
       }
 
@@ -4667,6 +4730,14 @@
             <p class="activity-live-note">Enter the room code from Teacher FLOAT, then send the selected Activity Product through Firestore.</p>
             <p class="activity-live-note" id="activityFirebaseProfileLabel">Firebase project: Teacher FLOAT</p>
           </div>
+          <div class="activity-live-profile-row">
+            <select class="activity-live-select" id="activityFirebaseProjectSelect" aria-label="Firebase project"></select>
+            <button class="ghost-btn activity-live-compact-btn" id="activityResetFirebaseProfileBtn" type="button">Default</button>
+          </div>
+          <textarea class="activity-live-textarea" id="activityFirebaseProfileInput" rows="2" spellcheck="false" autocomplete="off" placeholder="PASTE TEACHER PROJECT LINK OR FIREBASE WEB CONFIG" aria-label="Teacher Firebase project link or Firebase web config"></textarea>
+          <div class="activity-live-actions">
+            <button class="ghost-btn" id="activityImportFirebaseProfileBtn" type="button">Use Project</button>
+          </div>
           <div class="activity-live-row">
             <input class="activity-live-input" id="activityFirebaseRoomInput" type="text" inputmode="text" maxlength="10" autocomplete="off" placeholder="ROOM CODE" aria-label="Firebase classroom room code">
             <button class="action-btn" id="activitySendFirebaseBtn" type="button">Send Selected AP to Firebase</button>
@@ -4984,6 +5055,10 @@
     const activityFirebaseRoomInput = document.getElementById("activityFirebaseRoomInput");
     const activitySendFirebaseBtn = document.getElementById("activitySendFirebaseBtn");
     const activityFirebaseProfileLabel = document.getElementById("activityFirebaseProfileLabel");
+    const activityFirebaseProjectSelect = document.getElementById("activityFirebaseProjectSelect");
+    const activityFirebaseProfileInput = document.getElementById("activityFirebaseProfileInput");
+    const activityImportFirebaseProfileBtn = document.getElementById("activityImportFirebaseProfileBtn");
+    const activityResetFirebaseProfileBtn = document.getElementById("activityResetFirebaseProfileBtn");
     const activityGoogleClientIdInput = document.getElementById("activityGoogleClientIdInput");
     const activityGoogleApiKeyInput = document.getElementById("activityGoogleApiKeyInput");
     const activityGoogleAppIdInput = document.getElementById("activityGoogleAppIdInput");
@@ -5075,6 +5150,7 @@
     const LIVE_ACTIVITY_MAX_DATA_URL_LENGTH = 2_400_000;
     const FIREBASE_ACTIVITY_ROOM_STORAGE_KEY = "spell-scribble-firebase-room-code-v1";
     const FIREBASE_ACTIVITY_PROFILE_STORAGE_KEY = "spell-scribble-firebase-profile-v1";
+    const FIREBASE_ACTIVITY_PROFILES_STORAGE_KEY = "spell-scribble-firebase-profiles-v1";
     const FIREBASE_ACTIVITY_MAX_IMAGE_EDGE = 1200;
     const FIREBASE_ACTIVITY_MAX_DATA_URL_LENGTH = 760_000;
     const FIREBASE_STORAGE_MAX_UPLOAD_RETRY_MS = 30_000;
@@ -8097,6 +8173,28 @@
       };
     }
 
+    function firebaseActivityProfileKey(profile = {}) {
+      const normalized = normalizeFirebaseActivityProfile(profile);
+      if (!normalized) return DEFAULT_FIREBASE_ACTIVITY_PROFILE.id;
+      if (normalized.isDefault) return DEFAULT_FIREBASE_ACTIVITY_PROFILE.id;
+      return String(normalized.id || `firebase-${normalized.config.projectId || "project"}`).trim() || DEFAULT_FIREBASE_ACTIVITY_PROFILE.id;
+    }
+
+    function firebaseActivityProfileSignature(profile = {}) {
+      const normalized = normalizeFirebaseActivityProfile(profile) || defaultFirebaseActivityProfile();
+      return JSON.stringify({
+        name: normalized.name || "",
+        config: normalized.config || {}
+      });
+    }
+
+    function firebaseActivityProfileIsDefault(profile = {}) {
+      const normalized = normalizeFirebaseActivityProfile(profile);
+      if (!normalized) return true;
+      if (normalized.isDefault) return true;
+      return firebaseActivityProfileSignature(normalized) === firebaseActivityProfileSignature(defaultFirebaseActivityProfile());
+    }
+
     function decodeBase64UrlToText(value = "") {
       const normalized = String(value || "").replace(/-/g, "+").replace(/_/g, "/");
       const padded = normalized + "=".repeat((4 - normalized.length % 4) % 4);
@@ -8127,9 +8225,58 @@
       }
     }
 
+    function readStoredFirebaseActivityProfiles() {
+      const profiles = new Map();
+      const addProfile = (profile) => {
+        const normalized = normalizeFirebaseActivityProfile(profile);
+        if (!normalized) return;
+        if (firebaseActivityProfileIsDefault(normalized)) {
+          profiles.set(DEFAULT_FIREBASE_ACTIVITY_PROFILE.id, defaultFirebaseActivityProfile());
+          return;
+        }
+        profiles.set(firebaseActivityProfileKey(normalized), normalized);
+      };
+
+      addProfile(defaultFirebaseActivityProfile());
+      try {
+        const parsed = JSON.parse(localStorage.getItem(FIREBASE_ACTIVITY_PROFILES_STORAGE_KEY) || "[]");
+        if (Array.isArray(parsed)) {
+          parsed.forEach(addProfile);
+        }
+      } catch (_error) {}
+      try {
+        addProfile(JSON.parse(localStorage.getItem(FIREBASE_ACTIVITY_PROFILE_STORAGE_KEY) || "null"));
+      } catch (_error) {}
+
+      return Array.from(profiles.values());
+    }
+
+    function persistFirebaseActivityProfiles(profiles = []) {
+      try {
+        const normalizedProfiles = profiles
+          .map((profile) => normalizeFirebaseActivityProfile(profile))
+          .filter((profile) => profile && !firebaseActivityProfileIsDefault(profile));
+        if (!normalizedProfiles.length) {
+          localStorage.removeItem(FIREBASE_ACTIVITY_PROFILES_STORAGE_KEY);
+          return;
+        }
+        localStorage.setItem(FIREBASE_ACTIVITY_PROFILES_STORAGE_KEY, JSON.stringify(normalizedProfiles));
+      } catch (_error) {}
+    }
+
+    function upsertStoredFirebaseActivityProfile(profile) {
+      const normalized = normalizeFirebaseActivityProfile(profile);
+      if (!normalized) return;
+      const profiles = readStoredFirebaseActivityProfiles();
+      const key = firebaseActivityProfileKey(normalized);
+      const nextProfiles = profiles.filter((storedProfile) => firebaseActivityProfileKey(storedProfile) !== key);
+      nextProfiles.push(normalized);
+      persistFirebaseActivityProfiles(nextProfiles);
+    }
+
     function persistFirebaseActivityProfile(profile) {
       try {
-        if (!profile || profile.isDefault) {
+        if (!profile || firebaseActivityProfileIsDefault(profile)) {
           localStorage.removeItem(FIREBASE_ACTIVITY_PROFILE_STORAGE_KEY);
           return;
         }
@@ -8139,20 +8286,24 @@
 
     function setFirebaseActivityProfile(profile, { persist = true } = {}) {
       const normalized = normalizeFirebaseActivityProfile(profile) || defaultFirebaseActivityProfile();
-      const previousProjectId = firebaseActivityProfile && firebaseActivityProfile.config && firebaseActivityProfile.config.projectId;
+      const previousSignature = firebaseActivityProfile ? firebaseActivityProfileSignature(firebaseActivityProfile) : "";
       firebaseActivityProfile = normalized;
-      if (persist) persistFirebaseActivityProfile(normalized);
-      if (previousProjectId && previousProjectId !== normalized.config.projectId) {
+      if (persist) {
+        persistFirebaseActivityProfile(normalized);
+        upsertStoredFirebaseActivityProfile(normalized);
+      }
+      if (previousSignature && previousSignature !== firebaseActivityProfileSignature(normalized)) {
         firebaseActivityAppPromise = null;
         firebaseActivityDbPromise = null;
       }
       updateFirebaseActivityProfileLabel();
+      updateActivityControlState();
       return firebaseActivityProfile;
     }
 
     function firebaseActivityAppName() {
       const profile = firebaseActivityProfile || defaultFirebaseActivityProfile();
-      const key = String(profile.config.projectId || profile.id || "default")
+      const key = String([profile.config.projectId, profile.config.appId, profile.id].filter(Boolean).join("-") || "default")
         .toLowerCase()
         .replace(/[^a-z0-9-]+/g, "-")
         .replace(/^-+|-+$/g, "")
@@ -8160,10 +8311,39 @@
       return `${FIREBASE_ACTIVITY_APP_NAME_PREFIX}-${key}`;
     }
 
+    function updateFirebaseActivityProjectSelect() {
+      if (!activityFirebaseProjectSelect) return;
+      const currentProfile = firebaseActivityProfile || defaultFirebaseActivityProfile();
+      const currentKey = firebaseActivityProfileKey(currentProfile);
+      const profiles = readStoredFirebaseActivityProfiles();
+      if (!profiles.some((profile) => firebaseActivityProfileKey(profile) === currentKey)) {
+        profiles.push(currentProfile);
+      }
+
+      activityFirebaseProjectSelect.textContent = "";
+      profiles.forEach((profile) => {
+        const normalized = normalizeFirebaseActivityProfile(profile);
+        if (!normalized) return;
+        const option = document.createElement("option");
+        const projectId = normalized.config.projectId || "";
+        const label = normalized.isDefault
+          ? `${normalized.name || projectId} (Default)`
+          : (normalized.name && normalized.name !== projectId ? `${normalized.name} (${projectId})` : (normalized.name || projectId));
+        option.value = firebaseActivityProfileKey(normalized);
+        option.textContent = label;
+        activityFirebaseProjectSelect.appendChild(option);
+      });
+      activityFirebaseProjectSelect.value = currentKey;
+    }
+
     function updateFirebaseActivityProfileLabel() {
-      if (!activityFirebaseProfileLabel) return;
       const profile = firebaseActivityProfile || defaultFirebaseActivityProfile();
-      activityFirebaseProfileLabel.textContent = `Firebase project: ${profile.name || profile.config.projectId}`;
+      if (activityFirebaseProfileLabel) {
+        const projectName = profile.name || profile.config.projectId;
+        const projectId = profile.config.projectId || "";
+        activityFirebaseProfileLabel.textContent = `Firebase project: ${projectName}${projectId && projectId !== projectName ? ` (${projectId})` : ""}`;
+      }
+      updateFirebaseActivityProjectSelect();
     }
 
     function decodeFirebaseActivityProfileParam(value = "") {
@@ -8177,6 +8357,108 @@
       } catch (_error) {
         return null;
       }
+    }
+
+    function firebaseActivityProfileParamFromText(value = "") {
+      const text = String(value || "").trim();
+      if (!text) return "";
+      try {
+        const url = new URL(text, window.location.href);
+        const linkedProfile = url.searchParams.get(FIREBASE_ACTIVITY_LINK_PARAM);
+        if (linkedProfile) return linkedProfile;
+      } catch (_error) {}
+      try {
+        const paramsText = text.includes("?") ? text.slice(text.indexOf("?") + 1) : text;
+        const params = new URLSearchParams(paramsText);
+        const linkedProfile = params.get(FIREBASE_ACTIVITY_LINK_PARAM);
+        if (linkedProfile) return linkedProfile;
+      } catch (_error) {}
+      const match = text.match(/(?:^|[?&])tfb=([^&#\s]+)/);
+      if (match && match[1]) return decodeURIComponent(match[1]);
+      if (/^[A-Za-z0-9_-]{24,}$/.test(text)) return text;
+      return "";
+    }
+
+    function extractFirstObjectLiteralText(value = "") {
+      const text = String(value || "").trim();
+      const start = text.indexOf("{");
+      if (start < 0) return text;
+      let depth = 0;
+      let quote = "";
+      let escaped = false;
+      for (let index = start; index < text.length; index += 1) {
+        const char = text[index];
+        if (quote) {
+          if (escaped) {
+            escaped = false;
+          } else if (char === "\\") {
+            escaped = true;
+          } else if (char === quote) {
+            quote = "";
+          }
+          continue;
+        }
+        if (char === "\"" || char === "'") {
+          quote = char;
+          continue;
+        }
+        if (char === "{") depth += 1;
+        if (char === "}") {
+          depth -= 1;
+          if (depth === 0) {
+            return text.slice(start, index + 1);
+          }
+        }
+      }
+      return text.slice(start);
+    }
+
+    function parseFirebaseActivityLooseConfigText(value = "") {
+      const objectText = extractFirstObjectLiteralText(value);
+      const candidates = [
+        objectText,
+        objectText
+          .replace(/([{,]\s*)([A-Za-z_$][\w$]*)\s*:/g, "$1\"$2\":")
+          .replace(/'([^'\\]*(?:\\.[^'\\]*)*)'/g, (_match, body) => `"${body.replace(/"/g, "\\\"")}"`)
+          .replace(/,\s*([}\]])/g, "$1")
+      ];
+      for (const candidate of candidates) {
+        try {
+          return JSON.parse(candidate);
+        } catch (_error) {}
+      }
+      return null;
+    }
+
+    function firebaseActivityProjectNameFromConfig(config = {}) {
+      const projectId = String(config.projectId || "").trim();
+      if (!projectId) return "Firebase Project";
+      return projectId
+        .split(/[-_]+/g)
+        .filter(Boolean)
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(" ");
+    }
+
+    function parseFirebaseActivityProfileInput(value = "") {
+      const text = String(value || "").trim();
+      if (!text) return null;
+      const linkedParam = firebaseActivityProfileParamFromText(text);
+      if (linkedParam) {
+        const linkedProfile = decodeFirebaseActivityProfileParam(linkedParam);
+        if (linkedProfile) return linkedProfile;
+      }
+
+      const parsed = parseFirebaseActivityLooseConfigText(text);
+      if (!parsed) return null;
+      const sourceConfig = parsed.config || parsed.firebaseConfig || parsed;
+      const normalizedConfig = normalizeFirebaseActivityConfig(sourceConfig);
+      if (!firebaseActivityConfigIsUsable(normalizedConfig)) return null;
+      return normalizeFirebaseActivityProfile({
+        id: parsed.id || `firebase-${normalizedConfig.projectId}`,
+        name: parsed.name || firebaseActivityProjectNameFromConfig(normalizedConfig),
+        config: normalizedConfig
+      });
     }
 
     function applyFirebaseLaunchParams() {
@@ -9154,6 +9436,35 @@
       }
     }
 
+    function handleFirebaseActivityProjectSelectChange(event) {
+      const selectedKey = event && event.currentTarget ? event.currentTarget.value : "";
+      const selectedProfile = readStoredFirebaseActivityProfiles()
+        .find((profile) => firebaseActivityProfileKey(profile) === selectedKey);
+      if (!selectedProfile) {
+        updateFirebaseActivityProjectSelect();
+        return;
+      }
+      const profile = setFirebaseActivityProfile(selectedProfile, { persist: true });
+      setActivityStatus(`Firebase project selected: ${profile.name || profile.config.projectId}.`, "good");
+    }
+
+    function handleImportFirebaseActivityProfile() {
+      if (!activityFirebaseProfileInput) return;
+      const profile = parseFirebaseActivityProfileInput(activityFirebaseProfileInput.value);
+      if (!profile) {
+        setActivityStatus("Paste a Teacher project link or Firebase web config with apiKey, projectId, appId, authDomain, and storageBucket.", "warn");
+        return;
+      }
+      const selectedProfile = setFirebaseActivityProfile(profile, { persist: true });
+      activityFirebaseProfileInput.value = "";
+      setActivityStatus(`Firebase project saved: ${selectedProfile.name || selectedProfile.config.projectId}.`, "good");
+    }
+
+    function handleResetFirebaseActivityProfile() {
+      const profile = setFirebaseActivityProfile(defaultFirebaseActivityProfile(), { persist: true });
+      setActivityStatus(`Firebase project selected: ${profile.name || profile.config.projectId}.`, "good");
+    }
+
     async function handleSendSelectedActivityProductToFirebase() {
       if (activityControlsBusy()) {
         return;
@@ -9172,10 +9483,12 @@
       }
 
       setActivityBusy("send", true);
-      setActivityStatus(`Sending ${selectedProduct.label} to Firebase classroom ${roomCode}...`);
+      const profile = firebaseActivityProfile || defaultFirebaseActivityProfile();
+      const projectName = profile.name || profile.config.projectId || "Firebase";
+      setActivityStatus(`Sending ${selectedProduct.label} to ${projectName} classroom ${roomCode}...`);
       try {
         await sendActivityProductToFirebase(selectedProduct, roomCode);
-        setActivityStatus(`${selectedProduct.label} sent to Firebase classroom ${roomCode}.`, "good");
+        setActivityStatus(`${selectedProduct.label} sent to ${projectName} classroom ${roomCode}.`, "good");
       } catch (error) {
         setActivityStatus(explainFirebaseSendError(error), "bad");
       } finally {
@@ -9371,6 +9684,19 @@
         activitySendLiveBtn.disabled = controlsLocked || !selectedProductReady;
       }
       activitySendFirebaseBtn.disabled = controlsLocked || !selectedProductReady;
+      if (activityFirebaseProjectSelect) {
+        activityFirebaseProjectSelect.disabled = controlsLocked;
+      }
+      if (activityFirebaseProfileInput) {
+        activityFirebaseProfileInput.disabled = controlsLocked;
+      }
+      if (activityImportFirebaseProfileBtn) {
+        activityImportFirebaseProfileBtn.disabled = controlsLocked || !activityFirebaseProfileInput || !activityFirebaseProfileInput.value.trim();
+      }
+      if (activityResetFirebaseProfileBtn) {
+        const currentProfile = firebaseActivityProfile || defaultFirebaseActivityProfile();
+        activityResetFirebaseProfileBtn.disabled = controlsLocked || firebaseActivityProfileIsDefault(currentProfile);
+      }
       if (activityConnectGoogleBtn) {
         activityConnectGoogleBtn.textContent = googleDriveAccessToken ? "Refresh Google" : "Connect Google";
         activityConnectGoogleBtn.disabled = controlsLocked || recordingAny || !googleDriveIdentityLoaded;
@@ -15444,6 +15770,24 @@
           flushPendingLiveActivityProducts();
         }
       });
+    }
+    if (activityFirebaseProjectSelect) {
+      activityFirebaseProjectSelect.addEventListener("change", handleFirebaseActivityProjectSelectChange);
+    }
+    if (activityFirebaseProfileInput) {
+      activityFirebaseProfileInput.addEventListener("input", updateActivityControlState);
+      activityFirebaseProfileInput.addEventListener("keydown", (event) => {
+        if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+          event.preventDefault();
+          handleImportFirebaseActivityProfile();
+        }
+      });
+    }
+    if (activityImportFirebaseProfileBtn) {
+      activityImportFirebaseProfileBtn.addEventListener("click", handleImportFirebaseActivityProfile);
+    }
+    if (activityResetFirebaseProfileBtn) {
+      activityResetFirebaseProfileBtn.addEventListener("click", handleResetFirebaseActivityProfile);
     }
     activityFirebaseRoomInput.addEventListener("input", (event) => {
       setFirebaseRoomCode(event.currentTarget.value);
