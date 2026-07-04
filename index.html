@@ -6,14 +6,14 @@
   <meta name="theme-color" content="#070b1a">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Spell Scribble">
+  <meta name="apple-mobile-web-app-title" content="Student FLOAT">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="format-detection" content="telephone=no">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" sizes="192x192" href="icon-192.png">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <title>Spell &amp; Scribble Studio</title>
+  <title>Student FLOAT</title>
   <style>
     :root {
       --ink: #20304a;
@@ -266,7 +266,7 @@
       position: relative;
       z-index: 10;
       border-radius: var(--radius-lg);
-      padding: 12px 12px 12px 84px;
+      padding: 12px 84px 12px 12px;
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.07));
       border: 1px solid rgba(255, 255, 255, 0.16);
       min-height: 0;
@@ -277,8 +277,11 @@
       width: min(calc(100vw - 28px), 1140px);
       margin: 0;
       position: fixed;
-      left: max(12px, calc(env(safe-area-inset-left, 0px) + 12px));
-      bottom: max(12px, calc(env(safe-area-inset-bottom, 0px) + 12px));
+      left: auto;
+      right: max(12px, calc(env(safe-area-inset-right, 0px) + 12px));
+      top: max(12px, calc(env(safe-area-inset-top, 0px) + 12px));
+      bottom: auto;
+      transform-origin: right top;
       transition:
         width var(--tray-motion-ms) var(--launcher-motion-ease),
         min-height var(--tray-motion-ms) var(--launcher-motion-ease),
@@ -326,11 +329,31 @@
     }
 
     .bank-card.collapsed {
+      left: auto;
+      right: max(12px, calc(env(safe-area-inset-right, 0px) + 12px));
+      top: max(12px, calc(env(safe-area-inset-top, 0px) + 12px));
+      bottom: auto;
+      z-index: 18;
       overflow: visible;
+      background: transparent;
+      border-color: transparent;
+      box-shadow: none;
+    }
+
+    .bank-card.collapsed .master-launcher {
+      touch-action: manipulation;
+      cursor: pointer;
     }
 
     .board-top.collapsed {
+      left: auto;
+      right: max(12px, calc(env(safe-area-inset-right, 0px) + 12px));
+      top: max(12px, calc(env(safe-area-inset-top, 0px) + 12px));
+      bottom: auto;
       overflow: visible;
+      background: transparent;
+      border-color: transparent;
+      box-shadow: none;
     }
 
     .tray-panel-body {
@@ -346,8 +369,10 @@
 
     .tray-launcher-stack {
       position: absolute;
-      left: 8px;
-      bottom: 8px;
+      left: auto;
+      right: 8px;
+      top: 8px;
+      bottom: auto;
       z-index: 12;
       display: block;
       justify-items: center;
@@ -356,12 +381,14 @@
 
     .launcher-option-stack {
       position: absolute;
-      left: 0;
-      bottom: calc(100% + 12px);
+      left: auto;
+      right: 0;
+      top: calc(100% + 12px);
+      bottom: auto;
       display: grid;
       gap: 12px;
       justify-items: center;
-      transform-origin: center bottom;
+      transform-origin: center top;
       transition:
         opacity var(--launcher-motion-ms) var(--launcher-motion-ease),
         transform var(--launcher-motion-ms) var(--launcher-motion-ease),
@@ -428,8 +455,11 @@
       --popup-open-transform: translate3d(0, 0, 0) scale(1);
       --popup-closed-transform: translate3d(0, 12px, 0) scale(0.96);
       position: absolute;
-      left: 0;
-      bottom: calc(100% + 10px);
+      left: auto;
+      right: 0;
+      top: calc(100% + 10px);
+      bottom: auto;
+      z-index: 0;
       transform: var(--popup-closed-transform);
       width: min(296px, calc(100vw - 24px));
       max-width: calc(100vw - 24px);
@@ -450,10 +480,11 @@
         transform var(--launcher-motion-ms) var(--launcher-motion-ease),
         visibility 0s linear var(--launcher-motion-ms);
       will-change: opacity, transform;
-      transform-origin: left bottom;
+      transform-origin: right top;
     }
 
     .launcher-popup.is-open {
+      z-index: 30;
       opacity: 1;
       visibility: visible;
       pointer-events: auto;
@@ -570,6 +601,116 @@
       white-space: normal;
     }
 
+    .student-float-control-row {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 0.68fr) minmax(0, 0.68fr);
+      gap: 8px;
+    }
+
+    .student-float-toggle-btn.active,
+    .student-float-toggle-btn[aria-pressed="true"] {
+      background: linear-gradient(180deg, #fffbd4 0%, #ffdf63 46%, #ffbd16 100%);
+      box-shadow:
+        0 0 0 3px rgba(255, 220, 86, 0.26),
+        0 16px 26px rgba(120, 79, 0, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.88),
+        inset 0 -1px 0 rgba(164, 103, 0, 0.24);
+    }
+
+    .student-float-mini-launcher {
+      position: fixed;
+      right: max(22px, calc(env(safe-area-inset-right, 0px) + 18px));
+      bottom: max(22px, calc(env(safe-area-inset-bottom, 0px) + 18px));
+      z-index: 38;
+      display: none;
+      width: 124px;
+      height: 124px;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      background: transparent;
+      box-shadow: none;
+      cursor: grab;
+      touch-action: none;
+      overflow: visible;
+      transform: translate3d(0, 0, 0);
+      will-change: transform;
+      contain: layout paint style;
+      transform-style: preserve-3d;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .student-float-mini-launcher.is-dragging {
+      cursor: grabbing;
+      transition: none;
+    }
+
+    .student-float-mini-launcher img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      pointer-events: none;
+      user-select: none;
+      -webkit-user-drag: none;
+      filter:
+        drop-shadow(0 16px 26px rgba(56, 36, 0, 0.28))
+        drop-shadow(0 0 18px rgba(255, 213, 77, 0.22));
+    }
+
+    body.student-float-web-active .app {
+      position: fixed;
+      inset:
+        max(12px, env(safe-area-inset-top, 0px))
+        max(12px, env(safe-area-inset-right, 0px))
+        max(12px, env(safe-area-inset-bottom, 0px))
+        max(12px, env(safe-area-inset-left, 0px));
+      width: auto;
+      height: auto;
+      min-height: 0;
+      border-radius: 30px;
+      background: rgba(7, 10, 24, 0.22);
+      box-shadow:
+        0 28px 58px rgba(6, 10, 28, 0.34),
+        0 0 0 1px rgba(255, 238, 172, 0.28);
+    }
+
+    body.student-float-minimized {
+      background: transparent;
+    }
+
+    body.student-float-mini-dragging {
+      cursor: grabbing;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+    }
+
+    body.student-float-minimized .spell-background-wash,
+    body.student-float-minimized .app,
+    body.student-float-minimized .cover-screen,
+    body.student-float-minimized .modal-backdrop {
+      display: none !important;
+    }
+
+    body.student-float-minimized .student-float-mini-launcher {
+      display: block;
+    }
+
+    body.student-float-native-active.student-float-minimized .student-float-mini-launcher {
+      left: 0 !important;
+      top: 0 !important;
+      right: auto !important;
+      bottom: auto !important;
+      width: 100vw;
+      height: 100vh;
+    }
+
     .spelling-pencil-tools {
       display: grid;
       gap: 10px;
@@ -655,10 +796,16 @@
       font-size: 0.5rem;
     }
 
-    .bank-card.collapsed .tray-launcher-stack,
-    .board-top.collapsed .tray-launcher-stack {
+    .bank-card.collapsed .tray-launcher-stack {
       left: 0;
       bottom: 0;
+    }
+
+    .board-top.collapsed .tray-launcher-stack {
+      left: auto;
+      right: 0;
+      top: 0;
+      bottom: auto;
     }
 
     .bank-card.collapsed .tray-launcher-stack .tray-launcher:not(.master-launcher),
@@ -765,15 +912,16 @@
 
     .background-popup {
       --popup-open-transform: translate3d(0, -50%, 0) scale(1);
-      --popup-closed-transform: translate3d(10px, -50%, 0) scale(0.96);
+      --popup-closed-transform: translate3d(-10px, -50%, 0) scale(0.96);
       width: min(232px, calc(100vw - 32px));
       max-width: calc(100vw - 104px);
       display: grid;
       gap: 10px;
-      left: calc(100% + 10px);
+      left: auto;
+      right: calc(100% + 10px);
       top: 50%;
       bottom: auto;
-      transform-origin: left center;
+      transform-origin: right center;
     }
 
     .tray-launcher[aria-expanded="true"],
@@ -3952,13 +4100,15 @@
 
     .board-top {
       position: absolute;
-      left: max(12px, calc(env(safe-area-inset-left, 0px) + 12px));
-      bottom: max(18px, calc(env(safe-area-inset-bottom, 0px) + 12px));
+      left: auto;
+      right: max(12px, calc(env(safe-area-inset-right, 0px) + 12px));
+      top: max(12px, calc(env(safe-area-inset-top, 0px) + 12px));
+      bottom: auto;
       transform: none;
       z-index: 4;
       width: min(calc(100vw - 28px), 1140px);
       border-radius: 22px;
-      padding: 10px 10px 10px 84px;
+      padding: 10px 84px 10px 10px;
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.1));
       border: 1px solid rgba(255, 255, 255, 0.2);
       box-shadow:
@@ -4118,7 +4268,7 @@
         justify-self: center;
         width: min(calc(100vw - 24px), 1100px);
         gap: 6px;
-        padding: 8px 10px 8px 78px;
+        padding: 8px 78px 8px 10px;
       }
 
       .spell-stage {
@@ -4183,9 +4333,10 @@
       }
 
       .board-top {
-        bottom: max(16px, calc(env(safe-area-inset-bottom, 0px) + 10px));
+        top: max(16px, calc(env(safe-area-inset-top, 0px) + 10px));
+        bottom: auto;
         width: min(calc(100vw - 24px), 1100px);
-        padding: 8px 10px 8px 78px;
+        padding: 8px 78px 8px 10px;
       }
 
       .letter-card {
@@ -4247,9 +4398,10 @@
       }
 
       .board-top {
-        bottom: max(12px, calc(env(safe-area-inset-bottom, 0px) + 8px));
+        top: max(12px, calc(env(safe-area-inset-top, 0px) + 8px));
+        bottom: auto;
         width: calc(100vw - 16px);
-        padding: 8px 8px 8px 76px;
+        padding: 8px 76px 8px 8px;
       }
 
       .icon-bank {
@@ -4407,6 +4559,11 @@
                       <button class="ghost-btn" id="openBoardBtn" type="button">Open Screen Board</button>
                       <button class="ghost-btn" id="removeBtn" type="button">Remove Last</button>
                       <button class="action-btn" id="clearBtn" type="button">Clear All</button>
+                      <div class="student-float-control-row" role="group" aria-label="Student FLOAT window controls">
+                        <button class="action-btn student-float-toggle-btn" id="studentFloatToggleBtn" type="button" aria-pressed="false">FLOAT</button>
+                        <button class="ghost-btn" id="studentFloatMinBtn" type="button">MIN</button>
+                        <button class="ghost-btn" id="studentFloatOffBtn" type="button">OFF</button>
+                      </div>
                     </div>
                     <div class="spelling-pencil-tools" id="spellingPencilTools">
                       <div class="spelling-pencil-palette" id="spellingPaletteRow" aria-label="Spelling pencil colors">
@@ -4518,6 +4675,10 @@
       </section>
     </main>
   </div>
+
+  <button class="student-float-mini-launcher" id="studentFloatMiniLauncher" type="button" aria-label="Open Student FLOAT">
+    <img src="student-float-logo-minimized.png" alt="Student FLOAT">
+  </button>
 
   <div class="cover-screen" id="coverScreen" aria-hidden="false">
     <div class="cover-panel">
@@ -4967,7 +5128,14 @@
       activitySelectionMode: "product",
       activityCameraFacingMode: "environment",
       keepFullscreenOnIpad: false,
-      fullscreenRecoveryPending: false
+      fullscreenRecoveryPending: false,
+      studentFloatActive: false,
+      studentFloatMinimized: false,
+      studentFloatNativeAvailable: false,
+      studentFloatMiniX: null,
+      studentFloatMiniY: null,
+      studentFloatMiniDrag: null,
+      studentFloatMiniSuppressClick: false
     };
 
     const coverScreen = document.getElementById("coverScreen");
@@ -5006,6 +5174,10 @@
     const builtWord = document.getElementById("builtWord");
     const statusText = document.getElementById("statusText");
     const fullscreenBtn = document.getElementById("fullscreenBtn");
+    const studentFloatToggleBtn = document.getElementById("studentFloatToggleBtn");
+    const studentFloatMinBtn = document.getElementById("studentFloatMinBtn");
+    const studentFloatOffBtn = document.getElementById("studentFloatOffBtn");
+    const studentFloatMiniLauncher = document.getElementById("studentFloatMiniLauncher");
     const fullscreenTouchGuard = document.getElementById("fullscreenTouchGuard");
     const openBoardBtn = document.getElementById("openBoardBtn");
     const removeBtn = document.getElementById("removeBtn");
@@ -5150,6 +5322,7 @@
     const LIVE_ACTIVITY_FLUSH_INTERVAL_MS = 12000;
     const LIVE_ACTIVITY_MAX_IMAGE_EDGE = 1800;
     const LIVE_ACTIVITY_MAX_DATA_URL_LENGTH = 2_400_000;
+    const STUDENT_FLOAT_MINI_POSITION_STORAGE_KEY = "student-float-mini-position-v1";
     const FIREBASE_ACTIVITY_ROOM_STORAGE_KEY = "spell-scribble-firebase-room-code-v1";
     const FIREBASE_ACTIVITY_PROFILE_STORAGE_KEY = "spell-scribble-firebase-profile-v1";
     const FIREBASE_ACTIVITY_PROFILES_STORAGE_KEY = "spell-scribble-firebase-profiles-v1";
@@ -13035,6 +13208,356 @@
       );
     }
 
+    function canUseNativeStudentFloat() {
+      return Boolean(window.webkit?.messageHandlers?.studentFloatControl);
+    }
+
+    function postStudentFloatNativeCommand(command, payload = {}) {
+      try {
+        const handler = window.webkit?.messageHandlers?.studentFloatControl;
+        if (!handler) {
+          return false;
+        }
+        handler.postMessage({ command, ...payload });
+        return true;
+      } catch (_error) {
+        return false;
+      }
+    }
+
+    function updateStudentFloatToggleUi() {
+      if (!studentFloatToggleBtn) {
+        return;
+      }
+      studentFloatToggleBtn.textContent = state.studentFloatActive ? "FLOAT ON" : "FLOAT";
+      studentFloatToggleBtn.classList.toggle("active", state.studentFloatActive);
+      studentFloatToggleBtn.setAttribute("aria-pressed", String(state.studentFloatActive));
+      studentFloatToggleBtn.setAttribute(
+        "aria-label",
+        state.studentFloatActive
+          ? "Student FLOAT floating mode is on."
+          : "Turn Student FLOAT floating mode on."
+      );
+      studentFloatToggleBtn.title = state.studentFloatNativeAvailable
+        ? "Float the whole Student FLOAT app window above other Mac windows."
+        : "Float Student FLOAT inside this iPad or browser screen.";
+      if (studentFloatMinBtn) {
+        studentFloatMinBtn.disabled = false;
+        studentFloatMinBtn.setAttribute("aria-label", "Minimize Student FLOAT to the logo.");
+      }
+      if (studentFloatOffBtn) {
+        studentFloatOffBtn.setAttribute("aria-label", "Turn Student FLOAT off.");
+      }
+    }
+
+    function storedStudentFloatMiniPosition() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(STUDENT_FLOAT_MINI_POSITION_STORAGE_KEY) || "null");
+        if (!parsed || !Number.isFinite(parsed.x) || !Number.isFinite(parsed.y)) {
+          return null;
+        }
+        return { x: parsed.x, y: parsed.y };
+      } catch (_error) {
+        return null;
+      }
+    }
+
+    function persistStudentFloatMiniPosition() {
+      if (!Number.isFinite(state.studentFloatMiniX) || !Number.isFinite(state.studentFloatMiniY)) {
+        return;
+      }
+      try {
+        localStorage.setItem(
+          STUDENT_FLOAT_MINI_POSITION_STORAGE_KEY,
+          JSON.stringify({
+            x: Math.round(state.studentFloatMiniX),
+            y: Math.round(state.studentFloatMiniY)
+          })
+        );
+      } catch (_error) {}
+    }
+
+    function positionStudentFloatMiniLauncher(x, y, options = {}) {
+      if (!studentFloatMiniLauncher) {
+        return;
+      }
+      const persist = options.persist !== false;
+      const rect = studentFloatMiniLauncher.getBoundingClientRect();
+      const width = rect.width || 124;
+      const height = rect.height || 124;
+      const margin = 8;
+      const maxX = Math.max(margin, window.innerWidth - width - margin);
+      const maxY = Math.max(margin, window.innerHeight - height - margin);
+      const nextX = clamp(Number(x) || margin, margin, maxX);
+      const nextY = clamp(Number(y) || margin, margin, maxY);
+
+      state.studentFloatMiniX = nextX;
+      state.studentFloatMiniY = nextY;
+      studentFloatMiniLauncher.style.left = `${Math.round(nextX)}px`;
+      studentFloatMiniLauncher.style.top = `${Math.round(nextY)}px`;
+      studentFloatMiniLauncher.style.right = "auto";
+      studentFloatMiniLauncher.style.bottom = "auto";
+
+      if (persist) {
+        persistStudentFloatMiniPosition();
+      }
+    }
+
+    function ensureStudentFloatMiniPosition() {
+      if (!studentFloatMiniLauncher || state.studentFloatNativeAvailable) {
+        return;
+      }
+      const storedPosition = storedStudentFloatMiniPosition();
+      if (storedPosition) {
+        positionStudentFloatMiniLauncher(storedPosition.x, storedPosition.y, { persist: false });
+        return;
+      }
+      requestAnimationFrame(() => {
+        const rect = studentFloatMiniLauncher.getBoundingClientRect();
+        positionStudentFloatMiniLauncher(
+          window.innerWidth - (rect.width || 124) - 22,
+          window.innerHeight - (rect.height || 124) - 22,
+          { persist: false }
+        );
+      });
+    }
+
+    function latestStudentFloatPointerPoint(event) {
+      if (typeof event.getCoalescedEvents === "function") {
+        const coalescedEvents = event.getCoalescedEvents();
+        const latestEvent = coalescedEvents[coalescedEvents.length - 1];
+        if (latestEvent) {
+          return { x: latestEvent.clientX, y: latestEvent.clientY };
+        }
+      }
+      return { x: event.clientX, y: event.clientY };
+    }
+
+    function studentFloatTranslateValue(value) {
+      return Math.abs(value) < 0.01 ? "0" : value.toFixed(2);
+    }
+
+    function scheduleStudentFloatMiniTransform(session, nextX, nextY) {
+      if (!studentFloatMiniLauncher) {
+        return;
+      }
+      session.currentX = nextX;
+      session.currentY = nextY;
+      session.pendingTransformX = nextX - session.launcherX;
+      session.pendingTransformY = nextY - session.launcherY;
+      if (session.animationFrame) {
+        return;
+      }
+      session.animationFrame = requestAnimationFrame(() => {
+        session.animationFrame = 0;
+        if (state.studentFloatMiniDrag !== session || !studentFloatMiniLauncher) {
+          return;
+        }
+        studentFloatMiniLauncher.style.transform = `translate3d(${studentFloatTranslateValue(session.pendingTransformX)}px, ${studentFloatTranslateValue(session.pendingTransformY)}px, 0)`;
+      });
+    }
+
+    function flushStudentFloatNativeMiniMove(session) {
+      session.nativeFrame = 0;
+      if (state.studentFloatMiniDrag !== session) {
+        return;
+      }
+      const dx = session.pendingNativeDx || 0;
+      const dy = session.pendingNativeDy || 0;
+      session.pendingNativeDx = 0;
+      session.pendingNativeDy = 0;
+      if (dx || dy) {
+        postStudentFloatNativeCommand("moveMiniWindow", { dx, dy });
+      }
+    }
+
+    function scheduleStudentFloatNativeMiniMove(session, dx, dy) {
+      session.pendingNativeDx = (session.pendingNativeDx || 0) + dx;
+      session.pendingNativeDy = (session.pendingNativeDy || 0) + dy;
+      if (session.nativeFrame) {
+        return;
+      }
+      session.nativeFrame = requestAnimationFrame(() => flushStudentFloatNativeMiniMove(session));
+    }
+
+    function closeStudentFloatTransientPanels() {
+      setSpellingToolsPanelVisible(false);
+      setSpellingToolOptionsVisible(false);
+      setBackgroundPanelVisible(false);
+      setSpellFeaturePanelVisible(false);
+      setBoardBackgroundPanelVisible(false);
+      setBoardFeaturePanelVisible(false);
+      closeSizePopup();
+    }
+
+    function syncStudentFloatLayout() {
+      requestAnimationFrame(() => {
+        resizeSpellingCanvas();
+        normalizePlacedItems();
+        renderPlacedSpelling();
+        if (state.boardVisible) {
+          resizeCanvas();
+          normalizeBoardItems();
+          renderBoardStickers();
+        }
+      });
+    }
+
+    function setStudentFloatMode({ active, minimized } = {}) {
+      state.studentFloatActive = Boolean(active);
+      state.studentFloatMinimized = Boolean(state.studentFloatActive && minimized);
+      state.studentFloatNativeAvailable = canUseNativeStudentFloat();
+      if (state.studentFloatMinimized) {
+        closeStudentFloatTransientPanels();
+      }
+      document.body.classList.toggle("student-float-native-active", state.studentFloatActive && state.studentFloatNativeAvailable);
+      document.body.classList.toggle("student-float-minimized", state.studentFloatMinimized);
+      document.body.classList.toggle(
+        "student-float-web-active",
+        state.studentFloatActive && !state.studentFloatNativeAvailable && !state.studentFloatMinimized
+      );
+      postStudentFloatNativeCommand("setFloating", {
+        active: state.studentFloatActive,
+        minimized: state.studentFloatMinimized
+      });
+      if (state.studentFloatMinimized) {
+        ensureStudentFloatMiniPosition();
+      }
+      updateStudentFloatToggleUi();
+      syncStudentFloatLayout();
+    }
+
+    function toggleStudentFloatMode() {
+      setStudentFloatMode({ active: true, minimized: true });
+    }
+
+    function minimizeStudentFloatMode() {
+      setStudentFloatMode({ active: true, minimized: true });
+    }
+
+    function restoreStudentFloatFromMini() {
+      if (state.studentFloatMiniSuppressClick) {
+        return;
+      }
+      setStudentFloatMode({ active: true, minimized: false });
+    }
+
+    window.studentFloatNativeRestore = restoreStudentFloatFromMini;
+
+    function closeStudentFloatApp() {
+      if (postStudentFloatNativeCommand("closeApp")) {
+        return;
+      }
+      setStudentFloatMode({ active: false, minimized: false });
+      try {
+        window.close();
+      } catch (_error) {}
+    }
+
+    function beginStudentFloatMiniDrag(event) {
+      if (!state.studentFloatMinimized || !studentFloatMiniLauncher || !isPrimaryPointerInput(event)) {
+        return;
+      }
+      const rect = studentFloatMiniLauncher.getBoundingClientRect();
+      const width = rect.width || 124;
+      const height = rect.height || 124;
+      const margin = 8;
+      const maxX = Math.max(margin, window.innerWidth - width - margin);
+      const maxY = Math.max(margin, window.innerHeight - height - margin);
+      const point = latestStudentFloatPointerPoint(event);
+      state.studentFloatMiniDrag = {
+        pointerId: event.pointerId,
+        startX: point.x,
+        startY: point.y,
+        lastX: point.x,
+        lastY: point.y,
+        launcherX: rect.left,
+        launcherY: rect.top,
+        currentX: rect.left,
+        currentY: rect.top,
+        minX: margin,
+        minY: margin,
+        maxX,
+        maxY,
+        pendingTransformX: 0,
+        pendingTransformY: 0,
+        pendingNativeDx: 0,
+        pendingNativeDy: 0,
+        animationFrame: 0,
+        nativeFrame: 0,
+        moved: false
+      };
+      studentFloatMiniLauncher.style.transform = "translate3d(0, 0, 0)";
+      studentFloatMiniLauncher.classList.add("is-dragging");
+      document.body.classList.add("student-float-mini-dragging");
+      try {
+        studentFloatMiniLauncher.setPointerCapture(event.pointerId);
+      } catch (_error) {}
+    }
+
+    function updateStudentFloatMiniDrag(event) {
+      const session = state.studentFloatMiniDrag;
+      if (!session || event.pointerId !== session.pointerId || !studentFloatMiniLauncher) {
+        return;
+      }
+      const point = latestStudentFloatPointerPoint(event);
+      const dx = point.x - session.startX;
+      const dy = point.y - session.startY;
+      if (Math.hypot(dx, dy) > 4) {
+        session.moved = true;
+      }
+      if (!session.moved) {
+        return;
+      }
+      event.preventDefault();
+      if (state.studentFloatNativeAvailable) {
+        scheduleStudentFloatNativeMiniMove(session, point.x - session.lastX, point.y - session.lastY);
+        session.lastX = point.x;
+        session.lastY = point.y;
+      } else {
+        scheduleStudentFloatMiniTransform(
+          session,
+          clamp(session.launcherX + dx, session.minX, session.maxX),
+          clamp(session.launcherY + dy, session.minY, session.maxY)
+        );
+      }
+    }
+
+    function finishStudentFloatMiniDrag(event) {
+      const session = state.studentFloatMiniDrag;
+      if (!session || event.pointerId !== session.pointerId || !studentFloatMiniLauncher) {
+        return;
+      }
+      try {
+        studentFloatMiniLauncher.releasePointerCapture(event.pointerId);
+      } catch (_error) {}
+      studentFloatMiniLauncher.classList.remove("is-dragging");
+      document.body.classList.remove("student-float-mini-dragging");
+      if (session.moved) {
+        if (state.studentFloatNativeAvailable) {
+          if (session.nativeFrame) {
+            cancelAnimationFrame(session.nativeFrame);
+            flushStudentFloatNativeMiniMove(session);
+          }
+        } else {
+          if (session.animationFrame) {
+            cancelAnimationFrame(session.animationFrame);
+            session.animationFrame = 0;
+          }
+          positionStudentFloatMiniLauncher(session.currentX, session.currentY, { persist: false });
+          studentFloatMiniLauncher.style.transform = "translate3d(0, 0, 0)";
+          persistStudentFloatMiniPosition();
+        }
+        state.studentFloatMiniSuppressClick = true;
+        window.setTimeout(() => {
+          state.studentFloatMiniSuppressClick = false;
+        }, 180);
+      } else {
+        studentFloatMiniLauncher.style.transform = "translate3d(0, 0, 0)";
+      }
+      state.studentFloatMiniDrag = null;
+    }
+
     function setSpellTrayExpanded(expanded) {
       state.spellTrayExpanded = Boolean(expanded);
       spellTray.classList.toggle("collapsed", !state.spellTrayExpanded);
@@ -15594,6 +16117,22 @@
       setSpellingToolsPanelVisible(false);
       toggleFullscreen();
     });
+    studentFloatToggleBtn.addEventListener("click", toggleStudentFloatMode);
+    studentFloatMinBtn.addEventListener("click", minimizeStudentFloatMode);
+    studentFloatOffBtn.addEventListener("click", closeStudentFloatApp);
+    studentFloatMiniLauncher.addEventListener("click", restoreStudentFloatFromMini);
+    studentFloatMiniLauncher.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
+        event.preventDefault();
+        restoreStudentFloatFromMini();
+      }
+    });
+    studentFloatMiniLauncher.addEventListener("pointerdown", beginStudentFloatMiniDrag, { passive: false });
+    studentFloatMiniLauncher.addEventListener("pointermove", updateStudentFloatMiniDrag, { passive: false });
+    studentFloatMiniLauncher.addEventListener("pointerrawupdate", updateStudentFloatMiniDrag, { passive: false });
+    studentFloatMiniLauncher.addEventListener("pointerup", finishStudentFloatMiniDrag);
+    studentFloatMiniLauncher.addEventListener("pointercancel", finishStudentFloatMiniDrag);
+    studentFloatMiniLauncher.addEventListener("lostpointercapture", finishStudentFloatMiniDrag);
     document.addEventListener("fullscreenchange", handleFullscreenChange);
     document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
     document.addEventListener("pointerdown", recoverFullscreenFromUserGesture, true);
@@ -15949,6 +16488,9 @@
       if (state.sizePopupVisible) {
         requestAnimationFrame(positionSizePopup);
       }
+      if (state.studentFloatMinimized && !state.studentFloatNativeAvailable) {
+        ensureStudentFloatMiniPosition();
+      }
     });
     window.addEventListener("online", () => {
       flushPendingLiveActivityProducts();
@@ -16011,6 +16553,7 @@
     updateFeatureTimerUI();
     updateFeatureDieUI();
     selectFeatureTool(state.selectedFeatureTool);
+    updateStudentFloatToggleUi();
     updateFullscreenClasses();
     updateFullscreenLabel();
     setGameAccessUnlocked(false);
