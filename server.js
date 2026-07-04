@@ -528,11 +528,9 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(`Teacher live wall server running on ${HOST}:${PORT}`);
-  console.log(`Teacher access code: ${TEACHER_ACCESS_CODE}`);
-  console.log("Open one of these URLs on devices connected to the same Wi-Fi:");
+  console.log(`Student FLOAT server running on ${HOST}:${PORT}`);
+  console.log("Open one of these URLs on iPads connected to the same Wi-Fi:");
   networkUrls().forEach((url) => {
-    console.log(`- Game: ${url}/index.html`);
-    console.log(`  Teacher wall: ${url}/teacher-dashboard.html`);
+    console.log(`- Student FLOAT: ${url}/index.html`);
   });
 });

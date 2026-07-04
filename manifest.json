@@ -1,7 +1,7 @@
 {
-  "name": "Spell & Scribble Studio",
-  "short_name": "Spell Scribble",
-  "description": "A fullscreen spelling and drawing game for iPad.",
+  "name": "Student FLOAT",
+  "short_name": "Student FLOAT",
+  "description": "A fullscreen classroom learning and Activity Product app for iPad and Mac.",
   "id": "./index.html",
   "start_url": "./index.html?homescreen=1",
   "scope": "./",
