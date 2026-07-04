@@ -1,4 +1,4 @@
-const CACHE_NAME = "student-float-pwa-v1";
+const CACHE_NAME = "student-canvas-pwa-v1";
 const APP_SHELL = [
   "./",
   "./index.html",

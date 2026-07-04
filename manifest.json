@@ -1,6 +1,6 @@
 {
-  "name": "Student FLOAT",
-  "short_name": "Student FLOAT",
+  "name": "Student CANVAS",
+  "short_name": "Student CANVAS",
   "description": "A fullscreen classroom learning and Activity Product app for iPad and Mac.",
   "id": "./index.html",
   "start_url": "./index.html?homescreen=1",
